@@ -1,11 +1,11 @@
 ---
 layout: page
-title: projects
+title: 项目
 permalink: /projects/
-description: A growing collection of your cool projects.
+description: 我正在构建的 AI、开发者工具与知识管理项目。
 nav: true
 nav_order: 3
-display_categories: [work, fun]
+display_categories: [AI 与开发者工具, 产品与探索]
 horizontal: false
 ---
 

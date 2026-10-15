@@ -1,8 +1,8 @@
 ---
 layout: page
 permalink: /repositories/
-title: repositories
-description: Edit the `_data/repositories.yml` and change the `github_users` and `github_repos` lists to include your own GitHub profile and repositories.
+title: 开源仓库
+description: GitHub 上的个人主页与精选开源项目。
 nav: true
 nav_order: 4
 ---
