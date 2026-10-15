@@ -4,7 +4,12 @@ title: 关于我
 permalink: /
 subtitle: 独立开发者 · AI 工具与知识管理产品
 
-profile: false
+profile:
+  align: right
+  image: github-avatar.png
+  image_circular: true
+  more_info: >
+    <p><a href="https://github.com/fengjutian">GitHub @fengjutian</a></p>
 
 selected_papers: false
 social: true # includes social icons at the bottom of the page
