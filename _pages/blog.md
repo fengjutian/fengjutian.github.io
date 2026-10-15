@@ -3,7 +3,7 @@ layout: default
 permalink: /blog/
 title: 博客
 nav: true
-nav_order: 4
+nav_order: 2
 pagination:
   enabled: true
   collection: posts
