@@ -2,8 +2,27 @@
 layout: default
 permalink: /blog/
 title: 博客
+description: 记录 AI、开发者工具、知识管理与产品实践。
 nav: true
 nav_order: 2
+_styles: |
+  /* 博客页头与站内其它页面（post-title）统一：左对齐、常规字号、主题色只留给强调。 */
+  .header-bar {
+    padding-top: 0.5rem;
+    padding-bottom: 1.2rem;
+    text-align: left;
+    border-bottom: none;
+  }
+  .header-bar h1 {
+    color: var(--global-text-color);
+    font-size: 2.5rem;
+    font-weight: 300;
+  }
+  .header-bar h2 {
+    color: var(--global-text-color-light);
+    font-size: 1rem;
+    font-weight: 300;
+  }
 pagination:
   enabled: true
   collection: posts
@@ -62,7 +81,7 @@ pagination:
 
 <div class="container featured-posts">
 {% assign is_even = featured_posts.size | modulo: 2 %}
-<div class="row row-cols-{% if featured_posts.size <= 2 or is_even == 0 %}2{% else %}3{% endif %}">
+<div class="row row-cols-1 row-cols-md-{% if featured_posts.size <= 2 or is_even == 0 %}2{% else %}3{% endif %}">
 {% for post in featured_posts %}
 <div class="col mb-4">
 <a href="{{ post.url | relative_url }}">
@@ -84,7 +103,7 @@ pagination:
                     {% assign year = post.date | date: "%Y" %}
 
                     <p class="post-meta">
-                      {{ read_time }} min read &nbsp; &middot; &nbsp;
+                      {{ read_time }} 分钟阅读 &nbsp; &middot; &nbsp;
                       <a href="{{ year | prepend: '/blog/' | relative_url }}">
                         <i class="fa-solid fa-calendar fa-sm"></i> {{ year }} </a>
                     </p>
@@ -104,9 +123,9 @@ pagination:
   <ul class="post-list">
 
     {% if page.pagination.enabled %}
-      {% assign postlist = paginator.posts %}
+      {% assign postlist = paginator.posts | where_exp: "p", "p.featured != true and p.featured != 'true'" %}
     {% else %}
-      {% assign postlist = site.posts %}
+      {% assign postlist = site.posts | where_exp: "p", "p.featured != true and p.featured != 'true'" %}
     {% endif %}
 
     {% for post in postlist %}
@@ -141,8 +160,8 @@ pagination:
       </h3>
       <p>{{ post.description }}</p>
       <p class="post-meta">
-        {{ read_time }} min read &nbsp; &middot; &nbsp;
-        {{ post.date | date: '%B %d, %Y' }}
+        {{ read_time }} 分钟阅读 &nbsp; &middot; &nbsp;
+        {{ post.date | date: '%Y 年 %-m 月 %-d 日' }}
         {% if post.external_source %}
         &nbsp; &middot; &nbsp; {{ post.external_source }}
         {% endif %}
@@ -188,6 +207,10 @@ pagination:
     {% endfor %}
 
   </ul>
+
+{% if postlist.size == 0 %}
+  <p class="text-center" style="color: var(--global-text-color-light); padding: 2rem 0;">暂无其它文章。</p>
+  {% endif %}
 
 {% if page.pagination.enabled %}
 {% include pagination.liquid %}
