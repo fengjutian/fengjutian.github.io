@@ -5,171 +5,322 @@ title: 开源仓库
 description: 从 AI 智能体到工程工具，持续构建有趣且实用的软件。
 nav: true
 nav_order: 4
+_styles: |
+  /* 该页专属样式：仓库卡片、方向分组、概览条。
+     主题 v1 未提供 Bootstrap 兼容层（compat.bootstrap.enabled=false），
+     因此这里只依赖主题自身的 CSS 变量，暗色模式自动跟随。 */
+  .rp {
+    /* 次要文字用自定义灰度：主题的 --global-text-color-light（#828282）
+       在浅色/深色背景上的对比度都低于 WCAG AA 的 4.5:1。 */
+    --rp-muted: #6b6b6b;
+  }
+  html[data-theme="dark"] .rp {
+    --rp-muted: #a8a8a8;
+  }
+  .rp-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 2.4rem;
+  }
+  .rp-stat {
+    padding: 1.05rem 0.6rem;
+    text-align: center;
+    background: var(--global-card-bg-color);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.5rem;
+  }
+  .rp-stat-num {
+    display: block;
+    font-size: 1.55rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .rp-stat-label {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    color: var(--rp-muted);
+  }
+  .rp h2 {
+    margin: 2.1rem 0 0.9rem;
+    font-size: 1.35rem;
+  }
+  .rp h2:first-child {
+    margin-top: 0;
+  }
+  .rp-hint {
+    margin: 0 0 0.9rem;
+    font-size: 0.86rem;
+    color: var(--rp-muted);
+  }
+  .rp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .rp-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    height: 100%;
+    padding: 1rem 1.1rem 1.05rem;
+    color: var(--global-text-color);
+    text-decoration: none;
+    background: var(--global-card-bg-color);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.5rem;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease;
+  }
+  .rp-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--global-theme-color);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    text-decoration: none;
+  }
+  .rp-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .rp-card-name {
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .rp-card-arrow {
+    margin-left: auto;
+    font-size: 0.72rem;
+    opacity: 0.35;
+    transition: opacity 0.18s ease;
+  }
+  .rp-card:hover .rp-card-arrow {
+    opacity: 1;
+  }
+  .rp-card-desc {
+    flex: 1;
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--rp-muted);
+  }
+  .rp-dot {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+  }
+  .rp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.1rem;
+  }
+  .rp-tag {
+    padding: 0.28rem 0.55rem;
+    font-size: 0.7rem;
+    line-height: 1.1;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--global-theme-color) 14%, transparent);
+    color: var(--global-text-color);
+  }
+  .rp-group {
+    margin: 0 0 0.9rem;
+    overflow: hidden;
+    background: var(--global-card-bg-color);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.5rem;
+  }
+  .rp-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+  }
+  .rp-summary::-webkit-details-marker {
+    display: none;
+  }
+  .rp-summary:hover {
+    background: color-mix(in srgb, var(--global-theme-color) 7%, transparent);
+  }
+  .rp-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--rp-muted);
+  }
+  .rp-chevron {
+    font-size: 0.7rem;
+    color: var(--rp-muted);
+    transition: transform 0.18s ease;
+  }
+  .rp-group[open] .rp-chevron {
+    transform: rotate(180deg);
+  }
+  .rp-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.1rem 1rem;
+    padding: 0.2rem 0.7rem 0.85rem;
+  }
+  .rp-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.45rem 0.4rem;
+    color: var(--global-text-color);
+    text-decoration: none;
+    border-radius: 0.35rem;
+  }
+  .rp-item:hover {
+    background: color-mix(in srgb, var(--global-theme-color) 8%, transparent);
+    text-decoration: none;
+  }
+  .rp-item-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .rp-item-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+  .rp-item-name {
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .rp-item-desc {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--rp-muted);
+  }
+  .rp-item-lang {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    color: var(--rp-muted);
+  }
+  .rp-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.15rem;
+    font-size: 0.9rem;
+    color: var(--global-hover-text-color);
+    text-decoration: none;
+    background: var(--global-theme-color);
+    border-radius: 0.35rem;
+  }
+  .rp-cta:hover {
+    color: var(--global-hover-text-color);
+    background: var(--global-hover-color);
+    text-decoration: none;
+  }
+  @media (max-width: 575.98px) {
+    .rp-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .rp-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 ---
 
-<div class="row row-cols-2 row-cols-md-4 text-center mb-5">
-  <div class="col mb-3">
-    <div class="card h-100">
-      <div class="card-body">
-        <h3 class="card-title">30+</h3>
-        <p class="card-text text-muted">精选项目</p>
-      </div>
+{% assign repos = site.data.repositories.repos %}
+{% assign owner = site.data.repositories.github_users | first %}
+{% assign featured = repos | where: "featured", true %}
+{% assign langs = repos | map: "lang" | uniq %}
+{% assign cats = site.data.repositories.categories %}
+
+<div class="rp">
+
+  <div class="rp-stats">
+    <div class="rp-stat">
+      <span class="rp-stat-num">{{ repos | size }}</span>
+      <span class="rp-stat-label">公开项目</span>
+    </div>
+    <div class="rp-stat">
+      <span class="rp-stat-num">{{ featured | size }}</span>
+      <span class="rp-stat-label">重点项目</span>
+    </div>
+    <div class="rp-stat">
+      <span class="rp-stat-num">{{ langs | size }}</span>
+      <span class="rp-stat-label">主要语言</span>
+    </div>
+    <div class="rp-stat">
+      <span class="rp-stat-num">{{ cats | size }}</span>
+      <span class="rp-stat-label">探索方向</span>
     </div>
   </div>
-  <div class="col mb-3">
-    <div class="card h-100">
-      <div class="card-body">
-        <h3 class="card-title">6</h3>
-        <p class="card-text text-muted">主要语言</p>
-      </div>
-    </div>
-  </div>
-  <div class="col mb-3">
-    <div class="card h-100">
-      <div class="card-body">
-        <h3 class="card-title">AI</h3>
-        <p class="card-text text-muted">核心方向</p>
-      </div>
-    </div>
-  </div>
-  <div class="col mb-3">
-    <div class="card h-100">
-      <div class="card-body">
-        <h3 class="card-title">Open</h3>
-        <p class="card-text text-muted">持续探索</p>
-      </div>
-    </div>
-  </div>
-</div>
 
-## 重点项目
+  <h2>重点项目</h2>
 
-<div class="row row-cols-1 row-cols-md-2">
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/catshell" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">catshell</h3>
-          <p class="card-text">高效、轻量的文件查看工具，为顺畅的命令行工作流而生。</p>
-          <span class="badge rounded-pill text-bg-warning">Rust</span>
-        </div>
+  <div class="rp-grid">
+    {% for cat in cats %}
+      {% assign cat_featured = repos | where: "category", cat.id | where: "featured", true %}
+      {% for r in cat_featured %}
+        {% assign color = site.data.repositories.languages[r.lang] | default: "#8b949e" %}
+        <a class="rp-card" href="https://github.com/{{ owner }}/{{ r.name }}">
+          <span class="rp-card-head">
+            <span class="rp-dot" style="background: {{ color }}"></span>
+            <span class="rp-card-name">{{ r.title | default: r.name }}</span>
+            <i class="fa-solid fa-arrow-up-right-from-square rp-card-arrow"></i>
+          </span>
+          <p class="rp-card-desc">{{ r.desc }}</p>
+          <span class="rp-tags">
+            <span class="rp-tag">{{ r.lang }}</span>
+          </span>
+        </a>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <h2>更多探索</h2>
+
+  <p class="rp-hint">按方向浏览全部公开项目，点击分类展开。</p>
+
+{% for cat in cats %}
+    {% assign cat_repos = repos | where: "category", cat.id | where_exp: "r", "r.featured != true" %}
+    <details class="rp-group" {% if forloop.first %}open{% endif %}>
+      <summary class="rp-summary">
+        <span>{{ cat.name }}</span>
+        <span class="rp-count">{{ cat_repos | size }} 个项目</span>
+        <i class="fa-solid fa-chevron-down rp-chevron"></i>
+      </summary>
+      <div class="rp-items">
+        {% for r in cat_repos %}
+          {% assign color = site.data.repositories.languages[r.lang] | default: "#8b949e" %}
+          <a class="rp-item" href="https://github.com/{{ owner }}/{{ r.name }}">
+            <span class="rp-dot" style="background: {{ color }}"></span>
+            <span class="rp-item-body">
+              <span class="rp-item-title">
+                <span class="rp-item-name">{{ r.title | default: r.name }}</span>
+                <span class="rp-item-lang">{{ r.lang }}</span>
+              </span>
+              <span class="rp-item-desc">{{ r.desc }}</span>
+            </span>
+          </a>
+        {% endfor %}
       </div>
+    </details>
+{% endfor %}
+
+  <div class="text-center">
+    <a class="rp-cta" href="https://github.com/{{ owner }}?tab=repositories">
+      浏览全部公开仓库 <i class="fa-solid fa-arrow-up-right-from-square fa-sm"></i>
     </a>
   </div>
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/Blade-AI-Editor" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">Blade AI Editor</h3>
-          <p class="card-text">面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。</p>
-          <span class="badge rounded-pill text-bg-primary">TypeScript</span>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/weber-code-agent" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">weber-code-agent</h3>
-          <p class="card-text">理解代码、执行任务并协助完成软件开发工作的代码智能体。</p>
-          <span class="badge rounded-pill text-bg-primary">TypeScript</span>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/mix-knowledg" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">mix-knowledg</h3>
-          <p class="card-text">探索多个智能体共同组织、处理和连接知识的协作方式。</p>
-          <span class="badge rounded-pill text-bg-primary">TypeScript</span>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/NeuralNotes" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">NeuralNotes</h3>
-          <p class="card-text">以知识星图连接笔记，在关系网络中发现新的信息线索。</p>
-          <span class="badge rounded-pill text-bg-success">Python</span>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col mb-4">
-    <a href="https://github.com/fengjutian/jiufenglanting-business" class="text-decoration-none">
-      <div class="card hoverable h-100">
-        <div class="card-body">
-          <h3 class="card-title">九峰兰亭商业</h3>
-          <p class="card-text">聚焦江宁东山周边商业信息，将本地需求转化为数字产品。</p>
-          <span class="badge rounded-pill text-bg-primary">TypeScript</span>
-        </div>
-      </div>
-    </a>
-  </div>
-</div>
 
-## 更多探索
-
-<p class="text-muted">按方向浏览近期活跃项目。点击分类即可展开，项目名称直接链接到 GitHub。</p>
-
-<details class="card mb-3" open>
-  <summary class="card-header"><strong>AI 与开发者工具</strong> · 11 个项目</summary>
-  <div class="card-body">
-    <p><a href="https://github.com/fengjutian/IT-Master"><strong>IT-Master</strong></a> — 本地优先 AI 工程工作台 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/UME"><strong>UME</strong></a> — Universal Memory Engine <code>Python</code></p>
-    <p><a href="https://github.com/fengjutian/aidoc"><strong>aidoc</strong></a> — 下一代 AI 标准文本交互格式 <code>Rust</code></p>
-    <p><a href="https://github.com/fengjutian/NextMD"><strong>NextMD</strong></a> — 下一代 Markdown 编辑器 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/Oceanix"><strong>Oceanix</strong></a> — 下一代代码编辑器 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/Poseidonix"><strong>Poseidonix</strong></a> — 下一代 AI 工作平台 <code>Go</code></p>
-    <p><a href="https://github.com/fengjutian/NEXT-Software-Factory"><strong>NEXT Software Factory</strong></a> — AI 原生软件制造平台 <code>Python</code></p>
-    <p><a href="https://github.com/fengjutian/DBForge_AI"><strong>DBForge AI</strong></a> — 智能数据库管理工具 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/mix-agent"><strong>mix-agent</strong></a> — 多智能体代理 <code>Python</code></p>
-    <p><a href="https://github.com/fengjutian/code-wiki"><strong>code-wiki</strong></a> — 代码就是文档 <code>Python</code></p>
-    <p class="mb-0"><a href="https://github.com/fengjutian/Code-Knowledge-Compiler"><strong>Code Knowledge Compiler</strong></a> — 将代码仓库编译为知识中间表示 <code>Rust</code></p>
-  </div>
-</details>
-
-<details class="card mb-3">
-  <summary class="card-header"><strong>知识与内容工具</strong> · 6 个项目</summary>
-  <div class="card-body">
-    <p><a href="https://github.com/fengjutian/reader-knowledge"><strong>reader-knowledge</strong></a> — 读书知识库 <code>Rust</code></p>
-    <p><a href="https://github.com/fengjutian/AI-Second-Brain"><strong>AI Second Brain</strong></a> — AI 驱动的第二大脑 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/top-project-trend"><strong>top-project-trend</strong></a> — GitHub 项目发现与推荐 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/studio-design"><strong>studio-design</strong></a> — 面向影视创作的智能工作室 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/text-to-img-prompt"><strong>text-to-img-prompt</strong></a> — 文生图提示词工具 <code>TypeScript</code></p>
-    <p class="mb-0"><a href="https://github.com/fengjutian/project-recommend"><strong>project-recommend</strong></a> — 项目推荐工具 <code>Python</code></p>
-  </div>
-</details>
-
-<details class="card mb-3">
-  <summary class="card-header"><strong>系统与工程效率</strong> · 7 个项目</summary>
-  <div class="card-body">
-    <p><a href="https://github.com/fengjutian/WorkTrace"><strong>WorkTrace</strong></a> — 不可篡改的本地工作日志 <code>Rust</code></p>
-    <p><a href="https://github.com/fengjutian/AlexOS"><strong>AlexOS</strong></a> — 多 Runtime 桌面应用平台 <code>Rust</code></p>
-    <p><a href="https://github.com/fengjutian/DahuangDog"><strong>DahuangDog</strong></a> — Windows 状态监控工具 <code>Rust</code></p>
-    <p><a href="https://github.com/fengjutian/Fault-Hunter"><strong>Fault Hunter</strong></a> — 故障定位与排查工具 <code>Shell</code></p>
-    <p><a href="https://github.com/fengjutian/next-work-dashboard"><strong>next-work-dashboard</strong></a> — 下一代工作平台 <code>TypeScript</code></p>
-    <p><a href="https://github.com/fengjutian/mini-create-app"><strong>mini-create-app</strong></a> — 现代前端项目脚手架 <code>TypeScript</code></p>
-    <p class="mb-0"><a href="https://github.com/fengjutian/mp4-2-lottie"><strong>mp4-2-lottie</strong></a> — MP4 到 Lottie 转换工具 <code>JavaScript</code></p>
-  </div>
-</details>
-
-<details class="card mb-4">
-  <summary class="card-header"><strong>应用与场景探索</strong> · 5 个项目</summary>
-  <div class="card-body">
-    <p><a href="https://github.com/fengjutian/LocalVision"><strong>LocalVision</strong></a> — 高速公路车辆识别 <code>Kotlin</code></p>
-    <p><a href="https://github.com/fengjutian/shop_uploader"><strong>shop_uploader</strong></a> — 商铺信息采集 <code>Dart</code></p>
-    <p><a href="https://github.com/fengjutian/white_noise"><strong>white_noise</strong></a> — 白噪音应用 <code>Dart</code></p>
-    <p><a href="https://github.com/fengjutian/bazi"><strong>bazi</strong></a> — 八字应用实验 <code>TypeScript</code></p>
-    <p class="mb-0"><a href="https://github.com/fengjutian/yao_yi_yao"><strong>yao_yi_yao</strong></a> — 随机决定吃什么 <code>JavaScript</code></p>
-  </div>
-</details>
-
-<div class="text-center my-5">
-  <a class="btn btn-primary" href="https://github.com/fengjutian?tab=repositories">浏览全部公开仓库 <i class="fa-solid fa-arrow-up-right-from-square fa-sm"></i></a>
 </div>

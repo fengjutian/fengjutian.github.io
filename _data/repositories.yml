@@ -1,12 +1,195 @@
+# 仓库页的唯一数据源：_pages/repositories.md 完全由本文件驱动。
+# 新增/下线项目只改这里，页面上的计数、分类、语言标签会自动同步。
+#
+# github_users / repo_description_lines_max 由 al-folio 主题的仓库卡片
+# (repository/repo.liquid) 读取，删除会让主题自带的仓库渲染功能失效。
+
 github_users:
   - fengjutian
 
 repo_description_lines_max: 2
 
-github_repos:
-  - fengjutian/catshell
-  - fengjutian/Blade-AI-Editor
-  - fengjutian/jiufenglanting-business
-  - fengjutian/mix-knowledg
-  - fengjutian/NeuralNotes
-  - fengjutian/weber-code-agent
+# 探索方向，顺序即页面展示顺序
+categories:
+  - id: ai
+    name: AI 与开发者工具
+  - id: knowledge
+    name: 知识与内容工具
+  - id: engineering
+    name: 系统与工程效率
+  - id: apps
+    name: 应用与场景探索
+
+# GitHub linguist 语言色
+languages:
+  Rust: "#dea584"
+  TypeScript: "#3178c6"
+  Python: "#3572a5"
+  Go: "#00add8"
+  Shell: "#89e051"
+  JavaScript: "#f1e05a"
+  Kotlin: "#a97bff"
+  Dart: "#00b4ab"
+
+repos:
+  # ── 重点项目（featured: true 会出现在页面上方的卡片区）────────────────
+  - name: catshell
+    title: catshell
+    desc: 高效、轻量的文件查看工具，为顺畅的命令行工作流而生。
+    lang: Rust
+    category: ai
+    featured: true
+  - name: Blade-AI-Editor
+    title: Blade AI Editor
+    desc: 面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: weber-code-agent
+    title: weber-code-agent
+    desc: 理解代码、执行任务并协助完成软件开发工作的代码智能体。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: mix-knowledg
+    title: mix-knowledg
+    desc: 探索多个智能体共同组织、处理和连接知识的协作方式。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: NeuralNotes
+    title: NeuralNotes
+    desc: 以知识星图连接笔记，在关系网络中发现新的信息线索。
+    lang: Python
+    category: knowledge
+    featured: true
+  - name: jiufenglanting-business
+    title: 九峰兰亭商业
+    desc: 聚焦江宁东山周边商业信息，将本地需求转化为数字产品。
+    lang: TypeScript
+    category: apps
+    featured: true
+
+  # ── AI 与开发者工具 ──────────────────────────────────────────────────
+  - name: IT-Master
+    desc: 本地优先 AI 工程工作台
+    lang: TypeScript
+    category: ai
+  - name: UME
+    desc: Universal Memory Engine
+    lang: Python
+    category: ai
+  - name: aidoc
+    desc: 下一代 AI 标准文本交互格式
+    lang: Rust
+    category: ai
+  - name: NextMD
+    desc: 下一代 Markdown 编辑器
+    lang: TypeScript
+    category: ai
+  - name: Oceanix
+    desc: 下一代代码编辑器
+    lang: TypeScript
+    category: ai
+  - name: Poseidonix
+    desc: 下一代 AI 工作平台
+    lang: Go
+    category: ai
+  - name: NEXT-Software-Factory
+    desc: AI 原生软件制造平台
+    lang: Python
+    category: ai
+  - name: DBForge_AI
+    desc: 智能数据库管理工具
+    lang: TypeScript
+    category: ai
+  - name: mix-agent
+    desc: 多智能体代理
+    lang: Python
+    category: ai
+  - name: code-wiki
+    desc: 代码就是文档
+    lang: Python
+    category: ai
+  - name: Code-Knowledge-Compiler
+    desc: 将代码仓库编译为知识中间表示
+    lang: Rust
+    category: ai
+
+  # ── 知识与内容工具 ──────────────────────────────────────────────────
+  - name: reader-knowledge
+    desc: 读书知识库
+    lang: Rust
+    category: knowledge
+  - name: AI-Second-Brain
+    desc: AI 驱动的第二大脑
+    lang: TypeScript
+    category: knowledge
+  - name: top-project-trend
+    desc: GitHub 项目发现与推荐
+    lang: TypeScript
+    category: knowledge
+  - name: studio-design
+    desc: 面向影视创作的智能工作室
+    lang: TypeScript
+    category: knowledge
+  - name: text-to-img-prompt
+    desc: 文生图提示词工具
+    lang: TypeScript
+    category: knowledge
+  - name: project-recommend
+    desc: 项目推荐工具
+    lang: Python
+    category: knowledge
+
+  # ── 系统与工程效率 ──────────────────────────────────────────────────
+  - name: WorkTrace
+    desc: 不可篡改的本地工作日志
+    lang: Rust
+    category: engineering
+  - name: AlexOS
+    desc: 多 Runtime 桌面应用平台
+    lang: Rust
+    category: engineering
+  - name: DahuangDog
+    desc: Windows 状态监控工具
+    lang: Rust
+    category: engineering
+  - name: Fault-Hunter
+    desc: 故障定位与排查工具
+    lang: Shell
+    category: engineering
+  - name: next-work-dashboard
+    desc: 下一代工作平台
+    lang: TypeScript
+    category: engineering
+  - name: mini-create-app
+    desc: 现代前端项目脚手架
+    lang: TypeScript
+    category: engineering
+  - name: mp4-2-lottie
+    desc: MP4 到 Lottie 转换工具
+    lang: JavaScript
+    category: engineering
+
+  # ── 应用与场景探索 ──────────────────────────────────────────────────
+  - name: LocalVision
+    desc: 高速公路车辆识别
+    lang: Kotlin
+    category: apps
+  - name: shop_uploader
+    desc: 商铺信息采集
+    lang: Dart
+    category: apps
+  - name: white_noise
+    desc: 白噪音应用
+    lang: Dart
+    category: apps
+  - name: bazi
+    desc: 八字应用实验
+    lang: TypeScript
+    category: apps
+  - name: yao_yi_yao
+    desc: 随机决定吃什么
+    lang: JavaScript
+    category: apps
