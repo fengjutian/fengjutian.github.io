@@ -37,7 +37,11 @@ latest_posts:
 
 <p class="home-lead">你好，我是 <strong>Fengjutian</strong>。我关注 AI 智能体、开发者工具与个人知识管理，喜欢把想法做成可运行、可验证的开源项目。</p>
 
-<p>目前的方向覆盖 AI 编辑器、代码智能体、多智能体协作、知识星图与 Rust 命令行工具，站内收录 <strong>30 余个</strong>公开仓库。精选作品见 [项目页面](/projects/)，全部项目在 [GitHub](https://github.com/fengjutian) 上。</p>
+<!--
+  这段必须用纯 Markdown，不能写成 <p>...</p> 原始 HTML 块：
+  Kramdown 不会解析 HTML 块内部的 Markdown，[项目页面](/projects/) 会原样输出到页面上。
+-->
+目前的方向覆盖 AI 编辑器、代码智能体、多智能体协作、知识星图与 Rust 命令行工具，站内收录 **30 余个**公开仓库。精选作品见 [项目页面](/projects/)，全部项目在 [GitHub](https://github.com/fengjutian) 上。
 
 ## 关注方向
 
@@ -96,7 +100,7 @@ latest_posts:
   {% endfor %}
 </div>
 
-<p class="proj-more">更多项目见 [全部开源仓库](/repositories/)。</p>
+更多项目见 [全部开源仓库](/repositories/)。
 
 ## 最近在写
 
