@@ -1,6 +1,8 @@
 ---
 layout: about
-title: Fengjutian · 独立开发者
+# 首页的 h1 用的是 site.title，page.title 只负责导航栏第一项（关于我），
+# 所以这里保持「关于我」，别和站点标题重复。
+title: 关于我
 permalink: /
 subtitle: 独立开发者 · AI 工具与知识管理产品
 
@@ -45,7 +47,7 @@ latest_posts:
 
 {% assign featured_projects = site.projects | where: "featured", true | sort: "importance" %}
 <div class="row row-cols-1 row-cols-md-3">
-  {% for project in featured_projects %}
+  {% for project in featured_projects limit: 3 %}
     {% include projects.liquid %}
   {% endfor %}
 </div>
