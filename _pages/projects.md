@@ -5,8 +5,26 @@ permalink: /projects/
 description: 我正在构建的 AI、开发者工具与知识管理项目。
 nav: true
 nav_order: 3
-display_categories: [AI 与开发者工具, 产品与探索]
+# 与 _data/repositories.yml 的分类口径保持一致；只列真正有项目条目的分类，
+# 否则会渲染出空的分类标题。
+display_categories: [AI 与开发者工具, 知识与内容工具, 应用与场景探索]
 horizontal: false
+_styles: |
+  /* 项目卡片底部图标对齐：主题的 .card-body 是 block，标题长短不同时
+     GitHub 图标会跟着文字上下漂。改成纵向 flex 后文字块撑满、图标统一贴底。
+     首页（about 版式不支持 _styles）里有一份同样的规则。 */
+  .projects .card > .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .projects .card > .card-body > a {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .projects .card > .card-body > a > .card-text {
+    flex: 1 1 auto;
+  }
 ---
 
 <!-- pages/projects.md -->
