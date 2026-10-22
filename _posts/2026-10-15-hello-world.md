@@ -19,6 +19,6 @@ featured: true
 - Rust、TypeScript 与 Python 工程实践
 - 能够解决真实问题的产品原型
 
-你可以从[项目页面](/projects/)了解我的精选作品，也可以前往 [GitHub](https://github.com/fengjutian) 查看最新代码。
+你可以从 [项目页面](/projects/) 了解我的精选作品，也可以前往 [GitHub](https://github.com/fengjutian) 查看最新代码。
 
 接下来，我会陆续整理项目设计、技术实现和开发复盘。这里既是一份公开笔记，也是一段持续构建的记录。
