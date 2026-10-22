@@ -230,11 +230,6 @@ html[data-theme="dark"] {
   color: var(--global-theme-color);
 }
 
-.proj-more {
-  margin: 1rem 0 0;
-  font-size: 0.92rem;
-}
-
 /* ---------- 最近在写 / 最近动态 ---------- */
 
 .post .clearfix .news th {
