@@ -1,0 +1,271 @@
+/* 首页（about 布局）专属样式。
+ *
+ * 为什么是独立样式表：al_folio_core v1 的 `about` 布局不渲染 `page._styles`
+ * （只有 `page` / `post` / `book-review` 布局会），首页拿不到页面级样式钩子，
+ * 所以样式放在这里，由 `_pages/about.md` 正文顶部用 <link> 引入。
+ *
+ * 两条前提：
+ * 1. 主题 v1 不提供 Bootstrap 兼容层（compat.bootstrap.enabled=false），
+ *    页面里不要用 .row / .col / .card / .row-cols-* 这类类名拼布局，
+ *    这里一律用 CSS Grid 自绘。
+ * 2. 颜色全部走主题 CSS 变量，暗色模式自动跟随；只有次要文字的灰度
+ *    自己定义一份（主题的 --global-text-color-light 对比度低于 WCAG AA）。
+ */
+
+:root {
+  --home-muted: #6b6b6b;
+  --home-radius: 0.6rem;
+}
+
+html[data-theme="dark"] {
+  --home-muted: #a8a8a8;
+}
+
+/* ---------- Hero：头像不再挤压整列正文 ---------- */
+
+/* 主题里 .profile 是 float + width:30%，正文被它压到只剩约 2/3 宽。
+   这里改成右上角一张窄卡片，正文其余部分回到整行宽度。 */
+.post .profile.float-right {
+  width: 208px;
+  margin: 0.2rem 0 1.2rem 2.2rem;
+  padding: 1.1rem 1.1rem 1rem;
+  text-align: center;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: var(--home-radius);
+}
+
+.post .profile figure {
+  max-width: 148px;
+  margin: 0 auto 0.85rem;
+}
+
+.post .profile .more-info {
+  margin-top: 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.post .profile .more-info p {
+  display: block;
+  margin: 0 0 0.35rem;
+}
+
+.post .profile .more-info p:last-child {
+  margin-bottom: 0;
+  color: var(--home-muted);
+}
+
+/* ---------- 正文排版 ---------- */
+
+.post .clearfix p.home-lead {
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+/* 每个小节从头像下方开始，整行可用宽度 */
+.post .clearfix h2 {
+  clear: both;
+  margin: 2.4rem 0 1rem;
+  padding-bottom: 0.45rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--global-divider-color);
+}
+
+.post .clearfix h3 {
+  font-weight: 500;
+}
+
+/* ---------- 关注方向 ---------- */
+
+.dir-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 0.9rem;
+}
+
+.dir-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem 1.05rem;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: var(--home-radius);
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.dir-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--global-theme-color);
+}
+
+.dir-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.dir-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--home-muted);
+}
+
+.dir-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+}
+
+/* ---------- 精选项目 ---------- */
+
+.proj-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  gap: 1rem;
+}
+
+.proj-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.05rem 1.15rem 1rem;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: var(--home-radius);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.proj-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--global-theme-color);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+.proj-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.proj-cat {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--global-theme-color) 14%, transparent);
+}
+
+.proj-arrow {
+  margin-left: auto;
+  font-size: 0.72rem;
+  opacity: 0.3;
+  transition: opacity 0.18s ease;
+}
+
+.proj-card:hover .proj-arrow {
+  opacity: 1;
+}
+
+.proj-title {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* 标题链接铺满整张卡片，整卡可点；GitHub 角标单独抬高一层 */
+.proj-title a::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  border-radius: inherit;
+}
+
+.proj-title a {
+  color: var(--global-text-color);
+  text-decoration: none;
+}
+
+.proj-card:hover .proj-title a {
+  color: var(--global-theme-color);
+}
+
+.proj-desc {
+  flex: 1;
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--home-muted);
+}
+
+.proj-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.78rem;
+}
+
+.proj-gh {
+  position: relative;
+  z-index: 1;
+  color: var(--home-muted);
+  text-decoration: none;
+}
+
+.proj-gh:hover {
+  color: var(--global-theme-color);
+}
+
+.proj-more {
+  margin: 1rem 0 0;
+  font-size: 0.92rem;
+}
+
+/* ---------- 最近在写 / 最近动态 ---------- */
+
+.post .clearfix .news th {
+  font-weight: 400;
+  color: var(--home-muted);
+}
+
+.post .clearfix .news td {
+  font-size: 0.95rem;
+}
+
+/* ---------- 窄屏 ---------- */
+
+@media (max-width: 767.98px) {
+  .post .profile.float-right {
+    float: none !important;
+    width: auto;
+    max-width: 240px;
+    margin: 0 auto 1.4rem;
+  }
+
+  .post .profile figure {
+    max-width: 132px;
+  }
+
+  .post .clearfix h2 {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+  }
+
+  .post .clearfix p.home-lead {
+    font-size: 1rem;
+  }
+}
