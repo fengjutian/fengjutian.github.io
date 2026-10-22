@@ -3,5 +3,22 @@
 # for more information, please refer to the documentation of jekyll-socials plugin: https://github.com/george-gca/jekyll-socials
 github_username: fengjutian
 rss_icon: true # comment this line to hide the RSS icon
-# wechat_qr: # filename of your wechat qr-code saved as an image (e.g., wechat-qr.png if saved to assets/img/wechat-qr.png)
-# whatsapp_number: # your WhatsApp number (full phone number in international format. Omit any zeroes, brackets, or dashes when adding the phone number in international format.)
+
+# 联系方式。默认用 GitHub 的 noreply 地址——它能把邮件转进你的 GitHub 通知里，
+# 又不会把私人邮箱暴露在页面上。想用常用邮箱的话，直接替换成真实地址即可。
+email: fengjutian@users.noreply.github.com
+
+# 微信二维码：把图片放到 assets/img/wechat-qr.png，然后取消下面这行的注释。
+# wechat_qr: wechat-qr.png
+
+# 其他平台（jekyll-socials 内置字段）：
+# x_username: 你的 X / Twitter 用户名（不带 @）
+# linkedin_username: 你的 LinkedIn 用户名
+# youtube_id: 你的 YouTube 频道 ID
+# bilibili_id: 不支持内置字段时用自定义条目，见下方 custom_social 示例
+#
+# 自定义平台（例如 B 站、掘金、知乎）用 custom_social 形式，url 必填：
+# custom_social:
+#   logo: fa-brands fa-bilibili
+#   title: 哔哩哔哩
+#   url: https://space.bilibili.com/你的ID

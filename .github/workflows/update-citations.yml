@@ -1,10 +1,12 @@
 name: Update Google Scholar Citations
 
 on:
-  schedule:
-    - cron: "0 0 * * 1" # Monday
-    - cron: "0 0 * * 3" # Wednesday
-    - cron: "0 0 * * 5" # Friday
+  # 本站没有学术论文目录（publications 页已移除），定时抓取 Google Scholar 引用没有意义。
+  # 保留 workflow_dispatch 以便日后要加论文页时手动跑一次。
+  # schedule:
+  #   - cron: "0 0 * * 1" # Monday
+  #   - cron: "0 0 * * 3" # Wednesday
+  #   - cron: "0 0 * * 5" # Friday
   workflow_dispatch:
 
 jobs:

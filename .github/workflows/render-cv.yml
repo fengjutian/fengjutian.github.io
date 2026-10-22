@@ -1,14 +1,16 @@
 name: Render a CV
 on:
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - "_data/cv.yml"
-      - "assets/rendercv/design.yaml"
-      - "assets/rendercv/locale.yaml"
-      - "assets/rendercv/settings.yaml"
+  # _data/cv.yml 目前只是最小骨架（没有真实履历），每次改动都自动渲染 PDF 会产生无意义的提交，
+  # 也可能在 RenderCV 上失败。等履历补齐后，把下面这行取消注释即可恢复自动渲染。
+  # push:
+  #   branches:
+  #     - main
+  #     - master
+  #   paths:
+  #     - "_data/cv.yml"
+  #     - "assets/rendercv/design.yaml"
+  #     - "assets/rendercv/locale.yaml"
+  #     - "assets/rendercv/settings.yaml"
   workflow_call:
   workflow_dispatch:
 permissions:

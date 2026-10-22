@@ -7,7 +7,7 @@ first_name: Ju Tian
 middle_name:
 last_name: Feng
 contact_note: >
-  欢迎通过 GitHub 交流项目与想法。
+  欢迎通过 GitHub 交流项目与想法，也可以直接发邮件联系。
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   Fengjutian 的个人博客与项目作品集，关注 AI 智能体、开发者工具和知识管理。
 footer_text: >
@@ -15,12 +15,12 @@ footer_text: >
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
 keywords: AI, AI agent, developer tools, knowledge management, Rust, TypeScript, Python
 lang: zh-CN
-icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
-apple_touch_icon: # image name in /assets/img/ (or a rooted path / absolute URL) used for iOS home-screen bookmarks; needs a real 180x180 PNG, since Safari ignores the emoji favicon above. Left empty, iOS falls back to a screenshot of the page.
+icon: favicon.svg # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
+apple_touch_icon: apple-touch-icon.png # image name in /assets/img/ (or a rooted path / absolute URL) used for iOS home-screen bookmarks; needs a real 180x180 PNG, since Safari ignores the emoji favicon above. Left empty, iOS falls back to a screenshot of the page.
 
 url: https://fengjutian.github.io
 baseurl:
-last_updated: false # set to true if you want to display last updated in the footer
+last_updated: true # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
 back_to_top: true # set to false to disable the back to top button
 
@@ -109,9 +109,9 @@ max_width: 930px
 # -----------------------------------------------------------------------------
 # Display links to the page with a preview object on social media.
 # see https://schema.org/docs/faq.html for more information
-serve_og_meta: false # Include Open Graph meta tags in the HTML head
-serve_schema_org: false # Include Schema.org in the HTML head
-og_image: # The site-wide (default for all links) Open Graph preview image
+serve_og_meta: true # Include Open Graph meta tags in the HTML head
+serve_schema_org: true # Include Schema.org in the HTML head
+og_image: /assets/img/og-image.png # The site-wide (default for all links) Open Graph preview image (1200x630 recommended)
 
 # -----------------------------------------------------------------------------
 # Analytics and search engine verification
@@ -234,16 +234,9 @@ exclude:
   - package.json
   - package-lock.json
   - _pages/about_einstein.md
-  # 上游示例页：内容为空或仍是示例数据（英文标题、示例论文、爱因斯坦 CV），
-  # 对个人站只是 SEO 噪音，发布前请用真实内容替换后再移出这个列表。
-  - _pages/books.md
+  # CV 页保留但暂不发布：_data/cv.yml 已换成最小骨架，填好真实履历后
+  # 把下面这行删掉即可启用。
   - _pages/cv.md
-  - _pages/dropdown.md
-  - _pages/news.md
-  - _pages/plugins.md
-  - _pages/profiles.md
-  - _pages/publications.md
-  - _pages/teaching.md
   - purgecss.config.js
   - README.md
   - readme_preview/
@@ -348,15 +341,15 @@ jekyll-archives:
     enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
 
 display_tags: [AI, 开发者工具, 开源]
-display_categories: [技术随笔]
+display_categories: [技术随笔, 工程实践]
 
 # -----------------------------------------------------------------------------
 # Jekyll Scholar
 # -----------------------------------------------------------------------------
 
 scholar:
-  last_name: [Einstein]
-  first_name: [Albert, A.]
+  last_name: [Feng]
+  first_name: [Ju Tian]
 
   style: apa
   locale: en
@@ -693,9 +686,12 @@ third_party_libraries:
 # Get external JSON data
 # -----------------------------------------------------------------------------
 
-jekyll_get_json:
-  - data: resume
-    json: assets/json/resume.json # it can also be an url
+# 本站使用 rendercv 格式的 CV（_data/cv.yml），不需要 JSONResume 副本；
+# 若要改回 JSONResume，把下面的 jekyll_get_json 配置加回来并恢复
+# assets/json/resume.json。
+# jekyll_get_json:
+#   - data: resume
+#     json: assets/json/resume.json # it can also be an url
 
 jsonresume:
   - basics
