@@ -402,14 +402,29 @@ Delete or comment out the [`.github/workflows/render-cv.yml`](../.github/workflo
 
 ## Modifying the user and repository information
 
-The user and repository information is defined in [\_data/repositories.yml](../_data/repositories.yml). You can add as many users and repositories as you want. Both informations are used in the `repositories` section.
+The repository page is driven entirely by [\_data/repositories.yml](../_data/repositories.yml): every project, its description, its language and its direction live there. The page renders the “重点项目” cards, the “更多探索” groups and the counters at the top from that single file, so adding or removing a project never leaves stale numbers behind.
+
+```yaml
+repos:
+  - name: catshell
+    title: catshell # optional, defaults to `name`
+    desc: 高效、轻量的文件查看工具，为顺畅的命令行工作流而生。
+    lang: Rust
+    category: ai # must match one of `categories[].id`
+    featured: true # renders in the “重点项目” card grid
+```
+
+- `categories` defines the “更多探索” groups and their order; `languages` maps a language to its GitHub language colour (the dot next to each project).
+- `github_users` and `repo_description_lines_max` are kept because the theme’s own repository cards (`repository/repo.liquid`) read them. The custom page does not use those cards.
 
 ### Configuring external service URLs
 
-The repository page uses external services to display GitHub statistics and trophies:
+The theme can display GitHub statistics and trophies through external services:
 
 - `github-stats-extended.vercel.app` for user stats and repository cards — **on by default**
 - `github-profile-trophy.vercel.app` for GitHub profile trophies — **off by default**
+
+The custom repository page renders plain HTML instead, so it does not depend on these services being reachable.
 
 ### Protecting email addresses from scrapers
 
