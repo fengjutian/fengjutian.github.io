@@ -24,4 +24,3 @@ Folixa 是一个面向 Windows 的原生 AI PDF 编辑器，采用 C++20、Qt 6 
 ## 当前进展
 
 当前重点是完善 PDF 编辑基础、文本提取和索引，并逐步接入真实模型 Provider。
-

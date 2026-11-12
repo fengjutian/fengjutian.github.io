@@ -24,4 +24,3 @@ SuperDBA 将数据库结构探索、SQL 编写、数据编辑、执行计划、N
 ## 当前能力
 
 项目覆盖 MySQL、MariaDB、PostgreSQL 和 SQLite，并通过插件扩展更多 SQL、NoSQL、向量数据库和云服务。
-
