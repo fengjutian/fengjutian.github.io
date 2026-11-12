@@ -13,14 +13,14 @@
 
 ## 精选项目
 
-| 项目                                                                  | 简介                                     | 技术方向                 |
-| --------------------------------------------------------------------- | ---------------------------------------- | ------------------------ |
-| [catshell](https://github.com/fengjutian/catshell)                    | 高效、轻量的文件查看工具                 | Rust、命令行工具         |
-| [Blade AI Editor](https://github.com/fengjutian/Blade-AI-Editor)      | 面向 AI 辅助开发场景的编辑器             | TypeScript、AI 编辑器    |
-| [weber-code-agent](https://github.com/fengjutian/weber-code-agent)    | 理解代码、执行任务并协助开发的代码智能体 | TypeScript、AI Agent     |
-| [mix-knowledg](https://github.com/fengjutian/mix-knowledg)            | 多智能体共同组织、处理和连接知识         | TypeScript、多智能体协作 |
-| [NeuralNotes](https://github.com/fengjutian/NeuralNotes)              | 通过知识星图连接笔记与信息线索           | Python、知识管理         |
-| [九峰兰亭商业](https://github.com/fengjutian/jiufenglanting-business) | 将本地商业信息需求转化为数字产品         | TypeScript、产品原型     |
+| 项目                                                       | 简介                                             | 技术方向                 |
+| ---------------------------------------------------------- | ------------------------------------------------ | ------------------------ |
+| [Folixa](https://github.com/fengjutian/Folixa)             | 基于 Qt 6 与 PDFium 的原生 AI PDF 编辑器         | C++、原生桌面应用        |
+| [DocuFlowAI](https://github.com/fengjutian/DocuFlowAI)     | 融合 LSP 与多运行时智能体执行的 AI 开发工作区    | Rust、TypeScript、AI     |
+| [SuperDBA](https://github.com/fengjutian/SuperDBA)         | 面向开发者与 AI 智能体的开源数据库工作空间       | TypeScript、Rust、数据库 |
+| [Veyra Studio](https://github.com/fengjutian/Veyra-Studio) | 本地优先、与宿主无关的 AI 界面设计环境           | TypeScript、Tauri        |
+| [planloop](https://github.com/fengjutian/planloop)         | 通过验收、记忆和预算约束智能体计划执行           | Python、AI Agent         |
+| [Strata](https://github.com/fengjutian/Strata)             | 整合工作项、周期、模块、页面与分析的项目管理平台 | TypeScript、Django       |
 
 更多项目可以在站点的[项目页面](https://fengjutian.github.io/projects/)和[仓库页面](https://fengjutian.github.io/repositories/)查看。
 
@@ -31,7 +31,7 @@ _pages/         独立页面：首页、博客、项目、动态和仓库
 _posts/         技术文章
 _projects/      精选项目介绍
 _news/          站点与项目动态
-_data/          社交信息、仓库数据、履历和其他结构化内容
+_data/          社交信息、GitHub 仓库快照、履历和其他结构化内容
 _bibliography/  论文与引用数据
 assets/         本站自有样式、图片、Notebook 和 RenderCV 配置
 docs/           al-folio 使用与维护文档
@@ -133,6 +133,8 @@ npm run test:visual
 - Jekyll 构建时需要排除的文件。
 
 推送到 `main` 后，GitHub Actions 会构建站点并部署到 GitHub Pages。部署流程定义在 [deploy.yml](.github/workflows/deploy.yml)。
+
+部署前会运行 `python3 bin/sync_github_repositories.py`，从 GitHub API 刷新全部公开仓库，项目数量、原创/Fork 分类及更新时间无需手工维护。
 
 > 添加或移除 al-folio 插件时，必须同时更新 `Gemfile` 和 `_config.yml`；只修改其中一个会导致插件不生效。
 

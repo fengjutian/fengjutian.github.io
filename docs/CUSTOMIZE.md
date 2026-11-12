@@ -402,19 +402,24 @@ Delete or comment out the [`.github/workflows/render-cv.yml`](../.github/workflo
 
 ## Modifying the user and repository information
 
-The repository page is driven entirely by [\_data/repositories.yml](../_data/repositories.yml): every project, its description, its language and its direction live there. The page renders the “重点项目” cards, the “更多探索” groups and the counters at the top from that single file, so adding or removing a project never leaves stale numbers behind.
+The project and repository pages use two data sources with different responsibilities:
+
+- [`_data/github_repositories.json`](../_data/github_repositories.json) is the generated snapshot of every public GitHub repository. Run `python3 bin/sync_github_repositories.py` to refresh it. The deployment workflow runs this command automatically before each build.
+- [`_data/repositories.yml`](../_data/repositories.yml) contains only the small, curated set shown in the “重点项目” section.
+
+Repository totals, original/Fork counts and the complete project grid come from the generated snapshot, so they stay consistent with GitHub after every deployment.
 
 ```yaml
 repos:
-  - name: catshell
-    title: catshell # optional, defaults to `name`
-    desc: 高效、轻量的文件查看工具，为顺畅的命令行工作流而生。
-    lang: Rust
+  - name: Folixa
+    title: Folixa # optional, defaults to `name`
+    desc: 基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。
+    lang: C
     category: ai # must match one of `categories[].id`
     featured: true # renders in the “重点项目” card grid
 ```
 
-- `categories` defines the “更多探索” groups and their order; `languages` maps a language to its GitHub language colour (the dot next to each project).
+- `categories` defines the featured-project groups and their order; `languages` maps a language to its GitHub language colour.
 - `github_users` and `repo_description_lines_max` are kept because the theme’s own repository cards (`repository/repo.liquid`) read them. The custom page does not use those cards.
 
 ### Configuring external service URLs

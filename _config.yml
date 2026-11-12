@@ -469,7 +469,7 @@ enable_google_verification: false # enables google site verification
 enable_bing_verification: false # enables bing site verification
 enable_cookie_consent: false # enables GDPR-compliant cookie consent dialog (https://github.com/orestbida/cookieconsent)
 enable_masonry: true # enables automatic project cards arrangement
-enable_math: false # enables math typesetting (uses MathJax) — 站内当前没有公式，关掉可省下每页 1.1MB 的 MathJax
+enable_math: true # enables math typesetting (used by technical posts with LaTeX formulas)
 enable_tooltips: false # enables automatic tooltip links generated for each section titles on pages and posts
 enable_darkmode: true # enables switching between light/dark modes
 enable_navbar_social: false # enables displaying social links in the navbar on the about page

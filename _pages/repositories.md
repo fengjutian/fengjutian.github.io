@@ -241,15 +241,14 @@ _styles: |
 {% assign repos = site.data.repositories.repos %}
 {% assign owner = site.data.repositories.github_users | first %}
 {% assign featured = repos | where: "featured", true %}
-{% assign langs = repos | map: "lang" | uniq %}
+{% assign github_data = site.data.github_repositories %}
 {% assign cats = site.data.repositories.categories %}
-{% assign public_repos = site.data.repositories.github_public_repos | default: repos.size %}
 
 <div class="rp">
 
   <div class="rp-stats">
     <div class="rp-stat">
-      <span class="rp-stat-num">{{ public_repos }}</span>
+      <span class="rp-stat-num">{{ github_data.total }}</span>
       <span class="rp-stat-label">公开仓库</span>
     </div>
     <div class="rp-stat">
@@ -257,12 +256,12 @@ _styles: |
       <span class="rp-stat-label">重点项目</span>
     </div>
     <div class="rp-stat">
-      <span class="rp-stat-num">{{ langs | size }}</span>
-      <span class="rp-stat-label">主要语言</span>
+      <span class="rp-stat-num">{{ github_data.original_count }}</span>
+      <span class="rp-stat-label">原创仓库</span>
     </div>
     <div class="rp-stat">
-      <span class="rp-stat-num">{{ cats | size }}</span>
-      <span class="rp-stat-label">探索方向</span>
+      <span class="rp-stat-num">{{ github_data.fork_count }}</span>
+      <span class="rp-stat-label">Fork 仓库</span>
     </div>
   </div>
 
@@ -288,39 +287,13 @@ _styles: |
     {% endfor %}
   </div>
 
-  <h2>更多探索</h2>
+  <h2>全部仓库</h2>
 
-  <p class="rp-hint">按方向浏览全部公开项目，点击分类展开。</p>
-
-{% for cat in cats %}
-    {% assign cat_repos = repos | where: "category", cat.id | where_exp: "r", "r.featured != true" %}
-    <details class="rp-group" {% if forloop.first %}open{% endif %}>
-      <summary class="rp-summary">
-        <span>{{ cat.name }}</span>
-        <span class="rp-count">{{ cat_repos | size }} 个项目</span>
-        <i class="fa-solid fa-chevron-down rp-chevron"></i>
-      </summary>
-      <div class="rp-items">
-        {% for r in cat_repos %}
-          {% assign color = site.data.repositories.languages[r.lang] | default: "#8b949e" %}
-          <a class="rp-item" href="https://github.com/{{ owner }}/{{ r.name }}">
-            <span class="rp-dot" style="background: {{ color }}"></span>
-            <span class="rp-item-body">
-              <span class="rp-item-title">
-                <span class="rp-item-name">{{ r.title | default: r.name }}</span>
-                <span class="rp-item-lang">{{ r.lang }}</span>
-              </span>
-              <span class="rp-item-desc">{{ r.desc }}</span>
-            </span>
-          </a>
-        {% endfor %}
-      </div>
-    </details>
-{% endfor %}
+  <p class="rp-hint">完整项目页展示 {{ github_data.total }} 个公开仓库，并标注语言、更新时间、原创或 Fork 状态。</p>
 
   <div class="text-center">
-    <a class="rp-cta" href="https://github.com/{{ owner }}?tab=repositories">
-      浏览全部公开仓库 <i class="fa-solid fa-arrow-up-right-from-square fa-sm"></i>
+    <a class="rp-cta" href="{{ '/projects/' | relative_url }}">
+      浏览全部 {{ github_data.total }} 个仓库 <i class="fa-solid fa-arrow-right fa-sm"></i>
     </a>
   </div>
 

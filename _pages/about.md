@@ -44,7 +44,8 @@ latest_posts:
 
 <p class="home-lead">你好，我是 <strong>Fengjutian</strong>。我关注 AI 智能体、开发者工具与个人知识管理，喜欢把想法做成可运行、可验证的开源项目。</p>
 
-<p>目前的方向覆盖 AI 编辑器、代码智能体、多智能体协作、知识星图与 Rust 命令行工具，站内收录 <strong>30 余个</strong>公开仓库。精选作品见<a href="/projects/">项目页面</a>，全部项目在 <a href="https://github.com/fengjutian">GitHub</a> 上。</p>
+{% assign github_data = site.data.github_repositories %}
+<p>目前的方向覆盖 AI 编辑器、代码智能体、原生桌面工具、数据工作空间与协作产品。GitHub 现有 <strong>{{ github_data.total }}</strong> 个公开仓库，其中 <strong>{{ github_data.original_count }}</strong> 个原创仓库。全部内容见<a href="/projects/">项目页面</a>。</p>
 
 ## 关注方向
 
@@ -53,31 +54,32 @@ latest_posts:
     <h3 class="dir-title">AI 原生开发工具与代码智能体</h3>
     <p class="dir-desc">让模型能力真正进入日常编码流程，而不只是停在演示里。</p>
     <p class="dir-links">
-      <a href="https://github.com/fengjutian/Blade-AI-Editor">Blade AI Editor</a>
-      <a href="https://github.com/fengjutian/weber-code-agent">weber-code-agent</a>
+      <a href="https://github.com/fengjutian/DocuFlowAI">DocuFlowAI</a>
+      <a href="https://github.com/fengjutian/planloop">planloop</a>
     </p>
   </div>
   <div class="dir-card">
-    <h3 class="dir-title">多智能体协作与知识组织</h3>
-    <p class="dir-desc">多个智能体共同组织、处理和连接知识，而不是各自为战。</p>
+    <h3 class="dir-title">原生桌面工具与数据工作空间</h3>
+    <p class="dir-desc">把 AI、文档与数据库能力放进可靠、可验证的本地工作流。</p>
     <p class="dir-links">
-      <a href="https://github.com/fengjutian/mix-knowledg">mix-knowledg</a>
-      <a href="https://github.com/fengjutian/NeuralNotes">NeuralNotes</a>
+      <a href="https://github.com/fengjutian/Folixa">Folixa</a>
+      <a href="https://github.com/fengjutian/SuperDBA">SuperDBA</a>
     </p>
   </div>
   <div class="dir-card">
-    <h3 class="dir-title">Rust、TypeScript 与 Python 应用开发</h3>
-    <p class="dir-desc">从命令行到桌面端，把想法做成能跑起来、能被验证的工具。</p>
+    <h3 class="dir-title">AI 设计与实时视觉创作</h3>
+    <p class="dir-desc">探索本地优先的 AI 设计环境、交互画布与实时视觉工具。</p>
     <p class="dir-links">
-      <a href="https://github.com/fengjutian/catshell">catshell</a>
-      <a href="https://github.com/fengjutian/IT-Master">IT-Master</a>
+      <a href="https://github.com/fengjutian/Veyra-Studio">Veyra Studio</a>
+      <a href="https://github.com/fengjutian/ParticleStudio">ParticleStudio</a>
     </p>
   </div>
   <div class="dir-card">
-    <h3 class="dir-title">面向真实场景的产品原型</h3>
-    <p class="dir-desc">把本地需求转化成可用的数字产品，而不是停在需求文档里。</p>
+    <h3 class="dir-title">协作平台与真实场景产品</h3>
+    <p class="dir-desc">把团队协作和经营需求转化为可以部署、持续演进的产品。</p>
     <p class="dir-links">
-      <a href="https://github.com/fengjutian/jiufenglanting-business">九峰兰亭商业</a>
+      <a href="https://github.com/fengjutian/Strata">Strata</a>
+      <a href="https://github.com/fengjutian/ShopOS">ShopOS</a>
     </p>
   </div>
 </div>
@@ -103,7 +105,7 @@ latest_posts:
   {% endfor %}
 </div>
 
-<p class="proj-more">更多项目见 <a href="/repositories/">全部开源仓库</a>。</p>
+<p class="proj-more">更多项目见 <a href="/projects/">全部公开仓库</a>。</p>
 
 ## 最近在写
 
