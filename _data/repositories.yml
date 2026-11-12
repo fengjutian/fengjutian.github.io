@@ -9,6 +9,11 @@ github_users:
 
 repo_description_lines_max: 2
 
+# GitHub API 的 public_repos 字段；最近核对时间见 github_stats_updated_at。
+# repos 只是站内精选目录，不能用它的长度代替公开仓库总数。
+github_public_repos: 292
+github_stats_updated_at: 2026-11-12
+
 # 探索方向，顺序即页面展示顺序
 categories:
   - id: ai
@@ -22,6 +27,7 @@ categories:
 
 # GitHub linguist 语言色
 languages:
+  C: "#555555"
   Rust: "#dea584"
   TypeScript: "#3178c6"
   Python: "#3572a5"
@@ -33,42 +39,74 @@ languages:
 
 repos:
   # ── 重点项目（featured: true 会出现在页面上方的卡片区）────────────────
+  - name: Folixa
+    title: Folixa
+    desc: 基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。
+    lang: C
+    category: ai
+    featured: true
+  - name: DocuFlowAI
+    title: DocuFlowAI
+    desc: 融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: SuperDBA
+    title: SuperDBA
+    desc: 面向开发者与 AI 智能体的开源数据库工作空间。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: Veyra-Studio
+    title: Veyra Studio
+    desc: 本地优先、与宿主无关的 AI 界面设计环境。
+    lang: TypeScript
+    category: ai
+    featured: true
+  - name: planloop
+    title: planloop
+    desc: 将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。
+    lang: Python
+    category: ai
+    featured: true
+  - name: Strata
+    title: Strata
+    desc: 将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。
+    lang: TypeScript
+    category: apps
+    featured: true
+
+  # ── 过往重点项目 ────────────────────────────────────────────────────
   - name: catshell
     title: catshell
     desc: 高效、轻量的文件查看工具，为顺畅的命令行工作流而生。
     lang: Rust
     category: ai
-    featured: true
   - name: Blade-AI-Editor
     title: Blade AI Editor
     desc: 面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。
     lang: TypeScript
     category: ai
-    featured: true
   - name: weber-code-agent
     title: weber-code-agent
     desc: 理解代码、执行任务并协助完成软件开发工作的代码智能体。
     lang: TypeScript
     category: ai
-    featured: true
   - name: mix-knowledg
     title: mix-knowledg
     desc: 探索多个智能体共同组织、处理和连接知识的协作方式。
     lang: TypeScript
     category: ai
-    featured: true
   - name: NeuralNotes
     title: NeuralNotes
     desc: 以知识星图连接笔记，在关系网络中发现新的信息线索。
     lang: Python
     category: knowledge
-    featured: true
   - name: jiufenglanting-business
     title: 九峰兰亭商业
     desc: 聚焦江宁东山周边商业信息，将本地需求转化为数字产品。
     lang: TypeScript
     category: apps
-    featured: true
 
   # ── AI 与开发者工具 ──────────────────────────────────────────────────
   - name: IT-Master

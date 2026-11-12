@@ -243,13 +243,14 @@ _styles: |
 {% assign featured = repos | where: "featured", true %}
 {% assign langs = repos | map: "lang" | uniq %}
 {% assign cats = site.data.repositories.categories %}
+{% assign public_repos = site.data.repositories.github_public_repos | default: repos.size %}
 
 <div class="rp">
 
   <div class="rp-stats">
     <div class="rp-stat">
-      <span class="rp-stat-num">{{ repos | size }}</span>
-      <span class="rp-stat-label">公开项目</span>
+      <span class="rp-stat-num">{{ public_repos }}</span>
+      <span class="rp-stat-label">公开仓库</span>
     </div>
     <div class="rp-stat">
       <span class="rp-stat-num">{{ featured | size }}</span>
