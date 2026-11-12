@@ -227,6 +227,7 @@ exclude:
   - docker-compose.yml
   - docker-compose-slim.yml
   - docs/
+  - assets/video/
   - Gemfile
   - Gemfile.lock
   - LICENSE
