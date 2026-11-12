@@ -4,7 +4,7 @@ title: catshell
 description: 高效、轻量的文件查看工具，为顺畅的命令行工作流而生。
 importance: 1
 category: AI 与开发者工具
-featured: true
+featured: false
 github: https://github.com/fengjutian/catshell
 ---
 

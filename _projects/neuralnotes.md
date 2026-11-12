@@ -4,7 +4,7 @@ title: NeuralNotes
 description: 以知识星图连接笔记，在关系网络中发现新的信息线索。
 importance: 5
 category: 知识与内容工具
-featured: true
+featured: false
 github: https://github.com/fengjutian/NeuralNotes
 ---
 

@@ -4,7 +4,7 @@ title: Blade AI Editor
 description: 面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。
 importance: 2
 category: AI 与开发者工具
-featured: true
+featured: false
 github: https://github.com/fengjutian/Blade-AI-Editor
 ---
 

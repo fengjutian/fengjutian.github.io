@@ -4,7 +4,7 @@ title: weber-code-agent
 description: 理解代码、执行任务并协助完成软件开发工作的代码智能体。
 importance: 3
 category: AI 与开发者工具
-featured: true
+featured: false
 github: https://github.com/fengjutian/weber-code-agent
 ---
 

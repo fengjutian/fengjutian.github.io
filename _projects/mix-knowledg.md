@@ -4,7 +4,7 @@ title: mix-knowledg
 description: 探索多个智能体共同组织、处理和连接知识的协作方式。
 importance: 4
 category: AI 与开发者工具
-featured: true
+featured: false
 github: https://github.com/fengjutian/mix-knowledg
 ---
 

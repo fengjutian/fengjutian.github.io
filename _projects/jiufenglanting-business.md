@@ -4,7 +4,7 @@ title: 九峰兰亭商业
 description: 聚焦江宁东山周边商业信息，将本地需求转化为数字产品。
 importance: 6
 category: 应用与场景探索
-featured: true
+featured: false
 github: https://github.com/fengjutian/jiufenglanting-business
 ---
 
