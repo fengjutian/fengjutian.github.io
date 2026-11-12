@@ -1,0 +1,262 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。"> <meta name="keywords" content="AI, AI agent, developer tools, knowledge management, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/idol-image-to-3d-gaussian/"> <meta property="og:description" content="Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模"> <meta name="twitter:description" content="Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/idol-image-to-3d-gaussian/",
+        "@type": "BlogPosting",
+        "description": "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        "headline": "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 930px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/idol-image-to-3d-gaussian/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">开源仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模</h1> <p class="post-meta"> Created on November 12, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>如果只给 AI 一张普通照片，它能不能自动理解物体的三维结构，并生成一个可以自由旋转、从不同角度观察的 3D 模型？</p> <p>过去，这通常需要专业建模软件、多角度拍摄，甚至需要摄影测量和复杂的三维重建流程。</p> <p>现在，Sperid Labs 开源了一个名为 <strong>Idol</strong> 的 AI 模型，它尝试让这个过程变得简单：</p> <p><strong>一张图片输入，最多生成 1,048,576 个 3D Gaussian。</strong></p> <p>它不只是将图片转换成一个简单的三维轮廓，而是通过 AI 推断物体的空间结构，生成可以通过 Gaussian Splatting 技术渲染的三维资产。</p> <p>项目地址：</p> <ul> <li>Hugging Face：https://huggingface.co/speridlabs/idol</li> <li>GitHub：https://github.com/speridlabs/idol-sdk</li> <li>官方研究页面：https://speridlabs.com/research/idol</li> <li>在线 Demo：https://huggingface.co/spaces/speridlabs/idol</li> </ul> <h2 id="一从一张图片到一个三维世界">一、从一张图片到一个三维世界</h2> <p>先看一个实际案例。</p> <p>下面是一张 AI 生成的黄色机器人鸭子图片。</p> <p><img src="https://speridlabs.com/assets/research/idol/inputs/iris-robot-duck_s1_s42.webp" alt="Idol 输入图片：黄色机器人鸭子"></p> <p>这是一张普通的二维图片，只有一个观察角度。</p> <p>Idol 的任务是根据这张图片，推断物体的三维结构，并生成一个可以从不同方向观察的 3D Gaussian 模型。</p> <p>这意味着，即使原始图片没有展示鸭子的背面，模型也会尝试推断背部、尾部等不可见区域。</p> <p>另一个案例是复古薄荷绿色踏板摩托车：</p> <p><img src="https://speridlabs.com/assets/research/idol/inputs/iris-scooter_s1_s42.webp" alt="Idol 输入图片：复古薄荷绿色踏板摩托车"></p> <p>这些案例展示了 Idol 的基本能力：输入可以来自现实照片，也可以来自 AI 生成图片或三维渲染图。</p> <p>需要注意，未拍摄到的区域是模型根据学习到的先验知识进行推断，并不代表真实扫描还原。</p> <h2 id="二核心技术3d-gaussian-splatting">二、核心技术：3D Gaussian Splatting</h2> <p>要理解 Idol，首先需要了解它采用的三维表示技术。</p> <p>传统三维建模通常使用 Mesh（网格）描述物体。</p> <p>一个 Mesh 由顶点、边和三角形面构成，通过几何结构建立物体表面，再配合纹理和材质完成渲染。</p> <p>而 3D Gaussian Splatting 采用了另一种思路。</p> <p>它使用大量分布在三维空间中的高斯基元来表达物体。</p> <p><img src="https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/teaser.png" alt="3D Gaussian Splatting 三维高斯点云可视化"></p> <p>每个 Gaussian 都包含一组属性：</p> <table> <thead> <tr> <th>属性</th> <th>作用</th> </tr> </thead> <tbody> <tr> <td>Position</td> <td>三维空间位置</td> </tr> <tr> <td>Scale</td> <td>空间尺寸</td> </tr> <tr> <td>Rotation</td> <td>旋转方向</td> </tr> <tr> <td>Opacity</td> <td>透明度</td> </tr> <tr> <td>Color</td> <td>颜色</td> </tr> <tr> <td>Spherical Harmonics</td> <td>视角相关颜色表达</td> </tr> </tbody> </table> <p>可以把它理解为：使用大量具有空间位置、尺寸、方向和颜色的微小三维元素，共同组成一个物体。</p> <p>这些高斯基元经过投影和混合渲染后，就能够形成具有立体感的画面。</p> <p>与传统 Mesh 相比，Gaussian Splatting 特别适合表达复杂的视觉细节，并支持实时视角渲染。</p> <h2 id="三idol-的技术架构">三、Idol 的技术架构</h2> <p>Idol 并不是简单地使用一个图像生成模型直接输出三维点云，而是由多个模型组件共同完成。</p> <p>整体处理过程可以分为四个阶段。</p> <h3 id="1-图片预处理">1. 图片预处理</h3> <p>首先对输入图片进行预处理。</p> <p>Idol 使用 BiRefNet 进行背景移除，将物体主体从原始背景中分离出来。</p> <p>随后进行图片裁剪和构图调整。</p> <p>项目提供两种输入模式：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">real</code>：针对现实世界拍摄的照片。</li> <li> <code class="language-plaintext highlighter-rouge">synthetic</code>：针对 AI 生成图片和三维渲染图片。</li> </ul> <p>两种模式主要区别在于裁剪时为物体预留的空间。</p> <h3 id="2-图像特征提取">2. 图像特征提取</h3> <p>Idol 使用 DINOv3 ViT-H+ 提取图像视觉特征。</p> <p>同时使用 FLUX.2 VAE 对输入图片进行特征编码。</p> <p>这些信息为后续三维生成提供图像条件。</p> <h3 id="3-三维结构生成">3. 三维结构生成</h3> <p>这是整个系统最核心的部分。</p> <p>Idol 使用 DiT（Diffusion Transformer）作为去噪网络，通过生成过程推断物体的三维表示。</p> <p>随后通过两个解码器完成三维结构输出：</p> <ul> <li>Octree Decoder：解码空间组织结构。</li> <li>Gaussian Decoder：将特征转换为 Gaussian 参数。</li> </ul> <p>最终生成包含空间位置、尺度、旋转、颜色和透明度等属性的三维高斯基元。</p> <h3 id="4-导出三维资产">4. 导出三维资产</h3> <p>生成完成后，Idol 将结果保存为标准 3DGS PLY 文件。</p> <p>主要输出包括：</p> <table> <thead> <tr> <th>文件</th> <th>用途</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">.ply</code></td> <td>三维高斯模型</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">_input.png</code></td> <td>预处理后的输入图片</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">_camera.json</code></td> <td>预测的输入相机参数</td> </tr> </tbody> </table> <p>PLY 文件可以交给支持 Gaussian Splatting 的查看器进行渲染。</p> <h2 id="四模型参数与生成能力">四、模型参数与生成能力</h2> <p>Idol 支持不同规模的 Gaussian 输出。</p> <p><img src="https://speridlabs.com/assets/research/idol/loops/budget-fur-lamp-tiffany.webp" alt="Idol 不同 Gaussian 数量的细节等级展示"></p> <p>根据官方公开资料：</p> <table> <thead> <tr> <th>参数</th> <th style="text-align: right">数值</th> </tr> </thead> <tbody> <tr> <td>核心 DiT 参数量</td> <td style="text-align: right">370.6M</td> </tr> <tr> <td>Octree Decoder</td> <td style="text-align: right">50.8M</td> </tr> <tr> <td>Gaussian Decoder</td> <td style="text-align: right">237.3M</td> </tr> <tr> <td>完整推理组件参数量</td> <td style="text-align: right">约 1.80B</td> </tr> <tr> <td>默认 Gaussian 数量</td> <td style="text-align: right">262,144</td> </tr> <tr> <td>最大 Gaussian 数量</td> <td style="text-align: right">1,048,576</td> </tr> <tr> <td>最小 Gaussian 数量</td> <td style="text-align: right">32,768</td> </tr> <tr> <td>峰值显存</td> <td style="text-align: right">约 7.2 GB</td> </tr> </tbody> </table> <p>这里需要区分核心生成模型和完整推理流水线：1.80B 包含图像编码器、背景移除模型和生成组件，并不代表 DiT 本身有 1.80B 参数。</p> <p>官方公布的不同 GPU 推理性能：</p> <table> <thead> <tr> <th>GPU</th> <th style="text-align: right">显存</th> <th style="text-align: right">推理时间</th> </tr> </thead> <tbody> <tr> <td>B300</td> <td style="text-align: right">269 GB</td> <td style="text-align: right">3.4 秒</td> </tr> <tr> <td>B200</td> <td style="text-align: right">179 GB</td> <td style="text-align: right">3.6 秒</td> </tr> <tr> <td>H200</td> <td style="text-align: right">140 GB</td> <td style="text-align: right">6.6 秒</td> </tr> <tr> <td>H100</td> <td style="text-align: right">80 GB</td> <td style="text-align: right">6.7 秒</td> </tr> <tr> <td>RTX 5090</td> <td style="text-align: right">32 GB</td> <td style="text-align: right">14.1 秒</td> </tr> <tr> <td>RTX 4090</td> <td style="text-align: right">24 GB</td> <td style="text-align: right">19.1 秒</td> </tr> <tr> <td>RTX 3080</td> <td style="text-align: right">10 GB</td> <td style="text-align: right">46.2 秒</td> </tr> </tbody> </table> <p>测试条件为 50 个采样步骤、262,144 个 Gaussian，统计 8 张图片的中位推理时间。</p> <p>这说明 Idol 不仅面向大型 GPU 集群，也具备在消费级 NVIDIA 显卡上运行的能力。</p> <h2 id="五如何运行-idol">五、如何运行 Idol？</h2> <p>项目提供 Python SDK，开发者可以直接将其集成到自己的应用中。</p> <p>首先克隆项目：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/speridlabs/idol-sdk.git
+
+<span class="nb">cd </span>idol-sdk
+
+pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">.</span>
+</code></pre></div></div> <p>运行环境：</p> <ul> <li>Python 3.10+</li> <li>PyTorch 2.5+</li> <li>NVIDIA GPU</li> <li>CUDA 环境</li> </ul> <p>首次运行前，需要在 Hugging Face 接受 DINOv3 和 FLUX.2-dev（仅 VAE）的模型使用条款。</p> <p>然后登录：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>hf auth login
+</code></pre></div></div> <p>处理现实照片：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> idol.sample <span class="se">\</span>
+  <span class="nt">--image</span> photo.jpg <span class="se">\</span>
+  <span class="nt">--mode</span> real
+</code></pre></div></div> <p>处理 AI 生成图片：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> idol.sample <span class="se">\</span>
+  <span class="nt">--image</span> object.png <span class="se">\</span>
+  <span class="nt">--mode</span> synthetic
+</code></pre></div></div> <p>Python API：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">idol</span> <span class="kn">import</span> <span class="n">IdolPipeline</span>
+
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">IdolPipeline</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">speridlabs/idol</span><span class="sh">"</span>
+<span class="p">)</span>
+
+<span class="n">output</span> <span class="o">=</span> <span class="nf">pipeline</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">photo.jpg</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="sh">"</span><span class="s">real</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+    <span class="n">num_gaussians</span><span class="o">=</span><span class="mi">1048576</span>
+<span class="p">)</span>
+
+<span class="n">output</span><span class="p">.</span><span class="n">gaussian</span><span class="p">.</span><span class="nf">save_ply</span><span class="p">(</span><span class="sh">"</span><span class="s">photo.ply</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div> <p>对于希望进一步开发的团队，可以将 Python SDK 封装为独立的 HTTP 服务，供 Web、桌面端和移动端调用。</p> <h2 id="六与其他-image-to-3d-模型比较">六、与其他 Image-to-3D 模型比较</h2> <p>目前 Image-to-3D 已经成为生成式 AI 的重要方向。</p> <p>几个值得关注的项目：</p> <table> <thead> <tr> <th>项目</th> <th>主要特点</th> </tr> </thead> <tbody> <tr> <td>Idol</td> <td>单张图片生成 3D Gaussian</td> </tr> <tr> <td>TripoSplat</td> <td>单图生成高斯三维表示</td> </tr> <tr> <td>TRELLIS</td> <td>支持多种三维结构表示</td> </tr> <tr> <td>LGM</td> <td>大规模高斯模型生成</td> </tr> </tbody> </table> <p>官方在相同 H100 测试环境下公布了对比结果：</p> <table> <thead> <tr> <th>模型</th> <th style="text-align: right">PSNR</th> <th style="text-align: right">SSIM</th> <th style="text-align: right">LPIPS</th> <th style="text-align: right">新视角 CLIP</th> </tr> </thead> <tbody> <tr> <td>Idol</td> <td style="text-align: right">12.25</td> <td style="text-align: right">0.726</td> <td style="text-align: right">0.213</td> <td style="text-align: right">0.885</td> </tr> <tr> <td>TripoSplat</td> <td style="text-align: right">11.76</td> <td style="text-align: right">0.712</td> <td style="text-align: right">0.225</td> <td style="text-align: right">0.868</td> </tr> <tr> <td>TRELLIS</td> <td style="text-align: right">11.89</td> <td style="text-align: right">0.716</td> <td style="text-align: right">0.235</td> <td style="text-align: right">0.868</td> </tr> <tr> <td>LGM</td> <td style="text-align: right">12.46</td> <td style="text-align: right">0.722</td> <td style="text-align: right">0.237</td> <td style="text-align: right">0.784</td> </tr> </tbody> </table> <p>其中 LPIPS 越低越好，其他指标通常越高越好。</p> <p>Idol 在这组测试中的新视角 CLIP、LPIPS 等指标表现较好，但不同模型的输出规模和测试设置并不完全一致，不能简单认为它在所有场景都优于其他模型。</p> <h2 id="七idol-可以用来做什么">七、Idol 可以用来做什么？</h2> <p>它的价值不仅在于生成一个三维模型，还在于降低了三维内容生产的门槛。</p> <p><strong>1. 电商三维展示</strong></p> <p>将商品照片转换为三维资产，实现旋转、缩放和多角度展示。</p> <p><strong>2. 游戏开发</strong></p> <p>根据概念图生成游戏道具、物品和视觉素材，加快前期资产制作。</p> <p><strong>3. 数字孪生</strong></p> <p>将现实物体转换为三维视觉资产，用于产品展示和空间可视化。</p> <p><strong>4. AI 三维设计</strong></p> <p>用户提供图片和自然语言指令，AI 生成三维资产，再通过交互工具调整模型。</p> <p><strong>5. Web 3D 创作</strong></p> <p>将图片转三维能力集成到浏览器，让普通用户也可以创建三维交互内容。</p> <h2 id="八进一步探索ai-生成与粒子动画结合">八、进一步探索：AI 生成与粒子动画结合</h2> <p>如果把 Idol 与 Three.js、WebGPU 等实时渲染技术结合，还可以探索更有意思的应用。</p> <p>例如，用户上传一张建筑图片，AI 自动生成三维高斯模型，然后在浏览器中实现：</p> <ul> <li>三维模型旋转与观察。</li> <li>粒子扫描。</li> <li>模型解体。</li> <li>粒子聚合。</li> <li>形态重组。</li> <li>AI 自然语言控制。</li> </ul> <p>整体流程：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        图片输入
+           │
+           ▼
+      Idol AI 模型
+           │
+           ▼
+      3D Gaussian
+           │
+           ▼
+       PLY 数据解析
+           │
+           ▼
+      粒子渲染引擎
+           │
+      ┌────┼────┐
+      ▼    ▼    ▼
+     扫描  解体  重组
+           │
+           ▼
+      交互式 3D 场景
+</code></pre></div></div> <p>这里有一个重要的技术区别：</p> <p>Gaussian Splatting 并不是传统粒子系统，也不是普通 Mesh。</p> <p>如果要实现粒子动画，需要读取 PLY 中的高斯位置、颜色、透明度、尺度和旋转属性，再映射到自己的粒子系统中。</p> <p>也可以直接对 Gaussian 属性进行动态变换，保留其原有的渲染方式。</p> <p>这为 AI 三维生成与实时视觉创作之间的结合提供了新的可能性。</p> <h2 id="九总结">九、总结</h2> <p>Idol 展示了一种值得关注的 AI 三维生成方向：</p> <p><strong>从单张图片出发，通过生成模型推断三维结构，再利用 Gaussian Splatting 实现实时三维展示。</strong></p> <p>它并不能完全替代传统三维建模，也不能保证准确还原图片中不可见的真实结构。</p> <p>但它降低了创建三维视觉资产的门槛，让图片成为三维内容生产的一个入口。</p> <p>对于开发者来说，值得关注的不只是如何运行 Idol，更是如何将它集成到自己的产品中。</p> <p>当 AI 负责生成三维资产，实时渲染引擎负责展示，交互系统负责编辑，三维创作工具就可能从专业建模软件扩展为人人都能使用的 AI 创作平台。</p> <p><strong>一张图片，可能就是一个三维世界的开始。</strong></p> <hr> <p><strong>项目与参考资料</strong></p> <ul> <li>Idol 模型：https://huggingface.co/speridlabs/idol</li> <li>官方研究与案例：https://speridlabs.com/research/idol</li> <li>SDK 源码：https://github.com/speridlabs/idol-sdk</li> <li>3D Gaussian Splatting 原始研究：https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/</li> </ul> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/css-minify-broke-tailwind/">一次 CSS 压缩把整站布局打散</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/thin-starter-architecture/">把个人站从「魔改模板」改成「薄启动器」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hello-world/">从这里开始</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 12, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "我正在构建的 AI、开发者工具与知识管理项目。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-开源仓库",
+          title: "开源仓库",
+          description: "从 AI 智能体到工程工具，持续构建有趣且实用的软件。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
