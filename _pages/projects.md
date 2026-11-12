@@ -2,82 +2,155 @@
 layout: page
 title: 项目
 permalink: /projects/
-description: 我正在构建的 AI、开发者工具与知识管理项目。
+description: 浏览我在 GitHub 上的全部公开仓库。
 nav: true
 nav_order: 3
-# 与 _data/repositories.yml 的分类口径保持一致；只列真正有项目条目的分类，
-# 否则会渲染出空的分类标题。
-display_categories: [AI 与开发者工具, 知识与内容工具, 应用与场景探索]
-horizontal: false
 _styles: |
-  /* 项目卡片底部图标对齐：主题的 .card-body 是 block，标题长短不同时
-     GitHub 图标会跟着文字上下漂。改成纵向 flex 后文字块撑满、图标统一贴底。
-     首页（about 版式不支持 _styles）里有一份同样的规则。 */
-  .projects .card > .card-body {
+  .all-projects-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .all-projects-stat {
+    padding: 1rem;
+    text-align: center;
+    background: var(--global-card-bg-color);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.5rem;
+  }
+  .all-projects-stat strong,
+  .all-projects-stat span {
+    display: block;
+  }
+  .all-projects-stat strong {
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+  .all-projects-stat span {
+    margin-top: 0.2rem;
+    color: var(--global-text-color-light);
+    font-size: 0.78rem;
+  }
+  .all-projects-meta {
+    margin-bottom: 1rem;
+    color: var(--global-text-color-light);
+    font-size: 0.82rem;
+  }
+  .all-projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+  .all-project-card {
     display: flex;
     flex-direction: column;
+    min-height: 190px;
+    padding: 1rem 1.1rem;
+    color: var(--global-text-color);
+    text-decoration: none;
+    background: var(--global-card-bg-color);
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.5rem;
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
   }
-  .projects .card > .card-body > a {
-    flex: 1 1 auto;
+  .all-project-card:hover {
+    color: var(--global-text-color);
+    text-decoration: none;
+    transform: translateY(-2px);
+    border-color: var(--global-theme-color);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  }
+  .all-project-head {
     display: flex;
-    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
-  .projects .card > .card-body > a > .card-text {
-    flex: 1 1 auto;
+  .all-project-name {
+    min-width: 0;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .all-project-arrow {
+    margin-left: auto;
+    padding-top: 0.25rem;
+    font-size: 0.7rem;
+    opacity: 0.4;
+  }
+  .all-project-desc {
+    flex: 1;
+    margin: 0.65rem 0;
+    color: var(--global-text-color-light);
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+  .all-project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.7rem;
+  }
+  .all-project-tag {
+    padding: 0.24rem 0.5rem;
+    background: color-mix(in srgb, var(--global-theme-color) 14%, transparent);
+    border-radius: 999px;
+  }
+  .all-project-date {
+    margin-left: auto;
+    color: var(--global-text-color-light);
+  }
+  @media (max-width: 575.98px) {
+    .all-projects-summary {
+      grid-template-columns: 1fr;
+    }
+    .all-projects-grid {
+      grid-template-columns: 1fr;
+    }
   }
 ---
 
-<!-- pages/projects.md -->
-<div class="projects">
-{% if site.enable_project_categories and page.display_categories %}
-  <!-- Display categorized projects -->
-  {% for category in page.display_categories %}
-  <a id="{{ category }}" href=".#{{ category }}">
-    <h2 class="category">{{ category }}</h2>
-  </a>
-  {% assign categorized_projects = site.projects | where: "category", category %}
-  {% assign sorted_projects = categorized_projects | sort: "importance" %}
-  <!-- Generate cards for each project -->
-  {% if page.horizontal %}
-  <div class="container">
-    <div class="row row-cols-1 row-cols-md-2">
-    {% for project in sorted_projects %}
-      {% include projects_horizontal.liquid %}
-    {% endfor %}
-    </div>
+{% assign github_data = site.data.github_repositories %}
+{% assign repositories = github_data.repositories %}
+
+<div class="all-projects-summary">
+  <div class="all-projects-stat">
+    <strong>{{ github_data.total }}</strong>
+    <span>公开仓库</span>
   </div>
-  {% else %}
-  <div class="row row-cols-1 row-cols-md-3">
-    {% for project in sorted_projects %}
-      {% include projects.liquid %}
-    {% endfor %}
+  <div class="all-projects-stat">
+    <strong>{{ github_data.original_count }}</strong>
+    <span>原创仓库</span>
   </div>
-  {% endif %}
+  <div class="all-projects-stat">
+    <strong>{{ github_data.fork_count }}</strong>
+    <span>Fork 仓库</span>
+  </div>
+</div>
+
+<p class="all-projects-meta">
+  以下仓库按最近推送时间排列，共 {{ repositories | size }} 个。数据同步于 {{ github_data.generated_at | date: "%Y-%m-%d %H:%M UTC" }}。
+</p>
+
+<div class="all-projects-grid">
+  {% for repository in repositories %}
+    <a class="all-project-card" href="{{ repository.url }}">
+      <span class="all-project-head">
+        <span class="all-project-name">{{ repository.name }}</span>
+        <i class="fa-solid fa-arrow-up-right-from-square all-project-arrow"></i>
+      </span>
+      <span class="all-project-desc">{{ repository.description }}</span>
+      <span class="all-project-tags">
+        <span class="all-project-tag">{{ repository.language }}</span>
+        {% if repository.fork %}<span class="all-project-tag">Fork</span>{% endif %}
+        {% if repository.archived %}<span class="all-project-tag">已归档</span>{% endif %}
+        <span class="all-project-date">更新于 {{ repository.pushed_at | date: "%Y-%m-%d" }}</span>
+      </span>
+    </a>
   {% endfor %}
-
-{% else %}
-
-<!-- Display projects without categories -->
-
-{% assign sorted_projects = site.projects | sort: "importance" %}
-
-  <!-- Generate cards for each project -->
-
-{% if page.horizontal %}
-
-  <div class="container">
-    <div class="row row-cols-1 row-cols-md-2">
-    {% for project in sorted_projects %}
-      {% include projects_horizontal.liquid %}
-    {% endfor %}
-    </div>
-  </div>
-  {% else %}
-  <div class="row row-cols-1 row-cols-md-3">
-    {% for project in sorted_projects %}
-      {% include projects.liquid %}
-    {% endfor %}
-  </div>
-  {% endif %}
-{% endif %}
 </div>
