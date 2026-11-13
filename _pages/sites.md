@@ -125,6 +125,7 @@ _styles: |
     transition: opacity 0.18s ease, transform 0.18s ease;
   }
   .ws-card[hidden] { display: none; }
+  .ws-card--text-only { padding-top: 1.15rem; }
   .ws-card:hover {
     color: var(--global-text-color);
     text-decoration: none;
@@ -300,7 +301,7 @@ _styles: |
     {% for item in sites %}
       {% assign host = item.url | remove_first: "https://" | remove_first: "http://" | remove_first: "www." | split: "/" | first %}
       <a
-        class="ws-card"
+        class="ws-card{% unless item.preview %} ws-card--text-only{% endunless %}"
         href="{{ item.url }}"
         target="_blank"
         rel="noopener noreferrer"

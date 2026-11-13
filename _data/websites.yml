@@ -14,7 +14,6 @@
 
 - name: Finviz
   url: https://finviz.com/
-  preview: /assets/img/sites/finviz.jpg
   description: 热力图、筛选器、技术形态和板块强弱一站查看，适合开盘快速扫盘。
   tags: [投资, 美股, 工具]
   icon: "F"
@@ -28,14 +27,12 @@
 
 - name: Seeking Alpha
   url: https://seekingalpha.com/
-  preview: /assets/img/sites/seeking-alpha.jpg
   description: 提供个股深度分析、财报点评、多空观点、股息和量化评分。
   tags: [投资, 美股, 研究]
   icon: "S"
 
 - name: ETF Database
   url: https://etfdb.com/
-  preview: /assets/img/sites/etf-database.jpg
   description: 查看 ETF 分类、持仓、费用率、规模和分红，方便比较主题与行业 ETF。
   tags: [投资, ETF, 工具]
   icon: "E"
@@ -56,7 +53,6 @@
 
 - name: MacroMicro
   url: https://en.macromicro.me/
-  preview: /assets/img/sites/macromicro.jpg
   description: 聚合利率、通胀、就业、流动性和经济周期等宏观数据。
   tags: [宏观, 数据, 投资]
   icon: "M"
@@ -70,14 +66,12 @@
 
 - name: Reddit
   url: https://www.reddit.com/
-  preview: /assets/img/sites/reddit.jpg
   description: 观察散户热门话题和早期线索，可关注 stocks、investing、wallstreetbets 与 ValueInvesting。
   tags: [社区, 投资, 热点]
   icon: "R"
 
 - name: AnalysisSite
   url: https://analysissite.vercel.app/
-  preview: /assets/img/sites/analysis-site.jpg
   description: 偏白毛股神与 Serenity 的投研看板，用于追踪推文、股票线索和 AI 分析结果。
   tags: [投资, AI, 看板]
   icon: "A"
@@ -98,28 +92,24 @@
 
 - name: Ars Technica
   url: https://arstechnica.com/
-  preview: /assets/img/sites/ars-technica.jpg
   description: 科技、AI、科学与健康领域的深度报道和长文。
   tags: [科技, 新闻, AI]
   icon: "A"
 
 - name: The Atlantic
   url: https://www.theatlantic.com/
-  preview: /assets/img/sites/the-atlantic.jpg
   description: 聚焦美国社会、文化与公共议题的深度调查和评论。
   tags: [新闻, 社会, 文化]
   icon: "A"
 
 - name: The Economist
   url: https://www.economist.com/
-  preview: /assets/img/sites/the-economist.jpg
   description: 全球商业、财经、政治和国际事务报道。
   tags: [财经, 新闻, 国际]
   icon: "E"
 
 - name: Phys.org
   url: https://phys.org/
-  preview: /assets/img/sites/phys-org.jpg
   description: 追踪物理、生命科学、技术等领域最新发表的学术研究。
   tags: [科学, 研究, 新闻]
   icon: "P"
@@ -140,14 +130,12 @@
 
 - name: UPI
   url: https://www.upi.com/
-  preview: /assets/img/sites/upi.jpg
   description: 覆盖国际、美国、科学和商业议题的通讯社新闻。
   tags: [新闻, 国际, 通讯社]
   icon: "U"
 
 - name: Drive
   url: https://www.drive.com.au/
-  preview: /assets/img/sites/drive.jpg
   description: 汽车产业、新车评测和市场动态新闻。
   tags: [汽车, 新闻]
   icon: "D"
