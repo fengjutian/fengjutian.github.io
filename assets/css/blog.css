@@ -215,7 +215,7 @@
 /* 主题的 pagination.liquid 输出 .af-pagination / .af-page-item / .af-page-link，
    但 Tailwind 构建里没有这三组样式（Bootstrap 兼容层关闭），默认会渲染成一列圆点。
    这里按博客列表的样式补齐：横向胶囊按钮、当前页用主题色。 */
-.post nav[aria-label='Blog page navigation'] {
+.post nav[aria-label="Blog page navigation"] {
   margin: 2.4rem 0 0.6rem;
 }
 .post .af-pagination {
