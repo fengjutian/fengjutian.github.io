@@ -26,3 +26,6 @@ vendor
 # Python bytecode from bin/ helper scripts
 __pycache__/
 *.pyc
+
+# Theme gem unpacked for inspection
+.gem/
