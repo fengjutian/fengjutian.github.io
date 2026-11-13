@@ -6,6 +6,10 @@ thumbnail: assets/img/blog/deepseek-v4-weight-editing.jpg
 description: 从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。
 tags: [AI, 开源]
 categories: [技术随笔, 工程实践]
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/deepseek-v4-weight-editing.jpg
 ---
 
 ![DeepSeek V4 模型封面图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-01.jpg' | relative_url }})
@@ -32,7 +36,7 @@ MoonMath.ai 发布的 DeepSeek-V4.1-Flash-1017-Uncensored，提供了一个值�
 
 根据 MoonMath.ai 的模型说明，它采用了一种叫作 Closed-form Weight Edit（闭式权重编辑）的技术，直接修改模型权重，并将修改结果合并到原生 FP8 Checkpoint 中。
 
-![模型权重原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-02.jpg' | relative_url }})
+![模型权重原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-02.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[楠楠自瑜：什么是模型权重](https://cnutshell.net/tutorial/what-is-model-weights/)_
 
@@ -59,7 +63,7 @@ _图片来源：[楠楠自瑜：什么是模型权重](https://cnutshell.net/tut
 
 MoonMath.ai 采用的是第三种方法。
 
-![权重编辑原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-03.jpg' | relative_url }})
+![权重编辑原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-03.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[Yong Cao](https://x.com/YongCaoPlus)_
 
@@ -94,7 +98,7 @@ Weight Editing 则采用不同的思路。
 
 ## 三、模型架构：763B 参数的 MoE 模型
 
-![MoE 模型架构示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-04.jpg' | relative_url }})
+![MoE 模型架构示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-04.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[Founders Creative](https://www.founderscreative.org/model-architecture-behind-deepseek-r1/)_
 
@@ -134,7 +138,7 @@ MoE（Mixture of Experts，混合专家架构）是目前大规模语言模型�
 
 MoonMath.ai 对基础模型和修改模型使用相同的评测流程，公布了以下结果。
 
-![大模型评测数据示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-05.jpg' | relative_url }})
+![大模型评测数据示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-05.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[LG AI Research](https://www.lgresearch.ai/blog/view?seq=618)_
 
@@ -173,7 +177,7 @@ MoonMath.ai 对模型进行了有害问题和正常问题的测试。
 - 有害问题测试集：1,410 个问题。
 - 正常问题测试集：350 个问题。
 
-![AI 安全与红队测试示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-06.jpg' | relative_url }})
+![AI 安全与红队测试示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-06.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[AI Roads](https://airoads.org/electives/module-d/)_
 
@@ -197,7 +201,7 @@ _图片来源：[AI Roads](https://airoads.org/electives/module-d/)_
 
 官方推荐 SGLang。
 
-![大模型并行部署架构图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-07.jpg' | relative_url }})
+![大模型并行部署架构图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-07.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[Jarvis Labs](https://jarvislabs.ai/blog/expert-parallelism-mixed-strategies-vllm)_
 

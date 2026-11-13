@@ -6,6 +6,10 @@ thumbnail: assets/img/blog/deleting-weights.jpg
 description: 从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。
 tags: [AI, 论文解读, 模型训练]
 categories: [技术随笔, 论文解读]
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/deleting-weights.jpg
 ---
 
 ![Deletion Tuning 方法示意]({{ '/assets/img/blog/deleting-weights-deletion-tuning/method.webp' | relative_url }})
@@ -147,7 +151,7 @@ $$
 
 后训练最实际的问题不是“新任务涨不涨”，而是“旧任务掉多少”。论文在 GSM8K 上做 GRPO，同时监控六个先验任务（HellaSwag、MMLU、TruthfulQA、WinoGrande、IFEval、HumanEval）的平均准确率，以及到基座策略的前向 KL。
 
-![GRPO 训练过程中的前向 KL 与先验任务准确率变化]({{ '/assets/img/blog/deleting-weights-deletion-tuning/retention.jpg' | relative_url }})
+![GRPO 训练过程中的前向 KL 与先验任务准确率变化]({{ '/assets/img/blog/deleting-weights-deletion-tuning/retention.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[项目主页](https://agenticlearning.ai/deleting-weights/)_
 
@@ -185,7 +189,7 @@ SFT 在 MMLU-Pro 的 14 个学科上按任务各训一个掩码，BBEH 的 23 �
 2. **spectrum drift（谱漂移）**：奇异值移动了多远；
 3. **principal-weight overlap（主权重重叠）**：改动落在基座“主权重”（$W_0$ 的 rank-$k$ SVD 重构中幅值最大的那些元素）上的比例。
 
-![三种更新几何指标：Deletion Tuning 最接近 FFT]({{ '/assets/img/blog/deleting-weights-deletion-tuning/geometry.jpg' | relative_url }})
+![三种更新几何指标：Deletion Tuning 最接近 FFT]({{ '/assets/img/blog/deleting-weights-deletion-tuning/geometry.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 _图片来源：[项目主页](https://agenticlearning.ai/deleting-weights/)_
 

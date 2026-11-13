@@ -6,6 +6,10 @@ thumbnail: assets/img/blog/train-llm-from-scratch.jpg
 description: 使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/train-llm-from-scratch.jpg
 ---
 
 ![从零训练大语言模型]({{ '/assets/img/blog/train-llm-from-scratch/fig-01.jpg' | relative_url }})
@@ -76,7 +80,7 @@ DPO / PPO / GRPO
 
 ## 二、从 Tokenizer 开始：让模型理解文字
 
-![Tokenizer 与文本处理]({{ '/assets/img/blog/train-llm-from-scratch/fig-02.jpg' | relative_url }})
+![Tokenizer 与文本处理]({{ '/assets/img/blog/train-llm-from-scratch/fig-02.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 大语言模型并不直接理解人类看到的文字，它真正处理的是数字序列。
 
@@ -111,7 +115,7 @@ Token IDs：
 
 ## 三、使用 PyTorch 从零实现 Transformer
 
-![Transformer 模型架构]({{ '/assets/img/blog/train-llm-from-scratch/fig-03.jpg' | relative_url }})
+![Transformer 模型架构]({{ '/assets/img/blog/train-llm-from-scratch/fig-03.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 Transformer 是当前主流大语言模型的核心架构。
 
@@ -183,7 +187,7 @@ class Block(nn.Module):
 
 ## 五、Pretraining：让模型学会预测下一个 Token
 
-![模型预训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-04.jpg' | relative_url }})
+![模型预训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-04.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 预训练是大语言模型建立语言能力的基础。
 
@@ -289,7 +293,7 @@ PPO 通过奖励信号优化模型生成策略。
 
 ### 5. GRPO：组相对策略优化
 
-![GRPO 后训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-05.jpg' | relative_url }})
+![GRPO 后训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-05.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 GRPO 是 DeepSeek-R1 技术路线中受到广泛关注的方法。
 

@@ -6,6 +6,10 @@ thumbnail: assets/img/blog/idol-image-to-3d-gaussian.jpg
 description: Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。
 tags: [AI, 开源]
 categories: [技术随笔]
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/idol-image-to-3d-gaussian.jpg
 ---
 
 如果只给 AI 一张普通照片，它能不能自动理解物体的三维结构，并生成一个可以自由旋转、从不同角度观察的 3D 模型？
@@ -41,7 +45,7 @@ Idol 的任务是根据这张图片，推断物体的三维结构，并生成一
 
 另一个案例是复古薄荷绿色踏板摩托车：
 
-![Idol 输入图片：复古薄荷绿色踏板摩托车]({{ '/assets/img/blog/idol-image-to-3d-gaussian/iris-scooter_s1_s42.jpg' | relative_url }})
+![Idol 输入图片：复古薄荷绿色踏板摩托车]({{ '/assets/img/blog/idol-image-to-3d-gaussian/iris-scooter_s1_s42.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 这些案例展示了 Idol 的基本能力：输入可以来自现实照片，也可以来自 AI 生成图片或三维渲染图。
 
@@ -59,7 +63,7 @@ Idol 的任务是根据这张图片，推断物体的三维结构，并生成一
 
 它使用大量分布在三维空间中的高斯基元来表达物体。
 
-![3D Gaussian Splatting 三维高斯点云可视化]({{ '/assets/img/blog/idol-image-to-3d-gaussian/teaser.jpg' | relative_url }})
+![3D Gaussian Splatting 三维高斯点云可视化]({{ '/assets/img/blog/idol-image-to-3d-gaussian/teaser.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 每个 Gaussian 都包含一组属性：
 
@@ -138,7 +142,7 @@ PLY 文件可以交给支持 Gaussian Splatting 的查看器进行渲染。
 
 Idol 支持不同规模的 Gaussian 输出。
 
-![Idol 不同 Gaussian 数量的细节等级展示]({{ '/assets/img/blog/idol-image-to-3d-gaussian/fig-04.jpg' | relative_url }})
+![Idol 不同 Gaussian 数量的细节等级展示]({{ '/assets/img/blog/idol-image-to-3d-gaussian/fig-04.jpg' | relative_url }}){: loading="lazy" decoding="async"}
 
 根据官方公开资料：
 

@@ -7,6 +7,10 @@ description: 从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配�
 tags: [AI, 开源]
 categories: [技术随笔, 工程实践]
 featured: true
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/freetoken-edge-moe-serving.jpg
 ---
 
 ![FreeToken 桌面端控制台]({{ '/assets/img/blog/freetoken-edge-moe-serving/desktop-console.png' | relative_url }})

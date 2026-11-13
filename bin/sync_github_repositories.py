@@ -55,7 +55,7 @@ def fetch_all() -> list[dict]:
 def normalize(repository: dict) -> dict:
     return {
         "name": repository["name"],
-        "description": repository.get("description") or "暂无项目描述。",
+        "description": repository.get("description") or "",
         "url": repository["html_url"],
         "homepage": repository.get("homepage") or "",
         "language": repository.get("language") or "未标注",

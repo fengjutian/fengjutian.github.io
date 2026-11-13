@@ -2,7 +2,7 @@
 layout: page
 title: 项目
 permalink: /projects/
-description: 浏览我在 GitHub 上的全部公开仓库。
+description: 持续维护的项目，每个都有详情页与源码入口。
 nav: true
 nav_order: 3
 _styles: |
@@ -100,10 +100,6 @@ _styles: |
     padding: 0.24rem 0.5rem;
     background: color-mix(in srgb, var(--global-theme-color) 14%, transparent);
     border-radius: 999px;
-  }
-  .all-project-date {
-    margin-left: auto;
-    color: var(--global-text-color-light);
   }
   @media (max-width: 575.98px) {
     .all-projects-summary {

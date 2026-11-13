@@ -6,6 +6,10 @@ thumbnail: assets/img/blog/transformerlens-mech-interp.jpg
 description: 从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
+toc:
+  sidebar: left
+  collapse: auto
+og_image: /assets/img/blog/transformerlens-mech-interp.jpg
 ---
 
 ![Transformer Explainer]({{ '/assets/img/blog/transformerlens-mech-interp/fig-01.jpg' | relative_url }})

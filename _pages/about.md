@@ -45,7 +45,7 @@ latest_posts:
 <p class="home-lead">你好，我是 <strong>Fengjutian</strong>。我关注 AI 智能体、开发者工具与个人知识管理，喜欢把想法做成可运行、可验证的开源项目。</p>
 
 {% assign github_data = site.data.github_repositories %}
-<p>目前的方向覆盖 AI 编辑器、代码智能体、原生桌面工具、数据工作空间与协作产品。GitHub 现有 <strong>{{ github_data.total }}</strong> 个公开仓库，其中 <strong>{{ github_data.original_count }}</strong> 个原创仓库。全部内容见<a href="/repositories/">仓库页面</a>。</p>
+<p>目前主要维护 <strong>{{ site.projects | size }}</strong> 个项目：AI 编辑器、代码智能体、原生桌面工具与协作平台。GitHub 上另有 <strong>{{ github_data.total }}</strong> 个公开仓库（含实验与 Fork），完整清单见<a href="/repositories/">全部仓库</a>。</p>
 
 ## 关注方向
 

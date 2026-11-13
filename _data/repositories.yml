@@ -1,17 +1,11 @@
-# 当前精选项目。全部公开仓库由 bin/sync_github_repositories.py
-# 自动同步到 github_repositories.json，项目页和仓库页的统计均读取该快照。
-
+# 精选项目的唯一数据源是 `_projects/`（每个项目一个页面），这里只保留
+# 主题兼容字段，以及仓库页用来给语言圆点配色的 languages 表。
+#
 # al-folio 主题的 repository/repo.liquid 仍读取这两个兼容字段。
 github_users:
   - fengjutian
 
 repo_description_lines_max: 2
-
-categories:
-  - id: ai
-    name: AI 与开发者工具
-  - id: apps
-    name: 应用与协作平台
 
 languages:
   C: "#555555"
@@ -34,41 +28,3 @@ languages:
   TypeScript: "#3178c6"
   Vue: "#41b883"
   未标注: "#8b949e"
-
-repos:
-  - name: Folixa
-    title: Folixa
-    desc: 基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。
-    lang: C
-    category: ai
-    featured: true
-  - name: DocuFlowAI
-    title: DocuFlowAI
-    desc: 融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。
-    lang: TypeScript
-    category: ai
-    featured: true
-  - name: SuperDBA
-    title: SuperDBA
-    desc: 面向开发者与 AI 智能体的开源数据库工作空间。
-    lang: TypeScript
-    category: ai
-    featured: true
-  - name: Veyra-Studio
-    title: Veyra Studio
-    desc: 本地优先、与宿主无关的 AI 界面设计环境。
-    lang: TypeScript
-    category: ai
-    featured: true
-  - name: planloop
-    title: planloop
-    desc: 将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。
-    lang: Python
-    category: ai
-    featured: true
-  - name: Strata
-    title: Strata
-    desc: 将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。
-    lang: TypeScript
-    category: apps
-    featured: true

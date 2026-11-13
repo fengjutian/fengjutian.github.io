@@ -42,71 +42,9 @@ _styles: |
     font-size: 0.78rem;
     color: var(--rp-muted);
   }
-  .rp h2 {
-    margin: 2.1rem 0 0.9rem;
-    font-size: 1.35rem;
-  }
-  .rp h2:first-child {
-    margin-top: 0;
-  }
   .rp-hint {
     margin: 0 0 0.9rem;
     font-size: 0.86rem;
-    color: var(--rp-muted);
-  }
-  .rp-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  .rp-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    height: 100%;
-    padding: 1rem 1.1rem 1.05rem;
-    color: var(--global-text-color);
-    text-decoration: none;
-    background: var(--global-card-bg-color);
-    border: 1px solid var(--global-divider-color);
-    border-radius: 0.5rem;
-    transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease,
-      border-color 0.18s ease;
-  }
-  .rp-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--global-theme-color);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-    text-decoration: none;
-  }
-  .rp-card-head {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .rp-card-name {
-    font-size: 1.05rem;
-    font-weight: 500;
-    line-height: 1.3;
-    overflow-wrap: anywhere;
-  }
-  .rp-card-arrow {
-    margin-left: auto;
-    font-size: 0.72rem;
-    opacity: 0.35;
-    transition: opacity 0.18s ease;
-  }
-  .rp-card:hover .rp-card-arrow {
-    opacity: 1;
-  }
-  .rp-card-desc {
-    flex: 1;
-    margin: 0;
-    font-size: 0.86rem;
-    line-height: 1.55;
     color: var(--rp-muted);
   }
   .rp-dot {
@@ -115,20 +53,6 @@ _styles: |
     width: 0.6rem;
     height: 0.6rem;
     border-radius: 50%;
-  }
-  .rp-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.1rem;
-  }
-  .rp-tag {
-    padding: 0.28rem 0.55rem;
-    font-size: 0.7rem;
-    line-height: 1.1;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--global-theme-color) 14%, transparent);
-    color: var(--global-text-color);
   }
   .rp-group {
     margin: 0 0 0.9rem;
@@ -219,35 +143,16 @@ _styles: |
     white-space: nowrap;
     color: var(--rp-muted);
   }
-  .rp-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.6rem 1.15rem;
-    font-size: 0.9rem;
-    color: var(--global-hover-text-color);
-    text-decoration: none;
-    background: var(--global-theme-color);
-    border-radius: 0.35rem;
-  }
-  .rp-cta:hover {
-    color: var(--global-hover-text-color);
-    background: var(--global-hover-color);
-    text-decoration: none;
-  }
   @media (max-width: 575.98px) {
     .rp-stats {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .rp-grid {
-      grid-template-columns: 1fr;
     }
   }
 ---
 
 {% assign github_data = site.data.github_repositories %}
 {% assign languages = site.data.repositories.languages %}
-{% assign groups = github_data.repositories | group_by: "language" %}
+{% assign groups = github_data.repositories | group_by: "language" | sort: "size" | reverse %}
 
 <div class="rp">
 
@@ -271,13 +176,13 @@ _styles: |
   </div>
 
   <p class="rp-hint">
-    快照同步于 {{ github_data.generated_at | date: "%Y-%m-%d" }}，组内按最近推送排序。精选项目与详情见
+    按语言分组、数量多的在前，组内按最近推送排序。快照同步于 {{ github_data.generated_at | date: "%Y-%m-%d" }}，精选项目与详情见
     <a href="{{ '/projects/' | relative_url }}">项目</a>。
   </p>
 
-  {% for group in groups %}
+{% for group in groups %}
     {% assign color = languages[group.name] | default: "#8b949e" %}
-    <details class="rp-group"{% if forloop.index <= 2 %} open{% endif %}>
+    <details class="rp-group"{% if forloop.index <= 3 %} open{% endif %}>
       <summary class="rp-summary">
         <span class="rp-dot" style="background: {{ color }}"></span>
         <span>{{ group.name }}</span>
@@ -293,13 +198,13 @@ _styles: |
                 {% if repo.fork %}<span class="rp-item-lang">Fork</span>{% endif %}
                 {% if repo.archived %}<span class="rp-item-lang">已归档</span>{% endif %}
               </span>
-              <span class="rp-item-desc">{{ repo.description }}</span>
+              {% if repo.description != blank %}<span class="rp-item-desc">{{ repo.description }}</span>{% endif %}
             </span>
             <span class="rp-item-date">{{ repo.pushed_at | date: "%Y-%m" }}</span>
           </a>
         {% endfor %}
       </div>
     </details>
-  {% endfor %}
+{% endfor %}
 
 </div>

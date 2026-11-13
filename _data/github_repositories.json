@@ -1,25 +1,13 @@
 {
   "owner": "fengjutian",
-  "generated_at": "2026-11-12T10:13:50+00:00",
+  "generated_at": "2026-11-13T02:50:40+00:00",
   "total": 292,
   "original_count": 271,
   "fork_count": 21,
   "repositories": [
     {
-      "name": "fengjutian.github.io",
-      "description": "暂无项目描述。",
-      "url": "https://github.com/fengjutian/fengjutian.github.io",
-      "homepage": "https://fengjutian.github.io/",
-      "language": "HTML",
-      "fork": false,
-      "archived": false,
-      "stars": 0,
-      "created_at": "2026-10-15T09:10:24Z",
-      "pushed_at": "2026-11-12T10:12:28Z"
-    },
-    {
       "name": "Folixa",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Folixa",
       "homepage": "",
       "language": "C",
@@ -27,11 +15,23 @@
       "archived": false,
       "stars": 0,
       "created_at": "2026-11-12T05:07:12Z",
-      "pushed_at": "2026-11-12T09:28:12Z"
+      "pushed_at": "2026-11-13T02:50:21Z"
+    },
+    {
+      "name": "fengjutian.github.io",
+      "description": "",
+      "url": "https://github.com/fengjutian/fengjutian.github.io",
+      "homepage": "https://fengjutian.github.io/",
+      "language": "HTML",
+      "fork": false,
+      "archived": false,
+      "stars": 0,
+      "created_at": "2026-10-15T09:10:24Z",
+      "pushed_at": "2026-11-13T02:46:11Z"
     },
     {
       "name": "DocuFlowAI",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/DocuFlowAI",
       "homepage": "",
       "language": "TypeScript",
@@ -39,11 +39,11 @@
       "archived": false,
       "stars": 0,
       "created_at": "2026-11-09T01:07:49Z",
-      "pushed_at": "2026-11-12T09:03:11Z"
+      "pushed_at": "2026-11-13T02:23:30Z"
     },
     {
       "name": "SuperDBA",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/SuperDBA",
       "homepage": "https://superdba.netlify.app/",
       "language": "TypeScript",
@@ -55,7 +55,7 @@
     },
     {
       "name": "Veyra-Studio",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Veyra-Studio",
       "homepage": "",
       "language": "TypeScript",
@@ -67,7 +67,7 @@
     },
     {
       "name": "planloop",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/planloop",
       "homepage": "",
       "language": "Python",
@@ -79,7 +79,7 @@
     },
     {
       "name": "Strata",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Strata",
       "homepage": "",
       "language": "TypeScript",
@@ -91,7 +91,7 @@
     },
     {
       "name": "ParticleStudio",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ParticleStudio",
       "homepage": "",
       "language": "TypeScript",
@@ -103,7 +103,7 @@
     },
     {
       "name": "Metamorphosis",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Metamorphosis",
       "homepage": "",
       "language": "JavaScript",
@@ -115,7 +115,7 @@
     },
     {
       "name": "MagneticTape",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/MagneticTape",
       "homepage": "https://magnetic-tape.netlify.app/",
       "language": "Rust",
@@ -127,7 +127,7 @@
     },
     {
       "name": "screenshare",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/screenshare",
       "homepage": "",
       "language": "未标注",
@@ -151,7 +151,7 @@
     },
     {
       "name": "ElasticBox",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ElasticBox",
       "homepage": "",
       "language": "未标注",
@@ -163,7 +163,7 @@
     },
     {
       "name": "xiaozhishen",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/xiaozhishen",
       "homepage": "https://mini-lu.netlify.app/",
       "language": "Rust",
@@ -187,7 +187,7 @@
     },
     {
       "name": "novels",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/novels",
       "homepage": "",
       "language": "TypeScript",
@@ -199,7 +199,7 @@
     },
     {
       "name": "ScreenLoom",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ScreenLoom",
       "homepage": "",
       "language": "Rust",
@@ -235,7 +235,7 @@
     },
     {
       "name": "GEO",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/GEO",
       "homepage": "",
       "language": "Go",
@@ -259,7 +259,7 @@
     },
     {
       "name": "ESP32S3",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ESP32S3",
       "homepage": "",
       "language": "C",
@@ -271,7 +271,7 @@
     },
     {
       "name": "xinge",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/xinge",
       "homepage": "",
       "language": "TypeScript",
@@ -283,7 +283,7 @@
     },
     {
       "name": "bio21",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/bio21",
       "homepage": "https://bio-21.netlify.app/",
       "language": "TypeScript",
@@ -295,7 +295,7 @@
     },
     {
       "name": "RoadVision",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/RoadVision",
       "homepage": "",
       "language": "Kotlin",
@@ -319,7 +319,7 @@
     },
     {
       "name": "yan",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/yan",
       "homepage": "",
       "language": "Dart",
@@ -331,7 +331,7 @@
     },
     {
       "name": "GitRepoSite",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/GitRepoSite",
       "homepage": "",
       "language": "TypeScript",
@@ -343,7 +343,7 @@
     },
     {
       "name": "NovelStudio",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/NovelStudio",
       "homepage": "",
       "language": "Go",
@@ -355,7 +355,7 @@
     },
     {
       "name": "music",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/music",
       "homepage": "",
       "language": "Kotlin",
@@ -379,7 +379,7 @@
     },
     {
       "name": "NankingAtlas",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/NankingAtlas",
       "homepage": "https://nanking-atlas.netlify.app/",
       "language": "TypeScript",
@@ -415,7 +415,7 @@
     },
     {
       "name": "LanguageCoach",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/LanguageCoach",
       "homepage": "",
       "language": "Dart",
@@ -427,7 +427,7 @@
     },
     {
       "name": "OpenMusic",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/OpenMusic",
       "homepage": "",
       "language": "TypeScript",
@@ -439,7 +439,7 @@
     },
     {
       "name": "BioDemand",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/BioDemand",
       "homepage": "",
       "language": "未标注",
@@ -451,7 +451,7 @@
     },
     {
       "name": "product-mining",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/product-mining",
       "homepage": "",
       "language": "未标注",
@@ -463,7 +463,7 @@
     },
     {
       "name": "AgentFlow",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/AgentFlow",
       "homepage": "",
       "language": "Dart",
@@ -475,7 +475,7 @@
     },
     {
       "name": "word_ninja",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/word_ninja",
       "homepage": "",
       "language": "Dart",
@@ -487,7 +487,7 @@
     },
     {
       "name": "Read",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Read",
       "homepage": "",
       "language": "Kotlin",
@@ -547,7 +547,7 @@
     },
     {
       "name": "grafana_watch_dog",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/grafana_watch_dog",
       "homepage": "",
       "language": "Rust",
@@ -631,7 +631,7 @@
     },
     {
       "name": "ExtOS",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ExtOS",
       "homepage": "",
       "language": "Kotlin",
@@ -643,7 +643,7 @@
     },
     {
       "name": "The_Country_of_Giant_Babies",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/The_Country_of_Giant_Babies",
       "homepage": "",
       "language": "HTML",
@@ -655,7 +655,7 @@
     },
     {
       "name": "mini-cicd",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mini-cicd",
       "homepage": "",
       "language": "Go",
@@ -679,7 +679,7 @@
     },
     {
       "name": "qinmo-hanwangchao",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/qinmo-hanwangchao",
       "homepage": "https://fengjutian.github.io/qinmo-hanwangchao/",
       "language": "HTML",
@@ -691,7 +691,7 @@
     },
     {
       "name": "code-mermaid",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code-mermaid",
       "homepage": "",
       "language": "TypeScript",
@@ -703,7 +703,7 @@
     },
     {
       "name": "CameraPromptsGenerator",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/CameraPromptsGenerator",
       "homepage": "https://camera-prompts-generator-three.vercel.app",
       "language": "HTML",
@@ -727,7 +727,7 @@
     },
     {
       "name": "ai_weather_wallpaper",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ai_weather_wallpaper",
       "homepage": "",
       "language": "Dart",
@@ -763,7 +763,7 @@
     },
     {
       "name": "box",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/box",
       "homepage": "",
       "language": "TypeScript",
@@ -775,7 +775,7 @@
     },
     {
       "name": "OpenWord",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/OpenWord",
       "homepage": "",
       "language": "TypeScript",
@@ -859,7 +859,7 @@
     },
     {
       "name": "askrealm",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/askrealm",
       "homepage": "",
       "language": "Dart",
@@ -883,7 +883,7 @@
     },
     {
       "name": "xterminal",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/xterminal",
       "homepage": "",
       "language": "TypeScript",
@@ -895,7 +895,7 @@
     },
     {
       "name": "llm-wiki",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/llm-wiki",
       "homepage": "",
       "language": "Python",
@@ -919,7 +919,7 @@
     },
     {
       "name": "copilot-multi-provider",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/copilot-multi-provider",
       "homepage": "",
       "language": "TypeScript",
@@ -931,7 +931,7 @@
     },
     {
       "name": "DBForge_AI-main",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/DBForge_AI-main",
       "homepage": "",
       "language": "未标注",
@@ -955,7 +955,7 @@
     },
     {
       "name": "wxreader-note",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/wxreader-note",
       "homepage": "",
       "language": "Python",
@@ -979,7 +979,7 @@
     },
     {
       "name": "charles-deepwiki",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/charles-deepwiki",
       "homepage": "",
       "language": "Python",
@@ -1003,7 +1003,7 @@
     },
     {
       "name": "charles-model-trainer",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/charles-model-trainer",
       "homepage": "",
       "language": "Python",
@@ -1015,7 +1015,7 @@
     },
     {
       "name": "skills",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/skills",
       "homepage": "",
       "language": "C#",
@@ -1039,7 +1039,7 @@
     },
     {
       "name": "reverse-obsidian",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reverse-obsidian",
       "homepage": "",
       "language": "TypeScript",
@@ -1063,7 +1063,7 @@
     },
     {
       "name": "TraceVision",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/TraceVision",
       "homepage": "",
       "language": "Batchfile",
@@ -1075,7 +1075,7 @@
     },
     {
       "name": "codeviz-analyzer",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/codeviz-analyzer",
       "homepage": "",
       "language": "TypeScript",
@@ -1087,7 +1087,7 @@
     },
     {
       "name": "learn-claude-code",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/learn-claude-code",
       "homepage": "",
       "language": "TypeScript",
@@ -1099,7 +1099,7 @@
     },
     {
       "name": "zhifou_analyse",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/zhifou_analyse",
       "homepage": "",
       "language": "PowerShell",
@@ -1111,7 +1111,7 @@
     },
     {
       "name": "react-ai-analyzer",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/react-ai-analyzer",
       "homepage": "",
       "language": "TypeScript",
@@ -1123,7 +1123,7 @@
     },
     {
       "name": "interview-question",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/interview-question",
       "homepage": "",
       "language": "HTML",
@@ -1135,7 +1135,7 @@
     },
     {
       "name": "history-editor",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/history-editor",
       "homepage": "",
       "language": "未标注",
@@ -1147,7 +1147,7 @@
     },
     {
       "name": "mini-antd-design",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mini-antd-design",
       "homepage": "https://mini-antd-design.netlify.app/",
       "language": "JavaScript",
@@ -1159,7 +1159,7 @@
     },
     {
       "name": "book_analysis",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/book_analysis",
       "homepage": "",
       "language": "JavaScript",
@@ -1171,7 +1171,7 @@
     },
     {
       "name": "go-shop-admin",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/go-shop-admin",
       "homepage": "",
       "language": "TypeScript",
@@ -1195,7 +1195,7 @@
     },
     {
       "name": "books-RAG",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/books-RAG",
       "homepage": "",
       "language": "Python",
@@ -1207,7 +1207,7 @@
     },
     {
       "name": "AI-reader",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/AI-reader",
       "homepage": "",
       "language": "Dart",
@@ -1255,7 +1255,7 @@
     },
     {
       "name": "ai-prompt-card",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ai-prompt-card",
       "homepage": "",
       "language": "TypeScript",
@@ -1279,7 +1279,7 @@
     },
     {
       "name": "You-re_toxic.",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/You-re_toxic.",
       "homepage": "",
       "language": "JavaScript",
@@ -1303,7 +1303,7 @@
     },
     {
       "name": "spec-engine",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/spec-engine",
       "homepage": "",
       "language": "TypeScript",
@@ -1327,7 +1327,7 @@
     },
     {
       "name": "deep-file",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/deep-file",
       "homepage": "",
       "language": "TypeScript",
@@ -1339,7 +1339,7 @@
     },
     {
       "name": "code-RAG",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code-RAG",
       "homepage": "",
       "language": "Python",
@@ -1351,7 +1351,7 @@
     },
     {
       "name": "trae-agent-code",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/trae-agent-code",
       "homepage": "",
       "language": "Python",
@@ -1363,7 +1363,7 @@
     },
     {
       "name": "bazi-professional",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/bazi-professional",
       "homepage": "",
       "language": "TypeScript",
@@ -1375,7 +1375,7 @@
     },
     {
       "name": "Fireworks2026",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Fireworks2026",
       "homepage": "",
       "language": "JavaScript",
@@ -1387,7 +1387,7 @@
     },
     {
       "name": "card-camera",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/card-camera",
       "homepage": "",
       "language": "TypeScript",
@@ -1399,7 +1399,7 @@
     },
     {
       "name": "audio-streaming",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/audio-streaming",
       "homepage": "",
       "language": "Python",
@@ -1411,7 +1411,7 @@
     },
     {
       "name": "vue-analyze-cli",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/vue-analyze-cli",
       "homepage": "",
       "language": "HTML",
@@ -1423,7 +1423,7 @@
     },
     {
       "name": "generate-sft",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/generate-sft",
       "homepage": "",
       "language": "Python",
@@ -1447,7 +1447,7 @@
     },
     {
       "name": "LLMGate",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/LLMGate",
       "homepage": "",
       "language": "Python",
@@ -1459,7 +1459,7 @@
     },
     {
       "name": "wxread-fengjutian",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/wxread-fengjutian",
       "homepage": "",
       "language": "TypeScript",
@@ -1471,7 +1471,7 @@
     },
     {
       "name": "code-quality",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code-quality",
       "homepage": "",
       "language": "TypeScript",
@@ -1507,7 +1507,7 @@
     },
     {
       "name": "A2UI-FJT",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/A2UI-FJT",
       "homepage": "https://a2ui.org/",
       "language": "未标注",
@@ -1531,7 +1531,7 @@
     },
     {
       "name": "WebGraphy",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/WebGraphy",
       "homepage": "",
       "language": "TypeScript",
@@ -1555,7 +1555,7 @@
     },
     {
       "name": "3d",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/3d",
       "homepage": "",
       "language": "HTML",
@@ -1567,7 +1567,7 @@
     },
     {
       "name": "tiptap-pro",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/tiptap-pro",
       "homepage": "",
       "language": "TypeScript",
@@ -1579,7 +1579,7 @@
     },
     {
       "name": "find-a-partner",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/find-a-partner",
       "homepage": "",
       "language": "HTML",
@@ -1591,7 +1591,7 @@
     },
     {
       "name": "find_a_partner",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/find_a_partner",
       "homepage": "",
       "language": "未标注",
@@ -1603,7 +1603,7 @@
     },
     {
       "name": "news-crawler",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/news-crawler",
       "homepage": "",
       "language": "Python",
@@ -1627,7 +1627,7 @@
     },
     {
       "name": "space_time_companion",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/space_time_companion",
       "homepage": "",
       "language": "C++",
@@ -1639,7 +1639,7 @@
     },
     {
       "name": "zhongyi_drools",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/zhongyi_drools",
       "homepage": "",
       "language": "Java",
@@ -1651,7 +1651,7 @@
     },
     {
       "name": "zhongyi-inference",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/zhongyi-inference",
       "homepage": "",
       "language": "Java",
@@ -1675,7 +1675,7 @@
     },
     {
       "name": "cook_scan",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/cook_scan",
       "homepage": "",
       "language": "Dart",
@@ -1711,7 +1711,7 @@
     },
     {
       "name": "merchant_admin",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/merchant_admin",
       "homepage": "",
       "language": "TypeScript",
@@ -1735,7 +1735,7 @@
     },
     {
       "name": "go-example",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/go-example",
       "homepage": "",
       "language": "Go",
@@ -1747,7 +1747,7 @@
     },
     {
       "name": "rn_app",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/rn_app",
       "homepage": "",
       "language": "TypeScript",
@@ -1759,7 +1759,7 @@
     },
     {
       "name": "vision-object",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/vision-object",
       "homepage": "",
       "language": "TypeScript",
@@ -1771,7 +1771,7 @@
     },
     {
       "name": "Spectra-client",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Spectra-client",
       "homepage": "",
       "language": "TypeScript",
@@ -1819,7 +1819,7 @@
     },
     {
       "name": "azure-dragon-guard",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/azure-dragon-guard",
       "homepage": "",
       "language": "Go",
@@ -1831,7 +1831,7 @@
     },
     {
       "name": "text2image-ai-prompt",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/text2image-ai-prompt",
       "homepage": "",
       "language": "未标注",
@@ -1843,7 +1843,7 @@
     },
     {
       "name": "video-frame-preview",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/video-frame-preview",
       "homepage": "",
       "language": "HTML",
@@ -1867,7 +1867,7 @@
     },
     {
       "name": "mp4-2-lottie",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mp4-2-lottie",
       "homepage": "",
       "language": "JavaScript",
@@ -1879,7 +1879,7 @@
     },
     {
       "name": "next-js-run-time",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/next-js-run-time",
       "homepage": "",
       "language": "Rust",
@@ -1891,7 +1891,7 @@
     },
     {
       "name": "trace-logger",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/trace-logger",
       "homepage": "",
       "language": "TypeScript",
@@ -1903,7 +1903,7 @@
     },
     {
       "name": "browser-hostory",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/browser-hostory",
       "homepage": "",
       "language": "TypeScript",
@@ -1927,7 +1927,7 @@
     },
     {
       "name": "mastra-zh-doc",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mastra-zh-doc",
       "homepage": "",
       "language": "MDX",
@@ -1939,7 +1939,7 @@
     },
     {
       "name": "ts-lite",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ts-lite",
       "homepage": "",
       "language": "TypeScript",
@@ -1951,7 +1951,7 @@
     },
     {
       "name": "ruler-scrollbar",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ruler-scrollbar",
       "homepage": "",
       "language": "TypeScript",
@@ -1963,7 +1963,7 @@
     },
     {
       "name": "OmniBus",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/OmniBus",
       "homepage": "",
       "language": "TypeScript",
@@ -1975,7 +1975,7 @@
     },
     {
       "name": "mini-ts-utils",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mini-ts-utils",
       "homepage": "",
       "language": "HTML",
@@ -1987,7 +1987,7 @@
     },
     {
       "name": "MiniReact",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/MiniReact",
       "homepage": "",
       "language": "HTML",
@@ -1999,7 +1999,7 @@
     },
     {
       "name": "polygon-shredder-react",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/polygon-shredder-react",
       "homepage": "",
       "language": "JavaScript",
@@ -2011,7 +2011,7 @@
     },
     {
       "name": "fengjutian-blog-chat",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/fengjutian-blog-chat",
       "homepage": "",
       "language": "Python",
@@ -2023,7 +2023,7 @@
     },
     {
       "name": "online-editor",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/online-editor",
       "homepage": "",
       "language": "TypeScript",
@@ -2059,7 +2059,7 @@
     },
     {
       "name": "leetcode-code-evaluator",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/leetcode-code-evaluator",
       "homepage": "",
       "language": "TypeScript",
@@ -2071,7 +2071,7 @@
     },
     {
       "name": "pdf-mindmap",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/pdf-mindmap",
       "homepage": "",
       "language": "TypeScript",
@@ -2083,7 +2083,7 @@
     },
     {
       "name": "draw_io_file",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/draw_io_file",
       "homepage": "",
       "language": "未标注",
@@ -2119,7 +2119,7 @@
     },
     {
       "name": "ollama_pdf_qa",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ollama_pdf_qa",
       "homepage": "",
       "language": "Python",
@@ -2131,7 +2131,7 @@
     },
     {
       "name": "hongloumeng-extract",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/hongloumeng-extract",
       "homepage": "",
       "language": "Python",
@@ -2203,7 +2203,7 @@
     },
     {
       "name": "fldraw-flutter",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/fldraw-flutter",
       "homepage": "",
       "language": "未标注",
@@ -2227,7 +2227,7 @@
     },
     {
       "name": "books",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/books",
       "homepage": "",
       "language": "未标注",
@@ -2251,7 +2251,7 @@
     },
     {
       "name": "whiteboard",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/whiteboard",
       "homepage": "",
       "language": "TypeScript",
@@ -2335,7 +2335,7 @@
     },
     {
       "name": "niuma-page",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/niuma-page",
       "homepage": "",
       "language": "TypeScript",
@@ -2347,7 +2347,7 @@
     },
     {
       "name": "Qwen-TTS-Reader",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Qwen-TTS-Reader",
       "homepage": "",
       "language": "TypeScript",
@@ -2371,7 +2371,7 @@
     },
     {
       "name": "screenshots",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/screenshots",
       "homepage": "",
       "language": "未标注",
@@ -2395,7 +2395,7 @@
     },
     {
       "name": "Recognizegoods",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Recognizegoods",
       "homepage": "",
       "language": "TypeScript",
@@ -2431,7 +2431,7 @@
     },
     {
       "name": "AI-people",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/AI-people",
       "homepage": "",
       "language": "TypeScript",
@@ -2455,7 +2455,7 @@
     },
     {
       "name": "harmonyos_pro_list",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/harmonyos_pro_list",
       "homepage": "",
       "language": "TypeScript",
@@ -2503,7 +2503,7 @@
     },
     {
       "name": "ElectronAdventures",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ElectronAdventures",
       "homepage": "",
       "language": "JavaScript",
@@ -2515,7 +2515,7 @@
     },
     {
       "name": "YaoYao",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/YaoYao",
       "homepage": "",
       "language": "TypeScript",
@@ -2527,7 +2527,7 @@
     },
     {
       "name": "reader-desktop",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader-desktop",
       "homepage": "",
       "language": "TypeScript",
@@ -2539,7 +2539,7 @@
     },
     {
       "name": "reader_service",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader_service",
       "homepage": "",
       "language": "TypeScript",
@@ -2551,7 +2551,7 @@
     },
     {
       "name": "reader-analysis",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader-analysis",
       "homepage": "",
       "language": "Python",
@@ -2563,7 +2563,7 @@
     },
     {
       "name": "reader_service_spring",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader_service_spring",
       "homepage": "",
       "language": "Java",
@@ -2575,7 +2575,7 @@
     },
     {
       "name": "reader_service_actix",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader_service_actix",
       "homepage": "",
       "language": "Makefile",
@@ -2587,7 +2587,7 @@
     },
     {
       "name": "reader",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/reader",
       "homepage": "",
       "language": "TypeScript",
@@ -2599,7 +2599,7 @@
     },
     {
       "name": "show-line-title",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/show-line-title",
       "homepage": "",
       "language": "Rust",
@@ -2611,7 +2611,7 @@
     },
     {
       "name": "flutter-pro-demo",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/flutter-pro-demo",
       "homepage": "",
       "language": "C++",
@@ -2623,7 +2623,7 @@
     },
     {
       "name": "people_info",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/people_info",
       "homepage": "",
       "language": "Swift",
@@ -2635,7 +2635,7 @@
     },
     {
       "name": "city-points",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/city-points",
       "homepage": "",
       "language": "未标注",
@@ -2647,7 +2647,7 @@
     },
     {
       "name": "Typescript-Advanced",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Typescript-Advanced",
       "homepage": "",
       "language": "未标注",
@@ -2659,7 +2659,7 @@
     },
     {
       "name": "vscode_pro",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/vscode_pro",
       "homepage": "",
       "language": "TypeScript",
@@ -2683,7 +2683,7 @@
     },
     {
       "name": "pyqt6",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/pyqt6",
       "homepage": "",
       "language": "未标注",
@@ -2695,7 +2695,7 @@
     },
     {
       "name": "x.site",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/x.site",
       "homepage": "https://fengjutian.github.io/x.site/",
       "language": "HTML",
@@ -2707,7 +2707,7 @@
     },
     {
       "name": "scan-code",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/scan-code",
       "homepage": "https://scan-code-xi.vercel.app",
       "language": "JavaScript",
@@ -2731,7 +2731,7 @@
     },
     {
       "name": "nanjing_travel",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/nanjing_travel",
       "homepage": "",
       "language": "未标注",
@@ -2743,7 +2743,7 @@
     },
     {
       "name": "ai-llm-next-service",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ai-llm-next-service",
       "homepage": "",
       "language": "Python",
@@ -2755,7 +2755,7 @@
     },
     {
       "name": "ai-llm-next",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ai-llm-next",
       "homepage": "",
       "language": "TypeScript",
@@ -2767,7 +2767,7 @@
     },
     {
       "name": "color-pop",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/color-pop",
       "homepage": "",
       "language": "JavaScript",
@@ -2779,7 +2779,7 @@
     },
     {
       "name": "FeTools",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/FeTools",
       "homepage": "",
       "language": "JavaScript",
@@ -2791,7 +2791,7 @@
     },
     {
       "name": "client-intercept",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/client-intercept",
       "homepage": "",
       "language": "JavaScript",
@@ -2803,7 +2803,7 @@
     },
     {
       "name": "service-intercept",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/service-intercept",
       "homepage": "",
       "language": "JavaScript",
@@ -2827,7 +2827,7 @@
     },
     {
       "name": "visual-x-editor-sevice",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/visual-x-editor-sevice",
       "homepage": "",
       "language": "Makefile",
@@ -2839,7 +2839,7 @@
     },
     {
       "name": "visual-x-editor",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/visual-x-editor",
       "homepage": "",
       "language": "TypeScript",
@@ -2851,7 +2851,7 @@
     },
     {
       "name": "typescript.x.site",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/typescript.x.site",
       "homepage": "",
       "language": "未标注",
@@ -2863,7 +2863,7 @@
     },
     {
       "name": "fjt",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/fjt",
       "homepage": "",
       "language": "JavaScript",
@@ -2875,7 +2875,7 @@
     },
     {
       "name": "speech_ai",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/speech_ai",
       "homepage": "",
       "language": "JavaScript",
@@ -2899,7 +2899,7 @@
     },
     {
       "name": "probe_log_client",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/probe_log_client",
       "homepage": "",
       "language": "JavaScript",
@@ -2911,7 +2911,7 @@
     },
     {
       "name": "probe_log_service",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/probe_log_service",
       "homepage": "",
       "language": "TypeScript",
@@ -2923,7 +2923,7 @@
     },
     {
       "name": "nanjing_shop",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/nanjing_shop",
       "homepage": "",
       "language": "Java",
@@ -2935,7 +2935,7 @@
     },
     {
       "name": "x-ele",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/x-ele",
       "homepage": "",
       "language": "TypeScript",
@@ -2947,7 +2947,7 @@
     },
     {
       "name": "edit-full",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/edit-full",
       "homepage": "",
       "language": "TypeScript",
@@ -2983,7 +2983,7 @@
     },
     {
       "name": "image_edit",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/image_edit",
       "homepage": "",
       "language": "C++",
@@ -2995,7 +2995,7 @@
     },
     {
       "name": "java-demo",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/java-demo",
       "homepage": "",
       "language": "Java",
@@ -3007,7 +3007,7 @@
     },
     {
       "name": "Leetcode",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Leetcode",
       "homepage": "",
       "language": "C++",
@@ -3019,7 +3019,7 @@
     },
     {
       "name": "i-element-ui",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/i-element-ui",
       "homepage": "",
       "language": "Vue",
@@ -3031,7 +3031,7 @@
     },
     {
       "name": "my-element-ui",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/my-element-ui",
       "homepage": "",
       "language": "Vue",
@@ -3043,7 +3043,7 @@
     },
     {
       "name": "history_server",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/history_server",
       "homepage": "",
       "language": "Python",
@@ -3055,7 +3055,7 @@
     },
     {
       "name": "bowser-history",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/bowser-history",
       "homepage": "",
       "language": "JavaScript",
@@ -3067,7 +3067,7 @@
     },
     {
       "name": "git-log",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/git-log",
       "homepage": "",
       "language": "JavaScript",
@@ -3079,7 +3079,7 @@
     },
     {
       "name": "dating",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/dating",
       "homepage": "",
       "language": "C++",
@@ -3091,7 +3091,7 @@
     },
     {
       "name": "ff",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ff",
       "homepage": "",
       "language": "Python",
@@ -3115,7 +3115,7 @@
     },
     {
       "name": "seeWallPaper",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/seeWallPaper",
       "homepage": "",
       "language": "JavaScript",
@@ -3127,7 +3127,7 @@
     },
     {
       "name": "history_list",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/history_list",
       "homepage": "",
       "language": "JavaScript",
@@ -3139,7 +3139,7 @@
     },
     {
       "name": "history",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/history",
       "homepage": "",
       "language": "JavaScript",
@@ -3151,7 +3151,7 @@
     },
     {
       "name": "Tools",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Tools",
       "homepage": "",
       "language": "TypeScript",
@@ -3163,7 +3163,7 @@
     },
     {
       "name": "code-playground",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code-playground",
       "homepage": "",
       "language": "JavaScript",
@@ -3175,7 +3175,7 @@
     },
     {
       "name": "cron-vue-pro",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/cron-vue-pro",
       "homepage": "",
       "language": "Vue",
@@ -3199,7 +3199,7 @@
     },
     {
       "name": "flutter-playground",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/flutter-playground",
       "homepage": "",
       "language": "Dart",
@@ -3211,7 +3211,7 @@
     },
     {
       "name": "img_service_go",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/img_service_go",
       "homepage": "",
       "language": "Go",
@@ -3223,7 +3223,7 @@
     },
     {
       "name": "admin_wallpaper",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/admin_wallpaper",
       "homepage": "",
       "language": "JavaScript",
@@ -3235,7 +3235,7 @@
     },
     {
       "name": "FiltersImg",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/FiltersImg",
       "homepage": "",
       "language": "HTML",
@@ -3247,7 +3247,7 @@
     },
     {
       "name": "all-search",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/all-search",
       "homepage": "",
       "language": "HTML",
@@ -3259,7 +3259,7 @@
     },
     {
       "name": "wallpaper_server",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/wallpaper_server",
       "homepage": "",
       "language": "JavaScript",
@@ -3271,7 +3271,7 @@
     },
     {
       "name": "pyQT5",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/pyQT5",
       "homepage": "",
       "language": "Python",
@@ -3283,7 +3283,7 @@
     },
     {
       "name": "suanfa-java",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/suanfa-java",
       "homepage": "",
       "language": "Java",
@@ -3295,7 +3295,7 @@
     },
     {
       "name": "mul-page-vue",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mul-page-vue",
       "homepage": "",
       "language": "JavaScript",
@@ -3307,7 +3307,7 @@
     },
     {
       "name": "Vue2Leaflet",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/Vue2Leaflet",
       "homepage": "",
       "language": "JavaScript",
@@ -3319,7 +3319,7 @@
     },
     {
       "name": "echartsMap",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/echartsMap",
       "homepage": "",
       "language": "JavaScript",
@@ -3331,7 +3331,7 @@
     },
     {
       "name": "changeGithubStar",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/changeGithubStar",
       "homepage": "",
       "language": "JavaScript",
@@ -3343,7 +3343,7 @@
     },
     {
       "name": "spider-py",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/spider-py",
       "homepage": "",
       "language": "Python",
@@ -3355,7 +3355,7 @@
     },
     {
       "name": "wind-leaflet-vue",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/wind-leaflet-vue",
       "homepage": "",
       "language": "JavaScript",
@@ -3367,7 +3367,7 @@
     },
     {
       "name": "wind-map",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/wind-map",
       "homepage": "",
       "language": "HTML",
@@ -3379,7 +3379,7 @@
     },
     {
       "name": "suanfaCode",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/suanfaCode",
       "homepage": "",
       "language": "Java",
@@ -3391,7 +3391,7 @@
     },
     {
       "name": "nanjing_maifang",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/nanjing_maifang",
       "homepage": "",
       "language": "JavaScript",
@@ -3403,7 +3403,7 @@
     },
     {
       "name": "CodeAlgorithm",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/CodeAlgorithm",
       "homepage": "",
       "language": "Java",
@@ -3415,7 +3415,7 @@
     },
     {
       "name": "code",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code",
       "homepage": "",
       "language": "Python",
@@ -3427,7 +3427,7 @@
     },
     {
       "name": "mixSearch",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/mixSearch",
       "homepage": "",
       "language": "HTML",
@@ -3439,7 +3439,7 @@
     },
     {
       "name": "seeWallPaperServer",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/seeWallPaperServer",
       "homepage": "",
       "language": "JavaScript",
@@ -3451,7 +3451,7 @@
     },
     {
       "name": "code-cli",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/code-cli",
       "homepage": "",
       "language": "JavaScript",
@@ -3463,7 +3463,7 @@
     },
     {
       "name": "go-common",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/go-common",
       "homepage": "",
       "language": "Go",
@@ -3475,7 +3475,7 @@
     },
     {
       "name": "ts-webpack",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/ts-webpack",
       "homepage": "",
       "language": "TypeScript",
@@ -3499,7 +3499,7 @@
     },
     {
       "name": "camera",
-      "description": "暂无项目描述。",
+      "description": "",
       "url": "https://github.com/fengjutian/camera",
       "homepage": "",
       "language": "JavaScript",
