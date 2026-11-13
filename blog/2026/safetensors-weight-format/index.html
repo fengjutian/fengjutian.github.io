@@ -1,0 +1,515 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/safetensors-weight-format/"> <meta property="og:description" content="从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/safetensors-weight-format.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件"> <meta name="twitter:description" content="从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/safetensors-weight-format.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/safetensors-weight-format/",
+        "@type": "BlogPosting",
+        "description": "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        "headline": "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 930px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/safetensors-weight-format/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-divider-color) 85%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-divider-color) 85%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-hashtag fa-sm"></i> 工程实践</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p><img src="/assets/img/blog/safetensors-weight-format/fig-01.png" alt="Safetensors 文件格式" loading="lazy" decoding="async"></p> <p>同一个 2.44 GiB 的模型权重文件，用 <code class="language-plaintext highlighter-rouge">torch.load</code> 读进来要 1.57 秒、进程常驻内存涨 2446 MiB；换成 Safetensors 的 <code class="language-plaintext highlighter-rouge">load_file</code>，3 毫秒、涨 1.1 MiB。</p> <p>这不是”优化得好一点”的差距，而是两种格式对”权重文件是什么”给出了不同答案：一边是<strong>可以执行的 Python 对象图</strong>，另一边是<strong>一张记录字节位置的目录</strong>。</p> <p>大模型基础设施里，Safetensors 解决的就是这个看起来很底层、实际决定了很多上层设计的问题——如何安全、高效地存储、读取和分发几百 GB 甚至 TB 级的权重。它由 Hugging Face 开发并开源（Apache-2.0），今天的 Transformers、Diffusers、vLLM、llama.cpp、MLX、Candle、ComfyUI 几乎都在用它。</p> <p>这篇文章想讲清楚四件事：格式到底长什么样；安全性从哪来、边界在哪；”零拷贝”到底零掉了什么；以及——它为什么能成为<strong>权重编程</strong>的基础设施。</p> <h2 id="一权重文件里究竟装了什么">一、权重文件里究竟装了什么</h2> <p>先回到最朴素的问题：一个 <code class="language-plaintext highlighter-rouge">.safetensors</code> 文件（或 <code class="language-plaintext highlighter-rouge">.bin</code>、<code class="language-plaintext highlighter-rouge">.pt</code>）里，到底有什么？</p> <p>对一个 Transformer 来说，模型参数就是一堆有名字的多维数组：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">model.embed_tokens.weight</code>：词表嵌入，形状 <code class="language-plaintext highlighter-rouge">[vocab, hidden]</code>。</li> <li> <code class="language-plaintext highlighter-rouge">model.layers.N.self_attn.q_proj.weight</code>：第 N 层的 Q 投影矩阵。</li> <li> <code class="language-plaintext highlighter-rouge">model.layers.N.mlp.gate_proj.weight</code>：SwiGLU 的 gate 投影。</li> <li> <code class="language-plaintext highlighter-rouge">model.norm.weight</code>：最后一层 LayerNorm 的缩放参数。</li> </ul> <p>这些张量本质上只需要五项信息就能被无损重建：<strong>名字、数据类型、形状、字节数、字节在哪里</strong>。除此之外的一切——模型怎么前向、有哪些自定义算子、训练到了第几步——都不属于”权重”。</p> <p>PyTorch 的 <code class="language-plaintext highlighter-rouge">state_dict</code> 正是这样一张 <code class="language-plaintext highlighter-rouge">name → tensor</code> 的表。问题出在它默认的落盘方式：<code class="language-plaintext highlighter-rouge">torch.save</code> 用 Python 的 pickle 序列化整张表。而 pickle 的设计目标是”重建任意 Python 对象”，所以文件里不仅有张量数据，还有<strong>告诉解释器如何重建这些对象的指令</strong>。</p> <p>这份”额外的能力”就是后面所有安全问题的源头。</p> <h2 id="二一个只有三段的文件">二、一个只有三段的文件</h2> <p>Safetensors 的格式规范短到可以贴在一屏里。整个文件由三段组成：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌──────────────────────────────┐
+│  Header Length   8 字节       │  u64，little-endian
+├──────────────────────────────┤
+│  JSON Header     N 字节       │  UTF-8，必须以 { 开头
+│    name / dtype / shape      │  可用空格补齐到 8 字节对齐
+│    / data_offsets            │
+├──────────────────────────────┤
+│  Tensor Data     裸二进制     │  按 offset 连续排列
+└──────────────────────────────┘
+</code></pre></div></div> <h3 id="1-前-8-个字节一个整数">1. 前 8 个字节：一个整数</h3> <p>文件开头是一个无符号 64 位小端整数 <code class="language-plaintext highlighter-rouge">N</code>，表示 JSON header 的字节长度。</p> <p>为什么需要它？因为读取方必须先知道 header 有多长，才能准确跳到数据区。这一步是 O(1) 的——不需要扫描文件、不需要解析前面的内容。</p> <h3 id="2-json-header一张字节地图">2. JSON Header：一张字节地图</h3> <p>紧接着是 <code class="language-plaintext highlighter-rouge">N</code> 字节的 UTF-8 JSON。下面是我用 <code class="language-plaintext highlighter-rouge">save_file</code> 写出的一个真实文件（只有两个小张量）的 header 原文：</p> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"model.embed_tokens.weight"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"F32"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"shape"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"data_offsets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">128</span><span class="p">]</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"model.layers.0.mlp.gate_proj.weight"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"F32"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"shape"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"data_offsets"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">128</span><span class="p">,</span><span class="w"> </span><span class="mi">192</span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div> <p>三个字段各有明确职责：</p> <table> <thead> <tr> <th>字段</th> <th>含义</th> <th>你需要知道的细节</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">dtype</code></td> <td>元素类型</td> <td> <code class="language-plaintext highlighter-rouge">F64/F32/F16/BF16/I64/I32/I16/I8/U8/BOOL</code>，以及 <code class="language-plaintext highlighter-rouge">F8_E4M3</code> 等 FP8</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">shape</code></td> <td>维度</td> <td>行主序（C order）；<code class="language-plaintext highlighter-rouge">[]</code> 表示标量，允许某一维为 0 的空张量</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">data_offsets</code></td> <td> <code class="language-plaintext highlighter-rouge">[BEGIN, END)</code> 字节区间</td> <td> <strong>相对数据区起点</strong>，不是文件绝对位置；字节数 = <code class="language-plaintext highlighter-rouge">END - BEGIN</code> </td> </tr> </tbody> </table> <p><code class="language-plaintext highlighter-rouge">data_offsets</code> 是整个格式的核心。有了它，读取方能在<strong>不读任何张量数据</strong>的前提下，算出任意一个张量的精确位置和长度。</p> <p>还有一个特殊键 <code class="language-plaintext highlighter-rouge">__metadata__</code>，放的是字符串到字符串的映射（Hugging Face 会写 <code class="language-plaintext highlighter-rouge">{"format": "pt"}</code>）。注意限制：<strong>只允许字符串</strong>，不能嵌套任意 JSON。这一条不是洁癖，是为了让解析器的行为完全可预测。</p> <h3 id="3-tensor-data没有容器的裸数据">3. Tensor Data：没有容器的裸数据</h3> <p>header 之后就是连续的二进制数据。没有 per-tensor 的头部、没有对齐填充块、没有指向上层的指针——第 k 个张量的数据就老老实实躺在 <code class="language-plaintext highlighter-rouge">[offset_k, offset_k + size_k)</code>。</p> <p>我在实验里验证过一件容易被忽略的事：<strong>规范要求整个数据区被完整索引，不能有空洞</strong>。也就是说，所有张量的 <code class="language-plaintext highlighter-rouge">data_offsets</code> 必须不重叠、不遗漏地覆盖整块数据区。</p> <p>这条规则挡住了一类攻击：polyglot 文件——同时是合法 <code class="language-plaintext highlighter-rouge">.safetensors</code>、又是合法 ELF 或 ZIP 的文件。如果允许空洞，攻击者就能在”合法权重文件”的缝隙里塞进可执行内容；不允许空洞，塞进去的字节就必须被某个张量声明，而声明了就会被当成权重读出来。</p> <p>另外两个实现细节值得知道：</p> <ul> <li> <strong>对齐</strong>：header 允许在 JSON 后补若干空格（<code class="language-plaintext highlighter-rouge">0x20</code>），实现通常补到让数据区起点是 8 的倍数。这样 <code class="language-plaintext highlighter-rouge">float32</code>/<code class="language-plaintext highlighter-rouge">float16</code> 张量直接映射到内存就是天然对齐的。</li> <li> <strong>上限</strong>：header 最大 100 MB。否则一个声明了 10 GB JSON 的文件就能让解析器先把自己 OOM 掉。</li> </ul> <h2 id="三安全把可执行从格式里拿掉">三、安全：把”可执行”从格式里拿掉</h2> <p><img src="/assets/img/blog/safetensors-weight-format/fig-02.png" alt="pickle 与 safetensors 的加载路径对比" loading="lazy" decoding="async"></p> <h3 id="pickle-为什么危险">pickle 为什么危险</h3> <p>pickle 不是”数据格式”，而是一门小型虚拟机。它的字节流里有一条 <code class="language-plaintext highlighter-rouge">GLOBAL</code> 指令，作用是”导入某个模块的某个属性”；配合 <code class="language-plaintext highlighter-rouge">REDUCE</code>，就是”拿这些参数调用这个函数”。</p> <p>所以一个对象可以在反序列化时指定”我要被重建时执行什么”：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pickle</span>
+
+<span class="k">class</span> <span class="nc">Harmless</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="nf">return </span><span class="p">(</span><span class="k">print</span><span class="p">,</span> <span class="p">(</span><span class="sh">"</span><span class="s">[side effect] code from the checkpoint ran</span><span class="sh">"</span><span class="p">,))</span>
+
+<span class="n">payload</span> <span class="o">=</span> <span class="n">pickle</span><span class="p">.</span><span class="nf">dumps</span><span class="p">({</span><span class="sh">"</span><span class="s">w</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">x</span><span class="sh">"</span><span class="p">:</span> <span class="nc">Harmless</span><span class="p">()})</span>
+<span class="n">pickle</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>   <span class="c1"># 打印：[side effect] code from the checkpoint ran
+</span></code></pre></div></div> <p>我实际跑了这段代码：<strong>485 字节的 pickle，在 <code class="language-plaintext highlighter-rouge">loads</code> 的那一刻执行了里面的函数</strong>。这不是漏洞，是 pickle 的设计功能——它需要靠执行代码来重建对象。</p> <p>把这个能力放进”从互联网下载模型权重”的场景，结论就很清楚了：<strong>加载 <code class="language-plaintext highlighter-rouge">.bin</code> 等价于运行别人给你的代码</strong>。</p> <p>更麻烦的是，这条防线一直在被推后移：</p> <ul> <li>PyTorch 长期推荐 <code class="language-plaintext highlighter-rouge">torch.load(..., weights_only=True)</code> 作为缓解。</li> <li>2025 年的 <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-32434" rel="external nofollow noopener" target="_blank">CVE-2025-32434</a> 证明这个白名单<strong>可以被绕过</strong>，torch ≤ 2.5.1 受影响，2.6.0 修复（CVSS 4.0 评分 HIGH）。</li> <li>torch 2.6 起，<code class="language-plaintext highlighter-rouge">torch.load</code> 的 <code class="language-plaintext highlighter-rouge">weights_only</code> 默认值改为 <code class="language-plaintext highlighter-rouge">True</code>。</li> </ul> <p>只要格式本身允许”重建对象”，安全就永远是补丁式的。</p> <h3 id="safetensors-的做法只描述数据在哪">Safetensors 的做法：只描述数据在哪</h3> <p>Safetensors 把整条链路换成：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>读 8 字节长度 → 解析 JSON → 校验偏移 → 生成张量视图
+</code></pre></div></div> <p>没有任何一步需要执行文件里的内容。Rust 实现会在生成视图之前做结构性校验：</p> <ol> <li>header 长度合法（≤ 100 MB），且必须以 <code class="language-plaintext highlighter-rouge">{</code> 开头；</li> <li>每个张量的 <code class="language-plaintext highlighter-rouge">dtype × shape</code> 与 <code class="language-plaintext highlighter-rouge">data_offsets</code> 声明的字节数一致；</li> <li>偏移不越界；</li> <li>张量之间不重叠；</li> <li>数据区被完整覆盖（无空洞、无截断）。</li> </ol> <p>我构造了三个畸形文件来验证（结果来自实测）：</p> <table> <thead> <tr> <th>构造的破坏</th> <th>结果</th> </tr> </thead> <tbody> <tr> <td>把某个张量的 <code class="language-plaintext highlighter-rouge">END</code> 改大</td> <td><code class="language-plaintext highlighter-rouge">invalid shape, data type, or offset for tensor</code></td> </tr> <tr> <td>让两个张量区域重叠</td> <td><code class="language-plaintext highlighter-rouge">invalid offset for tensor `model.layers.3.self_attn.o_proj.weight`</code></td> </tr> <tr> <td>截断数据区 4 个字节</td> <td><code class="language-plaintext highlighter-rouge">incomplete metadata, file not fully covered</code></td> </tr> </tbody> </table> <p>三条都是<strong>整份拒绝</strong>，而不是”尽力加载”。这一点比很多人以为的更重要：一个能”部分加载”的格式，会让损坏的文件悄悄变成看起来正常的模型。</p> <h3 id="但安全边界到此为止">但安全边界到此为止</h3> <p>需要把话说清楚，避免过度承诺：</p> <ul> <li> <strong>Safetensors 不检查数值。</strong> <code class="language-plaintext highlighter-rouge">NaN</code>、<code class="language-plaintext highlighter-rouge">Inf</code>、异常大的权重都能合法存进去。README 里写得很明白：tensor values are not checked。</li> <li> <strong>格式没有校验和。</strong> 它不负责证明”这份权重就是你想要的那一份”。完整性要靠外部机制：Hugging Face 的 SHA256/Xet、Git LFS 的 OID、你自己签名的 manifest。</li> <li> <strong>模型供应链是另一层问题。</strong> 后门权重、投毒微调、许可证问题，格式一概管不了。</li> </ul> <p>一句话：<strong>Safetensors 消除的是”序列化执行风险”，不是”模型可信问题”。</strong></p> <h2 id="四零拷贝到底零掉了什么">四、”零拷贝”到底零掉了什么</h2> <p>这是最容易被说糊的一段。先把两条路径摊开。</p> <p>传统 <code class="language-plaintext highlighter-rouge">torch.load</code> 的链路是：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>磁盘 → 读入用户态缓冲区 → 反序列化（构造 Python 对象）→ 分配张量内存 → 拷贝数据 → 模型
+</code></pre></div></div> <p>Safetensors 的链路是：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>磁盘 → mmap 建立映射 → 按 offset 在映射区域取视图 → 模型
+</code></pre></div></div> <p>关键在于第二步：张量不是”被读进来的”，而是”被指向的”。数据仍然在页缓存里，进程只是拿到了一段虚拟地址。</p> <h3 id="实测">实测</h3> <p>我用一份合成的 Llama 风格 checkpoint 做对比：43 个张量、2.44 GiB，同一台机器、同一份数据，分别存成 <code class="language-plaintext highlighter-rouge">.safetensors</code> 和 <code class="language-plaintext highlighter-rouge">.bin</code>。</p> <table> <thead> <tr> <th>指标</th> <th style="text-align: right">safetensors <code class="language-plaintext highlighter-rouge">load_file</code> </th> <th style="text-align: right"><code class="language-plaintext highlighter-rouge">torch.load(weights_only=True)</code></th> </tr> </thead> <tbody> <tr> <td>保存耗时</td> <td style="text-align: right">3.02 s</td> <td style="text-align: right">3.76 s</td> </tr> <tr> <td>加载返回耗时</td> <td style="text-align: right"><strong>3.0 ms</strong></td> <td style="text-align: right"><strong>1.57 s</strong></td> </tr> <tr> <td>加载后常驻内存增量</td> <td style="text-align: right"><strong>1.1 MiB</strong></td> <td style="text-align: right"><strong>2446 MiB</strong></td> </tr> <tr> <td>逐个访问全部张量首尾</td> <td style="text-align: right">12.5 ms</td> <td style="text-align: right">3.6 ms</td> </tr> </tbody> </table> <p>前两行说明零拷贝的价值：<code class="language-plaintext highlighter-rouge">torch.load</code> 必须把 2.44 GiB 完整复制进用户态堆，进程 RSS 直接涨 2.4 GB；<code class="language-plaintext highlighter-rouge">load_file</code> 只建立映射，RSS 几乎不动。</p> <p>第三行是很多人会漏掉的细节：<strong>映射不等于数据已经在内存里</strong>。第一次访问某个页会触发缺页中断，把数据从页缓存映射进来。所以”访问全部张量”这步，safetensors 反而要花 12.5 ms——它把成本推到了真正用到数据的时候。这仍然是净赚：那 2.4 GB 里，多卡推理时你可能永远用不到别的卡负责的那部分。</p> <p><img src="/assets/img/blog/safetensors-weight-format/fig-03.png" alt="内存与耗时对比" loading="lazy" decoding="async"></p> <h3 id="三个必须澄清的边界">三个必须澄清的边界</h3> <ol> <li> <strong>header 不是零拷贝。</strong> JSON 总要被解析成结构体。但 header 通常只有几 KB 到几 MB，相对于几百 GB 的数据可以忽略。</li> <li> <strong>GPU 上一定有拷贝。</strong> 显存没有”磁盘页缓存”这种东西，权重必须从主机内存传到显存。Safetensors 省掉的是”CPU 上多分配一份完整副本”，不是 <code class="language-plaintext highlighter-rouge">cudaMemcpy</code> 本身。官方 benchmark 里 CPU 快 76.6 倍、GPU（T4）只快 2.1 倍，原因就在这里。</li> <li> <strong><code class="language-plaintext highlighter-rouge">load_file</code> 返回的映射张量不是”可以随便改的副本”。</strong> 写入是私有映射，不会回写文件；想改文件得自己用读写模式映射——这正是第六节要做的事。</li> </ol> <p>官方 README 还记录了一个著名的工程收益：BLOOM 在 8 卡上加载，从原来 PyTorch 权重的约 10 分钟降到 45 秒。这个数字来自特定环境，但它说明的是同一件事：省掉的不是 IO，而是”为了拿到一个张量而必须先构造整个对象图”。</p> <h2 id="五懒加载只碰你需要的那几百-mb">五、懒加载：只碰你需要的那几百 MB</h2> <p>有了 offset 表，”只读一部分”就不需要任何特殊支持，它是格式的自然结果。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">safetensors</span> <span class="kn">import</span> <span class="n">safe_open</span>
+
+<span class="k">with</span> <span class="nf">safe_open</span><span class="p">(</span><span class="sh">"</span><span class="s">model.safetensors</span><span class="sh">"</span><span class="p">,</span> <span class="n">framework</span><span class="o">=</span><span class="sh">"</span><span class="s">pt</span><span class="sh">"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="sh">"</span><span class="s">cpu</span><span class="sh">"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="c1"># 只要形状，不读数据
+</span>    <span class="n">slice_</span> <span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="nf">get_slice</span><span class="p">(</span><span class="sh">"</span><span class="s">model.embed_tokens.weight</span><span class="sh">"</span><span class="p">)</span>
+    <span class="n">vocab</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">slice_</span><span class="p">.</span><span class="nf">get_shape</span><span class="p">()</span>
+
+    <span class="c1"># 只要前 128 列
+</span>    <span class="n">part</span> <span class="o">=</span> <span class="n">slice_</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">128</span><span class="p">]</span>
+
+    <span class="c1"># 只要一个张量
+</span>    <span class="n">q</span> <span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="nf">get_tensor</span><span class="p">(</span><span class="sh">"</span><span class="s">model.layers.3.self_attn.q_proj.weight</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">get_slice</code> 返回的是一个可切片的视图对象，<code class="language-plaintext highlighter-rouge">[:, :128]</code> 只读那部分字节。实测中，读一个 45 MiB 的完整张量和读它 8 行（0.17 MiB）都在 1 ms 以内——因为两者都没有真正把数据全部搬进内存。</p> <h3 id="分片仓库约定不是格式规定">分片：仓库约定，不是格式规定</h3> <p>真正的百亿、千亿参数模型不会只有一个文件。Hugging Face 仓库里常见的是：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model-00001-of-00004.safetensors
+model-00002-of-00004.safetensors
+model-00003-of-00004.safetensors
+model-00004-of-00004.safetensors
+model.safetensors.index.json
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">index.json</code> 是一张 <code class="language-plaintext highlighter-rouge">weight_map</code>，把张量名映射到分片文件名：</p> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"total_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">16060522496</span><span class="w"> </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"weight_map"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"model.embed_tokens.weight"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model-00001-of-00004.safetensors"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"model.layers.0.self_attn.q_proj.weight"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model-00001-of-00004.safetensors"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"model.layers.20.self_attn.q_proj.weight"</span><span class="p">:</span><span class="w"> </span><span class="s2">"model-00003-of-00004.safetensors"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div> <p><strong>这里要区分两件事</strong>：Safetensors 格式本身完全不知道”分片”和”index”的存在——它只是一堆独立的单文件；分片和 <code class="language-plaintext highlighter-rouge">weight_map</code> 是<strong>模型仓库的组织约定</strong>，由 Transformers 一类的加载器实现。</p> <p>这个组合带来的实际能力是：第 0 号 GPU 只需要读 <code class="language-plaintext highlighter-rouge">model-00001</code> 里的 embedding 和前几层，第 2 号 GPU 只需要读 <code class="language-plaintext highlighter-rouge">model-00003</code>。每张卡都不需要先加载完整模型再挑自己那份。</p> <p>README 里还有一个更微妙的优势，叫 <strong>layout control</strong>：光是”能懒加载”不够，还得让每个张量的数据在文件里<strong>挨在一起</strong>。如果张量的元信息分散在文件各处，即使能惰性读取，你也得随机访问大半个文件才能凑齐一个张量，磁盘到内存的拷贝次数反而变多。Safetensors 把同名张量的 header 和数据都集中放置，正是为了这一点。</p> <h2 id="六把它当文件用不加载模型改掉一个-attention-head">六、把它当文件用：不加载模型，改掉一个 Attention Head</h2> <p>前面都是”读”。但格式设计同样决定了<strong>写</strong>能做到什么程度——这一点和模型权重拆分、权重编辑、Deletion Tuning 这些方向直接相关。</p> <p>假设我想把第 3 层 <code class="language-plaintext highlighter-rouge">q_proj</code> 的某 128 行权重置零（可以理解为消掉一簇 attention head 的贡献）。传统做法是：<code class="language-plaintext highlighter-rouge">load</code> 整个模型 → 改内存里的张量 → <code class="language-plaintext highlighter-rouge">save</code> 重新写一遍。2.44 GiB 的文件，实测这条路要 <strong>28.37 秒</strong>，还要求峰值内存能装下 2.4 GB。</p> <p>用 Safetensors，根本不需要加载模型：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">json</span><span class="p">,</span> <span class="n">struct</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="n">path</span> <span class="o">=</span> <span class="sh">"</span><span class="s">big.safetensors</span><span class="sh">"</span>
+
+<span class="c1"># 1. 只读 8 字节长度 + header
+</span><span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sh">"</span><span class="s">rb</span><span class="sh">"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">struct</span><span class="p">.</span><span class="nf">unpack</span><span class="p">(</span><span class="sh">"</span><span class="s">&lt;Q</span><span class="sh">"</span><span class="p">,</span> <span class="n">f</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="mi">8</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+<span class="c1"># 2. 从 header 里算出目标张量的绝对偏移
+</span><span class="n">key</span> <span class="o">=</span> <span class="sh">"</span><span class="s">model.layers.3.self_attn.q_proj.weight</span><span class="sh">"</span>
+<span class="n">begin</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="sh">"</span><span class="s">data_offsets</span><span class="sh">"</span><span class="p">]</span>
+<span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="sh">"</span><span class="s">shape</span><span class="sh">"</span><span class="p">]</span>
+
+<span class="c1"># 3. 以读写模式映射这一块，就地修改
+</span><span class="n">mm</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">memmap</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">"</span><span class="s">r+</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">offset</span><span class="o">=</span><span class="mi">8</span> <span class="o">+</span> <span class="n">n</span> <span class="o">+</span> <span class="n">begin</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">mm</span><span class="p">[</span><span class="mi">1024</span><span class="p">:</span><span class="mi">1152</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">mm</span><span class="p">.</span><span class="nf">flush</span><span class="p">()</span>
+</code></pre></div></div> <p>实测：<strong>5.87 ms</strong>，改的是 128 × 4096 个 <code class="language-plaintext highlighter-rouge">float16</code>（1 MiB）。相对 28.37 秒的完整重写，快了约 <strong>4800 倍</strong>。</p> <p>改完要验证的不是”跑起来不报错”，而是<strong>只有目标区域变了</strong>：</p> <table> <thead> <tr> <th>检查项</th> <th>结果</th> </tr> </thead> <tbody> <tr> <td>目标块全零</td> <td>✅</td> </tr> <tr> <td>第 1023 行、第 1152 行未受影响</td> <td>✅</td> </tr> <tr> <td>其余 42 个张量与原文逐字节相同</td> <td>✅</td> </tr> <tr> <td>文件大小不变</td> <td>✅</td> </tr> </tbody> </table> <p>这件事之所以成立，是四个设计决定的叠加：</p> <ol> <li> <strong>offset 表</strong>让你能在 O(1) 内定位任意张量，不需要解析其余数据；</li> <li> <strong>8 字节对齐</strong>让 <code class="language-plaintext highlighter-rouge">float16</code> 张量可以直接用裸内存视图访问，不需要中转缓冲；</li> <li> <strong>行主序 + 连续布局</strong>让”取某些行”是一段连续的字节，而不是散落各处的碎片；</li> <li> <strong>张量之间没有共享结构</strong>，改一个张量不会牵动其他张量的偏移。</li> </ol> <h3 id="为什么这件事对权重编程重要">为什么这件事对”权重编程”重要</h3> <p>这直接解释了为什么 Deletion Tuning 那类方法能做得那么轻。那篇工作学到的适配器是<strong>每个权重 1 个比特</strong>的掩码：Llama-3-8B 的掩码 8.4 MB，而全量微调的适配器是 30,633 MB。掩码要生效，就是把 <code class="language-plaintext highlighter-rouge">W ⊙ 1[G &gt; 0]</code> 落到权重上——如果每应用一次掩码都要读写一遍整个 checkpoint，这种”1 bit/weight”的优雅就会被工程成本吃掉。</p> <p>有了可随机访问的格式，”应用掩码”可以退化成：读 header、定位需要改的张量块、就地写回。甚至可以只改被删除的那 0.05% 参数——它们本来就很稀疏。</p> <p>同样受益的还有：</p> <ul> <li> <strong>权重拆分</strong>：按层/按张量把一个大文件拆成几份，只需要按 offset 复制区间，不需要反序列化再序列化。</li> <li> <strong>模型调试</strong>：想对比两个 checkpoint 的某一层差异，读那一个张量就够，不必把 140 GB 读进内存。</li> <li> <strong>增量分发</strong>：只传变化的张量块。</li> </ul> <h3 id="代价没有事务也没有校验和">代价：没有事务，也没有校验和</h3> <p>这种”直接改文件”的能力是双刃剑：</p> <ul> <li>写坏了就是写坏了。格式里没有校验和，也没有事务日志，进程中途崩溃会留下一个结构合法但内容损坏的文件。</li> <li>实践上必须：先留副本或计算哈希、改完用 <code class="language-plaintext highlighter-rouge">load_file</code> 重新打开验证结构、对关键张量做逐字节比对。</li> <li>非 1/2/4/8 字节的 dtype（比如 FP8、4-bit 打包）会让”按元素寻址”变得麻烦，任意切片可能落到非对齐地址，官方实现会直接报错而不是悄悄读错。</li> </ul> <h2 id="七和其他格式比它站在哪">七、和其他格式比，它站在哪</h2> <p>不同格式的设计目标不同，硬要比”谁更好”没有意义。Safetensors README 里的对照表维度选得很准，我按它的口径整理（✓ 表示支持，~ 表示部分支持）：</p> <table> <thead> <tr> <th>格式</th> <th>安全（不执行代码）</th> <th>零拷贝</th> <th>懒加载</th> <th>无文件大小上限</th> <th>布局可控</th> <th>灵活性</th> <th>BF16/FP8</th> </tr> </thead> <tbody> <tr> <td>pickle (PyTorch)</td> <td>✗</td> <td>✗</td> <td>✗</td> <td>✓</td> <td>✗</td> <td>✓</td> <td>✓</td> </tr> <tr> <td>HDF5</td> <td>✓</td> <td>✗</td> <td>✓</td> <td>✓</td> <td>~</td> <td>~</td> <td>✗</td> </tr> <tr> <td>SavedModel (TF)</td> <td>✓</td> <td>✗</td> <td>✗</td> <td>✓</td> <td>✓</td> <td>✗</td> <td>✓</td> </tr> <tr> <td>MsgPack (Flax)</td> <td>✓</td> <td>✓</td> <td>✗</td> <td>✓</td> <td>✗</td> <td>✗</td> <td>✓</td> </tr> <tr> <td>Protobuf (ONNX)</td> <td>✓</td> <td>✗</td> <td>✗</td> <td>✗（2 GB 上限）</td> <td>✗</td> <td>✗</td> <td>✓</td> </tr> <tr> <td>NumPy NPZ</td> <td>✓</td> <td>✗</td> <td>✗</td> <td>✗</td> <td>✓</td> <td>✗</td> <td>✗</td> </tr> <tr> <td><strong>Safetensors</strong></td> <td><strong>✓</strong></td> <td><strong>✓</strong></td> <td><strong>✓</strong></td> <td><strong>✓</strong></td> <td><strong>✓</strong></td> <td><strong>✗</strong></td> <td><strong>✓</strong></td> </tr> </tbody> </table> <p>“灵活性 ✗”是它的自我限定：<strong>不能存自定义代码、不能存任意对象</strong>。这不是缺陷，是它用功能换来的安全属性。</p> <p>两个常见的比较对象值得单独说：</p> <ul> <li> <strong>ONNX</strong> 存的是<strong>计算图 + 算子 + 权重</strong>，解决”跨框架交换模型”；Safetensors 只存权重，解决”安全高效地搬参数”。二者不是替代关系——ONNX 自己的外部权重也可以存成 Safetensors。</li> <li> <strong>GGUF</strong>（llama.cpp 的格式）把<strong>量化块结构</strong>做进了格式：k-quant 的分块缩放因子、张量级的量化元数据，都是为 CPU/端侧推理服务的。Safetensors 不做量化，它存原始精度的权重，量化发生在加载时或另存为 GGUF 时。两者常常在同一条流水线上：HF 上发行 Safetensors，转换脚本读它、量化、写出 GGUF。</li> </ul> <h2 id="八局限它明确不做什么">八、局限：它明确不做什么</h2> <p>把边界列清楚，比罗列优点更有用。</p> <ol> <li> <strong>不保存计算图。</strong> 层与层的调用关系、Attention 的实现、自定义算子，统统不在文件里。你需要 <code class="language-plaintext highlighter-rouge">config.json</code> 和模型代码才能把它变成可运行的模型。</li> <li> <strong>不保存任意 Python 对象。</strong> 优化器状态、训练器配置、自定义类，不能直接塞进来（只能以字符串元数据的形式记录少量信息）。</li> <li> <strong>不做压缩，也不做量化。</strong> 同样的 FP16 权重存成 Safetensors 不会变小。体积取决于张量数量、形状、dtype 和数值本身；要减体积得靠量化、剪枝、低秩分解。</li> <li> <strong>没有校验和、没有加密、没有签名。</strong> 完整性、来源可信、访问控制，都要在格式之外解决。</li> <li> <strong>不保证跨文件系统的 mmap 行为。</strong> 在网络文件系统上，内存映射的语义和性能可能与本地磁盘差异很大；某些场景下老老实实顺序读反而更快。</li> <li> <strong>张量数量极多时 header 会变大。</strong> 十万个小张量的 header 可能到几十 MB，解析成本不再可以忽略——这时应该合并小张量或调整布局。</li> <li> <strong>不支持 strided 张量。</strong> 写入前必须 <code class="language-plaintext highlighter-rouge">contiguous()</code>，这是一个常见但很容易撞上的坑。</li> </ol> <h2 id="九在生态里的位置">九、在生态里的位置</h2> <p>Safetensors 已经不是”一个可选格式”，而是默认选项：</p> <ul> <li> <strong>训练/微调</strong>：Transformers 的 <code class="language-plaintext highlighter-rouge">save_pretrained</code> 默认 <code class="language-plaintext highlighter-rouge">safe_serialization=True</code>；PEFT 的 adapter 也是 Safetensors。</li> <li> <strong>推理</strong>：vLLM、TensorRT-LLM、SGLang 直接读 Safetensors 分片；llama.cpp 通过转换脚本读入再量化成 GGUF。</li> <li> <strong>扩散模型</strong>：Diffusers、ComfyUI、Stable Diffusion WebUI 全面使用。</li> <li> <strong>端侧/其他语言</strong>：MLX（Apple）、Candle（Rust）、<code class="language-plaintext highlighter-rouge">safetensors</code> 的 Rust/Node/Python 绑定。</li> </ul> <p>一个典型的 HF 模型目录长这样：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>model/
+├── config.json                 # 架构与超参（决定怎么解释权重）
+├── generation_config.json       # 默认生成参数
+├── model.safetensors            # 权重
+├── tokenizer.json               # 分词器与词表
+└── tokenizer_config.json        # 分词器配置
+</code></pre></div></div> <p>职责分离得很清楚：<strong><code class="language-plaintext highlighter-rouge">config.json</code> 决定”这些张量怎么用”，Safetensors 只负责”这些张量在哪”。</strong></p> <h3 id="从旧格式迁移">从旧格式迁移</h3> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">from</span> <span class="n">safetensors.torch</span> <span class="kn">import</span> <span class="n">save_file</span><span class="p">,</span> <span class="n">load_file</span>
+
+<span class="c1"># 1. 只在确认来源可信时，用 weights_only=True 读旧文件
+</span><span class="n">state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">"</span><span class="s">pytorch_model.bin</span><span class="sh">"</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="sh">"</span><span class="s">cpu</span><span class="sh">"</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># 2. 直接写 Safetensors（要求张量连续、不共享存储）
+</span><span class="n">state_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">.</span><span class="nf">contiguous</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">.</span><span class="nf">items</span><span class="p">()}</span>
+<span class="nf">save_file</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="sh">"</span><span class="s">model.safetensors</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># 3. 以后这样读
+</span><span class="n">state_dict</span> <span class="o">=</span> <span class="nf">load_file</span><span class="p">(</span><span class="sh">"</span><span class="s">model.safetensors</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">model</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span>
+</code></pre></div></div> <p>两个容易踩的点：</p> <ul> <li> <strong>共享存储的张量</strong>（比如 tied embeddings）会让 <code class="language-plaintext highlighter-rouge">save_file</code> 报错。要么 <code class="language-plaintext highlighter-rouge">clone()</code> 展开，要么用 <code class="language-plaintext highlighter-rouge">save_model</code> 处理共享。</li> <li> <strong>转换不能”洗白”来源。</strong> 把恶意 pickle 转成 Safetensors 时，恶意代码已经在你机器上执行过了。转换的价值在于<strong>此后</strong>的分发是安全的。</li> </ul> <h2 id="十总结把数据和指令分开">十、总结：把”数据”和”指令”分开</h2> <p>Safetensors 最值得学的地方，不是它有多快，而是它的<strong>克制</strong>。</p> <p>它没有去设计一个能表达计算图、能存优化器状态、能塞自定义算子的”模型容器”。它只回答一个问题：<strong>给定一张”名字 → 字节区间”的表，能不能安全、零成本地把张量交给上层？</strong></p> <p>为此它做了几件很朴素的事：</p> <ul> <li>用 8 字节长度 + JSON 描述布局，任何语言几十行就能实现解析；</li> <li>把”可执行”从格式里彻底剥离，安全不再是补丁；</li> <li>让每个张量的位置可以 O(1) 计算，于是懒加载、切片、分片、原地修改全都成了自然结果；</li> <li>用”数据区必须被完整索引”这种约束，堵住 polyglot 这类结构性攻击。</li> </ul> <p>从整个技术栈看，三个环节分工清晰：<strong>训练决定权重如何产生，Safetensors 决定权重如何保存和分发，推理框架决定权重如何被执行。</strong></p> <p>而它的 offset 设计还打开了一个更有意思的方向：当权重文件从”一个不透明的 blob”变成”一张可寻址的表”，<strong>权重就不再只能整体加载，而可以被精确地读取、比较、修改和局部替换</strong>。这正是权重拆分、模型调试、以及 Deletion Tuning 这类”只改一点点权重”的方法，能够从论文走到工程的前提。</p> <p><strong>延伸阅读</strong></p> <table> <thead> <tr> <th>项目 / 资料</th> <th>关注点</th> </tr> </thead> <tbody> <tr> <td><a href="https://github.com/safetensors/safetensors" rel="external nofollow noopener" target="_blank">safetensors</a></td> <td>格式规范与 Rust/Python 实现</td> </tr> <tr> <td><a href="https://huggingface.co/docs/safetensors/index" rel="external nofollow noopener" target="_blank">Safetensors 文档</a></td> <td>API、速度对比、迁移指南</td> </tr> <tr> <td><a href="https://github.com/agentic-learning-ai-lab/deleting-weights" rel="external nofollow noopener" target="_blank">Deleting Weights</a></td> <td>1 bit/weight 的掩码式后训练</td> </tr> <tr> <td><a href="https://github.com/huggingface/transformers" rel="external nofollow noopener" target="_blank">Transformers</a></td> <td>权重加载、分片与 index 的实现</td> </tr> <tr> <td><a href="https://github.com/ggerganov/llama.cpp" rel="external nofollow noopener" target="_blank">llama.cpp</a></td> <td>GGUF 格式与量化流水线</td> </tr> <tr> <td><a href="https://github.com/vllm-project/vllm" rel="external nofollow noopener" target="_blank">vLLM</a></td> <td>高性能加载与分布式推理</td> </tr> </tbody> </table> <blockquote> <p>实验环境：Windows 11 / Python 3.11.9 / torch 2.14.1+cpu / safetensors 0.8.0，2.44 GiB 合成 Llama 风格 checkpoint（43 个张量），CPU-only，计时取 3 次最优。文中所有耗时与内存数字均来自本机实测，不同硬件与文件系统会有差异。</p> </blockquote> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deleting-weights-deletion-tuning/">删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/freetoken-edge-moe-serving/">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deepseek-v4-weight-editing/">DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/idol-image-to-3d-gaussian/">Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
