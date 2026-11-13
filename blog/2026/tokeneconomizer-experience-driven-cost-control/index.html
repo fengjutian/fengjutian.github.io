@@ -1,0 +1,517 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/tokeneconomizer-experience-driven-cost-control/"> <meta property="og:description" content="从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/tokeneconomizer-experience-driven-cost-control.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价"> <meta name="twitter:description" content="从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/tokeneconomizer-experience-driven-cost-control.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/tokeneconomizer-experience-driven-cost-control/",
+        "@type": "BlogPosting",
+        "description": "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        "headline": "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/tokeneconomizer-experience-driven-cost-control/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>一个 Coding Agent 在同一个仓库里跑到第 30 个任务，仍然可能重新发现「这个项目的测试要用 <code class="language-plaintext highlighter-rouge">python -m pytest</code>」，并且为这次重新发现付费。</p> <p>这句话以前是抱怨，现在有数字了。微软研究院和 UC Berkeley 的 TokenEconomizer 在 60 条未修改 agent 的 SWE-Bench 轨迹上量了三件事：每轮随请求发出的 23 个工具定义里有 <strong>16 个从未被调用</strong>；失败任务只占 17%，却吃掉 <strong>32% 的花费</strong>；仓库里积累 5 个任务之后，<strong>30% 的工具调用在重复前面已经做过的动作</strong>。</p> <ul> <li>GitHub：<a href="https://github.com/microsoft/TokenEconomizer" rel="external nofollow noopener" target="_blank">microsoft/TokenEconomizer</a>（Apache-2.0，Python 3.10+）</li> <li>论文：<a href="https://arxiv.org/abs/2610.22732" rel="external nofollow noopener" target="_blank">arXiv 2610.22732</a>（2026-10-15，CC BY 4.0）</li> <li>项目主页：<a href="https://tokeneconomizer.github.io/" rel="external nofollow noopener" target="_blank">tokeneconomizer.github.io</a> </li> </ul> <p>本文只讲一件事：<strong>它把成本的计量单位从「任务」换成了「仓库序列」。</strong> 三个机制都是这个换位的结果，包括它们在论文里和发布版插件里不一致的那几处。</p> <h2 id="一省-token-这件事为什么一直做不对">一、省 token 这件事，为什么一直做不对</h2> <p>先把账单拆开。agent 每转一轮，都要重新发出系统指令、每个工具的完整定义、以及到目前为止的全部历史。prompt cache 给这些重复内容打折，但<strong>打折不是免费</strong>——论文的原话是 “caching discounts this replayed context but does not eliminate its cost”。</p> <p>已有的优化几乎都作用在单个任务上：</p> <table> <thead> <tr> <th>路子</th> <th>怎么省</th> <th>代价</th> </tr> </thead> <tbody> <tr> <td>降低推理强度</td> <td>少想</td> <td>Pass@1 掉 1.8–10.3 个百分点</td> </tr> <tr> <td>手工改工具集</td> <td>少发几个工具定义</td> <td>靠人猜，且不随任务变化</td> </tr> <tr> <td>轨迹压缩 / 观察过滤</td> <td>把历史压短</td> <td>要改 agent loop 或训练额外组件，不通用</td> </tr> <tr> <td>加 MCP 服务器</td> <td>让 agent 找符号更快</td> <td>多一份工具定义，每轮都要付费</td> </tr> </tbody> </table> <p>注意最后一行。这篇论文测了三个流行的固定策略：RTK（把命令输出压短）、Serena（加语义代码导航）、Aider 的 RepoMap（把仓库符号地图塞进指令）。同一套配置跑遍 6 个仓库，结果是：</p> <blockquote> <p>三个策略<strong>都在 Django 上更便宜、在 SymPy 上更贵</strong>；scikit-learn 上只有 RTK 有效，Sphinx 上只有 RepoMap 有效。</p> </blockquote> <p>没有一个固定策略处处更便宜。把它们混在一起平均，效果接近零——不是因为它们没用，而是因为<strong>在 A 仓库赚的钱被在 B 仓库亏的钱抵消了</strong>。这是我读完第二节最直接的感受：成本不是 agent 的属性，是 agent 和仓库这一对的属性。</p> <p>所以论文把优化对象改了：不再优化「一次任务」，而是优化同一仓库里连续任务流（<code class="language-plaintext highlighter-rouge">τ1 … τn</code>）的<strong>累积成本</strong>。</p> <h2 id="二可削减的成本长什么样">二、可削减的成本长什么样</h2> <p><img src="/assets/img/blog/tokeneconomizer-experience-driven-cost-control/fig-01-three-wastes.png" alt="三个可削减的成本来源"></p> <p><em>60 条未修改 agent 的轨迹：每一条浪费都对应一个自适应策略，而不是一个固定开关。</em></p> <p>三个数字值得各自多说一句。</p> <p><strong>16 / 23。</strong> agent 每轮看到 23 个工具 schema，可没有任何一个仓库调用超过 7 个；16 个从未被调用，而调用量最高的 3 个工具占了全部调用的 98%。这意味着一份很大的固定开销，换来的边际能力很小。</p> <p><strong>30%。</strong> 「运维性动作」——装依赖、跑测试、看目录——在至少一半任务里重复出现，占工具调用收发字节的 12–28%。关键是趋势：第二个、第三个任务只有 14% 的调用匹配前序动作，一旦前面排了至少 5 个任务，这个比例升到 30%。而拿另一个仓库的完整历史去匹配，只有 7% 命中。</p> <p>这就是「仓库内规律」和「通用规律」的分界线：<strong>7% 是换个仓库也能复用的通用部分，30% 里剩下的那部分只在同一个仓库里出现——可以被记住，但没有人替它记住。</strong></p> <p><strong>17% → 32%。</strong> 失败的执行占任务数的 17%，却占掉 32% 的钱。60 条轨迹里有 45 条重复过更早的失败签名，51% 的花费发生在某条轨迹第一次重复之后。</p> <p>但这里有一句论文自己写下的反证，很多二手介绍都漏了：<strong>50 条成功轨迹里，也有 36 条重复过失败签名</strong>，而且重复之后过半的花费落在最终成功的那批轨迹里。所以「重复」不能当失败的判据，只能当「值得看一眼」的信号。第三道机制的全部设计难度都在这里。</p> <h2 id="三micro-skills一条事实要过几道闸门">三、micro-skills：一条事实要过几道闸门</h2> <p><img src="/assets/img/blog/tokeneconomizer-experience-driven-cost-control/fig-02-microskill-gate.png" alt="微技能的证据闸门"></p> <p><em>提议是模型的事，验证不是——检测器是可执行的，所以「经验」在这里可以被反证。</em></p> <p>机制分两段。上半段是生产：每 5 个任务，一个 LLM proposer 把近期轨迹压成 digest（命令模板、测试调用、报错、改过的文件），起草几条候选事实，每条都带一个<strong>可执行检测器</strong>——正则或内置谓词，能在真实轨迹上跑。</p> <p>下半段是验证，也是最容易被讲漏的部分。每个任务结束后，检测器在轨迹上做三种判定：</p> <ol> <li> <strong>scope</strong>：这条事实针对的情境出现了没有（比如「写复现脚本」这条，只有在 agent 真的去写脚本时才算被触发）；</li> <li> <strong>confirmed / contradicted</strong>：用对了，还是被反证了（比如事实说某包装好了，结果 import 报错）；</li> <li> <strong>need</strong>：这次是真的需要它，还是恰好路过。</li> </ol> <p>然后过两道闸门才允许注入：</p> <ul> <li> <strong>n = 3，且三个任务的「编辑文件集不重叠」。</strong> 同一条事实在同一个文件上被反复确认，不算数——那可能是某次 issue 的局部知识，不是仓库规律。</li> <li> <strong>need rate ≥ 0.4。</strong> 用得上它的任务，占「触发过它」的任务的比例，低于 0.4 就压住不注入。理由是：每轮重复一条没用的提示，本身也是要付费的。</li> </ul> <p>退出机制有一处刻意的不对称。支持度写成 $q_i(f) = \sum_{j&lt;i} \gamma^{i-j}\left(\mathbf{1}[\text{confirm}] - \lambda\,\mathbf{1}[\text{contradict}]\right)$，其中 $\gamma = 0.8$ 让旧证据衰减，$\lambda = 5$ 让<strong>一次反证抵五次确认</strong>。跌破 0 就永久退休，同一个 id 不会再被启用。</p> <p>论文给的解释很实在：两种错误的代价不对称。该退休没退休的事实，会在此后每一轮的指令前缀里重复计费；而退休太急的事实，换个 id 还能重新提议。</p> <p>我认为这是全文最值得抄的一处设计：<strong>它把「记忆」写成了一个带假阴性/假阳性不对称代价的判定问题</strong>，而不是一个「把上次的总结塞进 system prompt」的工程活。</p> <h2 id="四工具裁剪先保核心再谈裁谁">四、工具裁剪：先保核心，再谈裁谁</h2> <p>第二个机制反而简单，但细节全在边界条件上。</p> <p><strong>永远保留</strong> shell 执行和文件读/写/编辑这几类核心工具，其余工具在连续 $k = 3$ 个任务都没被调用后屏蔽。对从未调用过的工具，再加一个 LLM judge，用工具描述和当前任务描述判断相关性——<strong>判断前先把任务描述里指向 PR、issue、commit、文件的链接 mask 掉</strong>，否则 judge 会靠「任务提到了 <code class="language-plaintext highlighter-rouge">.ipynb</code>」这种捷径反推出「需要 Notebook 工具」。</p> <p>还有一道定期回审：每 $R = 5$ 个任务恢复全量目录，回审期间被调用过的工具<strong>永久解禁</strong>。这就是「裁剪」和「删除」的区别。</p> <p>落到发布版插件上，裁剪是写进 agent 自己的设置文件的，粒度跟着 agent 走：</p> <table> <thead> <tr> <th>Agent</th> <th>能裁掉什么</th> <th>写进哪里</th> </tr> </thead> <tbody> <tr> <td>Claude Code</td> <td>单个工具</td> <td><code class="language-plaintext highlighter-rouge">.claude/settings.local.json</code></td> </tr> <tr> <td>Codex</td> <td>能力包</td> <td><code class="language-plaintext highlighter-rouge">.codex/config.toml</code></td> </tr> <tr> <td>Copilot CLI</td> <td>整个 MCP 服务器</td> <td><code class="language-plaintext highlighter-rouge">.github/copilot/settings.local.json</code></td> </tr> <tr> <td>Pi / Droid / Cursor 等</td> <td>暂不支持（无持久化的单工具设置）</td> <td>—</td> </tr> </tbody> </table> <p>插件只追加自己的条目，不动你手写的 deny 规则；它创建的文件会被写进 <code class="language-plaintext highlighter-rouge">.git/info/exclude</code>。如果那个设置文件是仓库提交的、或者 JSON 不合法、或者符号链接指向仓库外，它就不写，把结果留成一条「建议」。</p> <h2 id="五失败循环三道闸门以及打断不等于判死">五、失败循环：三道闸门，以及「打断」不等于「判死」</h2> <p><img src="/assets/img/blog/tokeneconomizer-experience-driven-cost-control/fig-03-loop-guard.png" alt="失败循环干预的三道闸门"></p> <p><em>规则检查免费、judge 只看摘要、重定向一次——三道闸门的分工决定了它便宜且不容易误杀。</em></p> <p>第三道机制的第一件事，是<strong>不用固定轮数</strong>。它从该仓库已经成功的轨迹里取轮数的 P90，乘 1.25 当作这次任务的预算：</p> \[B_i = \beta \cdot Q_p(\{|\xi_j| : j &lt; i,\ y_j = 1\}),\quad \beta = 1.25,\ p = 90\] <p>理由是论文里那个对比：Matplotlib 的失败轨迹比成功轨迹长很多（45 轮 vs 20 轮），而 Sphinx 的失败轨迹只长一点（36 轮 vs 31 轮）。一个全局的轮数上限，在一个仓库上太松、在另一个仓库上太紧。</p> <p>有了预算，闸门按代价从低到高排：每次工具调用后跑一次<strong>纯规则检查</strong>（同一个失败签名、报错密集、超过预算），零模型调用；触发后，一个 judge 只看最近动作的摘要（命令、改过的文件名、报错签名、计数器），置信度 ≥ 0.7 才判「卡住」；判为卡住就注入一条重定向，把「你试过什么」摘要回上下文，要求换一条路径，<strong>每轮最多一次</strong>。再往后，还有一道 $\kappa = 2.5$ 倍的强制闸门，但要求编辑反复、密集报错、重复失败<strong>同时</strong>成立才触发。</p> <p>这里出现了论文和发布版插件最实质的一处分歧，我单独放在第七节说。</p> <h2 id="六结果省下的是真钱pass1-也没有被拿去换">六、结果：省下的是真钱，Pass@1 也没有被拿去换</h2> <p><img src="/assets/img/blog/tokeneconomizer-experience-driven-cost-control/fig-04-payback-curve.png" alt="成本随仓库累积的曲线"></p> <p><em>横轴不按真实任务数缩放，曲线形状是示意；回本点（约第 6 个任务）与 −23.6% 的终点来自论文里 Claude Code + Sonnet 5 的序列。</em></p> <p>277 个 SWE-Bench 任务，6 个仓库（scikit-learn 60、SymPy 60、Django 40、Sphinx 44、Matplotlib 34、xarray 39），5 组 agent–模型组合。同一仓库内的任务按时间顺序跑，所以第 i 个任务只能用到前 i−1 个的经验。成本按 cache 计价口径算，<strong>并且包含 controller 自己产生的每一次模型调用</strong>。</p> <table> <thead> <tr> <th>组合</th> <th>平均成本变化</th> <th>Pass@1 变化</th> </tr> </thead> <tbody> <tr> <td>Claude Code + Sonnet 5</td> <td>−23.6%</td> <td>+1.3</td> </tr> <tr> <td>Claude Code + Opus 4.8</td> <td>−30.9%</td> <td>−1.0</td> </tr> <tr> <td>Codex + GPT-5.6 Terra</td> <td>−24.7%</td> <td>+0.9</td> </tr> <tr> <td>Codex + GPT-5.6 Sol</td> <td>−26.1%</td> <td>+1.6</td> </tr> <tr> <td>Copilot CLI + Sonnet 5</td> <td>−18.4%</td> <td>+2.6</td> </tr> </tbody> </table> <p>表外还有三个点值得单独说：</p> <ul> <li> <strong>30 个格子全部更便宜。</strong> 6 个仓库 × 5 个组合，同一个仓库内每个组合都比默认便宜，落点在 −5% 到 −40% 之间。</li> <li> <strong>Pass@1 是 4 升 1 降</strong>，唯一的下降是 Opus 4.8 的 −1.0。作为对照，同一篇论文里把推理强度降到 medium 或 low，Pass@1 要掉 1.8–10.3 个点——<strong>这就是这件事值得做的原因：省下的钱大体上不是拿成功率换的</strong>（唯一的例外是 Opus 4.8 的 −1.0）。</li> <li> <strong>消融：单靠工具裁剪最省</strong>，因为它每一轮都生效；但任何单个机制都追不上三者合用，而单独使用时 Pass@1 仍在默认值的 3 个点之内。</li> </ul> <p>泛化的两组数字，读法比数字本身重要：</p> <table> <thead> <tr> <th>基准</th> <th>规模</th> <th>成本变化</th> <th>质量口径</th> </tr> </thead> <tbody> <tr> <td>Web-Bench</td> <td>102 任务 / 5 个项目</td> <td>−16.0% ~ −21.2%</td> <td>累积 Pass@2 持平</td> </tr> <tr> <td>CredData + ReposVul（安全审计）</td> <td>各 100 任务</td> <td>−6.4% ~ −19.6%</td> <td>检测 F1 持平</td> </tr> </tbody> </table> <p>安全审计那两组的每个任务都在<strong>新仓库</strong>里，所以 micro-skills 直接关闭。也就是说：<strong>当仓库不再连续，收益从 18.4–30.9% 掉到 6.4–19.6%。</strong> 这不是巧合，同一个变量在两个实验里各出现了一次。<strong>我由此推断</strong>：仓库记忆是主要收益来源，剩下的是工具接口和失败循环那部分——论文没有把这个拆分单独列出来。</p> <h2 id="七论文和发布版插件有四处不一致">七、论文和发布版插件，有四处不一致</h2> <p>这是我在读源码说明时花时间最多的地方。论文的 controller 和仓库里装到你机器上的插件，不是同一个东西：</p> <table> <thead> <tr> <th>维度</th> <th>论文里的 controller</th> <th>发布版插件</th> </tr> </thead> <tbody> <tr> <td>micro-skills</td> <td>默认开启，每 T = 5 个任务提议一次</td> <td> <strong>默认关闭</strong>（proposer 要花钱，收益看仓库），每 k = 3 个会话提议一次</td> </tr> <tr> <td>工具裁剪</td> <td>计数 + LLM 相关性判断 + 每 5 任务全量重审</td> <td>纯计数证据：p = 10 个未使用提示、跨 m = 2 个会话，或 s = 5 个会话；无 judge</td> </tr> <tr> <td>循环干预</td> <td>重定向一次，<strong>再犯就终止 rollout</strong> </td> <td> <strong>永不终止</strong>，最多一次重定向，之后只给你一行「按 Esc 中断」的提示</td> </tr> <tr> <td>适配范围</td> <td>5 组组合、3 个 agent</td> <td>4 个主力 agent + 6 个实验性适配，版本窗口写死</td> </tr> </tbody> </table> <p>我不觉得这是「论文注水」。这是两次不同的取舍：论文要的是能力上界（止损也是一种可学习策略），插件要的是<strong>装上去不会害你</strong>——误杀一个正在推进的任务，比多花一点钱更贵。</p> <p>但有一个后果得说清楚：README 首页那个「18.4–30.9%」不是开箱即得的数字。<strong>micro-skills 默认是关的</strong>，你得主动 <code class="language-plaintext highlighter-rouge">config set microskills=on</code> 才会拿到论文里那部分收益。</p> <p>版本窗口也值得抄下来，因为它暴露了黑盒适配的真实成本：</p> <table> <thead> <tr> <th>Agent</th> <th>支持版本</th> </tr> </thead> <tbody> <tr> <td>Claude Code</td> <td>2.1.300 – 2.1.310</td> </tr> <tr> <td>Codex</td> <td>0.153.1 – 0.164.0</td> </tr> <tr> <td>Copilot CLI</td> <td>1.0.83 – 1.0.102</td> </tr> <tr> <td>Pi</td> <td>1.2.0 – 1.3.0</td> </tr> </tbody> </table> <p>一个 patch 号的距离就要重新验证。Cursor 的实验性适配更直白：它拿不到每个 session 的 token usage，所以干脆把成本报成 unavailable。</p> <h2 id="八局限">八、局限</h2> <p>按我判断的重要性排：</p> <ol> <li> <strong>冷启动是一次赌注。</strong> 前几个任务更贵（要付 proposer 和 judge 的钱），Claude Code 那组大约到第 6 个任务才回本。仓库用得越少，越可能净亏——而「偶尔用一次 agent 的仓库」是多数人的常态。</li> <li> <strong>样本是 6 个仓库、277 个任务，每个仓库 34–60 个任务。</strong> 它证明了「第六个任务之后更便宜」，但没有证明「第 60 个任务之后还会继续便宜」。任务流再长一点会不会触底，论文没有说。</li> <li> <strong>主力组合只有 3 个 agent、5 组模型。</strong> 而且它靠 hook 吃饭：Codex 0.141.0 之前的版本完全不跑 plugin hook，三个机制一起失效。</li> <li> <strong>记忆单元是「仓库」。</strong> monorepo 或者一个仓库里塞了三个服务时，经验会互相串味：A 服务的测试命令被当作整个仓库的规律注入 B 服务。论文没有讨论这种情况。</li> <li> <strong>经验过期的清除依赖反证。</strong> 一条「用 <code class="language-plaintext highlighter-rouge">python -m pytest</code>」的事实，在测试框架迁移后会过期；但如果迁移之后再没有任务碰过那个文件，反证永远不会来，这条事实会一直被注入。这是我从 $q_i(f)$ 的更新条件推断出来的漏洞，论文没有正面处理。</li> <li> <strong>计费口径依赖 agent 暴露用量。</strong> 拿不到 usage 的 agent 只能报 unavailable，那时「省了多少」就成了估计值。</li> <li> <strong>失败循环的判定仍然是启发式的。</strong> judge 只看摘要，判不准就放行——这个保守方向是对的，但也意味着最难的那种「缓慢偏离」（每一步都像有进展，但整体在浪费）它管不到。</li> </ol> <h2 id="九我的判断">九、我的判断</h2> <p>这篇论文最值得拿走的不是三个机制，而是它对<strong>状态</strong>的定义：</p> \[(\Delta P_i,\ \mathcal{U}_i,\ B_i) = \mathcal{C}(\tau_i,\ S_{i-1})\] <p>$S_{i-1}$ 是从<strong>已完成的轨迹</strong>里蒸馏出来的仓库状态，不是聊天记录。这个区别决定了后面所有设计：聊天记录只能被压缩、摘要、塞进 prompt；轨迹可以被<strong>检测器验证</strong>。</p> <p>三个机制共享同一个状态，但更新规则各不相同——事实用可执行检测器验证，工具用计数，循环用相对预算。<strong>经验能落地的前提是经验可证伪。</strong> 这是我在这篇文章里最想记住的一句。</p> <p>下一步我会想看三个实验，都能测：</p> <ol> <li> <strong>序列长度的拐点。</strong> 现在最长的任务流是 60 个任务（scikit-learn 与 SymPy），把同一条流拉到几百个任务，看累积成本是继续下降还是触底。这是「越用越省」这句话唯一的实证。</li> <li> <strong>need rate 阈值是真正的旋钮。</strong> $\rho = 0.4$ 决定了注入多少条事实，论文把这个值固定住了、没有扫。扫一遍 $\rho$ 应该能得到一条成本–成功率的曲线，而这正是「注入多少经验」这个问题的答案。</li> <li> <strong>跨仓库迁移。</strong> 如果把学到的事实按「命令模板」抽象一层，能不能减少 B 仓库的冷启动？论文的对照实验（另一个仓库的历史只命中 7%）说明现在不行，但那是逐字匹配的结论，不是语义抽象的上限。</li> </ol> <p>回到我一直在看的那条线：上下文管理真正缺的不是压缩算法，是<strong>「什么值得跨会话保留」的判定器</strong>。压缩是在给定的上下文里做减法，而这套东西是在决定哪些内容有资格进入下一次的上下文。前者是编码问题，后者是判定问题——这篇论文给了判定器的三个具体形状，还给每个形状配了假阳性/假阴性的代价。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li> <a href="https://github.com/microsoft/TokenEconomizer" rel="external nofollow noopener" target="_blank">GitHub 仓库</a>（Apache-2.0；<code class="language-plaintext highlighter-rouge">python -m pytest tests</code> 跑离线测试）</li> <li> <a href="https://arxiv.org/abs/2610.22732" rel="external nofollow noopener" target="_blank">论文 arXiv:2610.22732</a>（2026-10-15，CC BY 4.0）</li> <li> <a href="https://tokeneconomizer.github.io/" rel="external nofollow noopener" target="_blank">项目主页</a>（交互图表、逐仓库数字、9 个标注过的案例）</li> <li> <a href="https://github.com/microsoft/TokenEconomizer/blob/main/plugin/README.md" rel="external nofollow noopener" target="_blank">插件说明 <code class="language-plaintext highlighter-rouge">plugin/README.md</code></a>（每个 agent 的安装、设置、限制）</li> <li> <a href="https://github.com/microsoft/TokenEconomizer/blob/main/experiments/README.md" rel="external nofollow noopener" target="_blank">实验框架 <code class="language-plaintext highlighter-rouge">experiments/</code></a>（复跑 SWE-Bench 与 Web-Bench 的那条路）</li> </ul> <p>数字来源：成本与 Pass@1 来自论文与 README 的结果表；23 个工具 schema、30% 重复动作、17%/32% 失败花费来自论文第 2 节的 60 条轨迹（每仓库 10 个任务）；超参数（$T=5$、$n=3$、$\rho=0.4$、$\gamma=0.8$、$\lambda=5$、$k=3$、$R=5$、$p=90$、$\beta=1.25$、$\kappa=2.5$）来自项目主页的机制说明；插件默认值与版本窗口来自 README。第六节里「仓库记忆是主要收益来源」、第八节第 5、7 条，以及第一节对固定策略失效原因的解释，是我的推断，已在正文里标注。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/saelens-sparse-autoencoder-instrument/">SAELens：重建得越准，特征越不一定是真的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformer-explainer/">Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/boubou-local-voice-runtime/">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hy-mt2-family-centric-post-training/">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/safetensors-weight-format/">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pyvene-intervention-framework/">pyvene：深入模型内部，理解并干预神经网络行为的开源工具</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deleting-weights-deletion-tuning/">删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/freetoken-edge-moe-serving/">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
