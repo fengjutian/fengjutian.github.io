@@ -102,7 +102,10 @@ posts_in_search: true
 bib_search: true
 
 # Dimensions
-max_width: 930px
+# 版心宽度：同时驱动 `.container` 的 max-width、`--max-content-width` CSS 变量和
+# 文章页 75/25 的正文/目录分栏。原来 930px 在 2K 屏上两侧留白过多，
+# 调宽到 1200px 后正文约 840px、右侧目录约 260px。
+max_width: 1200px
 
 # -----------------------------------------------------------------------------
 # Open Graph & Schema.org
@@ -327,17 +330,38 @@ defaults:
            目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
         #toc-sidebar {
           max-height: calc(100vh - 7rem);
-          padding-left: 1.5rem;
+          padding: 0.25rem 0.55rem 1rem 1.5rem;
           border-left: 1px solid var(--global-divider-color);
+          /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+             这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+          scrollbar-gutter: stable;
           scrollbar-width: thin;
-          scrollbar-color: color-mix(in srgb, var(--global-divider-color) 85%, transparent) transparent;
+          scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+        }
+        /* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+           两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+           旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+        #toc-sidebar:hover,
+        #toc-sidebar:focus-within {
+          scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
         }
         #toc-sidebar::-webkit-scrollbar {
-          width: 5px;
+          width: 6px;
+        }
+        #toc-sidebar::-webkit-scrollbar-track {
+          background: transparent;
+          margin-block: 6px;
         }
         #toc-sidebar::-webkit-scrollbar-thumb {
-          background: color-mix(in srgb, var(--global-divider-color) 85%, transparent);
+          background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
           border-radius: 999px;
+        }
+        #toc-sidebar:hover::-webkit-scrollbar-thumb,
+        #toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+          background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
         }
         #toc-sidebar.toc > .toc-list {
           padding-left: 0;
