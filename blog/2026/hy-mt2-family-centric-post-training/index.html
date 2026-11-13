@@ -1,0 +1,532 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/hy-mt2-family-centric-post-training/"> <meta property="og:description" content="从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/hy-mt2-family-centric-post-training.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型"> <meta name="twitter:description" content="从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/hy-mt2-family-centric-post-training.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/hy-mt2-family-centric-post-training/",
+        "@type": "BlogPosting",
+        "description": "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        "headline": "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/hy-mt2-family-centric-post-training/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0"> <i class="fa-solid fa-hashtag fa-sm"></i> 机器学习</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>先看三个数字。</p> <ul> <li> <strong>440MB</strong>：Hy-MT2-1.8B 的 1.25-bit 版本，塞进手机或笔记本的存储占用。</li> <li> <strong>85.70</strong>：30B-A3B 在 IFMTBench 上的总分，仅次于 Gemini 3.1 Pro 的 89.08。</li> <li> <strong>1T tokens</strong>：进入后训练之前，它在翻译数据上又多训了一个量级的中期。</li> </ul> <p>腾讯混元在 2026 年 5 月开源了 Hy-MT2 这一族翻译模型，规格是 1.8B、7B 和 30B-A3B（MoE），支持 33 种语言互译，同时放出了专门评测翻译指令遵循的 IFMTBench。论文是 <a href="https://arxiv.org/abs/2605.22064" rel="external nofollow noopener" target="_blank">Hy-MT2: A Family of Fast, Efficient and Powerful Multilingual Translation Models in the Wild</a>（arXiv 2605.22064），代码在 <a href="https://github.com/Tencent-Hunyuan/Hy-MT2" rel="external nofollow noopener" target="_blank">Tencent-Hunyuan/Hy-MT2</a>。</p> <p>但真正值得研究的不是它支持多少语言，而是它怎么组织训练：<strong>先把多语言翻译按语言家族拆成几条互不干扰的分支，各自培养教师，再用两次在线策略蒸馏把能力合并回一个学生模型。</strong></p> <p>这套流程叫 Family-Centric Post-training（FCPT）。它解决的是一个很具体的问题——多语言模型里，语言之间的相互干扰。</p> <h2 id="一上一代暴露的四个问题">一、上一代暴露的四个问题</h2> <p>Hy-MT2 不是凭空设计的。论文开篇先复盘了 Hy-MT1.5 上线后被真实业务反馈出来的短板，一共四条：</p> <ol> <li> <strong>专业领域和真实场景不够稳。</strong> 金融、法律、医疗有大量固定译法和行业术语，网页、会议记录、社交媒体又充满缩写、口语和不完整句。</li> <li> <strong>翻译指令容易被忽略。</strong> 用户要求“保留这个词不译”“用文言文风格”“按模板输出”，Hy-MT1.5 经常漏掉约束。</li> <li> <strong>和最强闭源模型仍有差距。</strong> 论文点名的对手是 Gemini 3.1 Pro 和 GPT-5.5。</li> <li> <strong>端侧部署仍然吃力。</strong> Hy-MT1.5-1.8B 的 4-bit 量化版依然需要 1GB 以上存储，延迟也压不下去。</li> </ol> <p>这四条正好对应 Hy-MT2 的四个动作：扩大训练数据覆盖面、把指令遵循当成独立能力来训、上 MoE 提高容量、把量化推到 1.25-bit。</p> <p>论文里还有一句容易被略过的话：Hy3-Preview 的质量提升明显，于是团队直接把它当成教师模型来提升翻译模型。这句话是理解后面 Chimera Teacher 的钥匙——<strong>他们没有为翻译单独训一个巨型教师，而是把已有的强模型改造成教师信号生成器。</strong></p> <h2 id="二整体管线三段训练">二、整体管线：三段训练</h2> <p><img src="/assets/img/blog/hy-mt2-family-centric-post-training/fig-01-pipeline.png" alt="训练管线"></p> <p><em>从 Hy 系列预训练模型到三个量化规格，Hy-MT2 的完整路径。</em></p> <p>整条管线分三段：</p> <ul> <li> <strong>MT-oriented Mid-training</strong>：约 1T tokens，把通用底座改造成“会翻译”的底座。</li> <li> <strong>Family-Centric Post-training</strong>：三个子阶段，RG-OPD → 家族 RL → 跨家族 OPD。</li> <li> <strong>量化</strong>：FP16 / 8-bit / 4-bit / 2-bit / 1.25-bit 五档。</li> </ul> <p>中期训练这一段看起来最平淡，但它是后面所有花活的前提。训练数据沿两个维度组织：</p> <table> <thead> <tr> <th>维度</th> <th>内容</th> <th>作用</th> </tr> </thead> <tbody> <tr> <td>数据形式</td> <td>多语单语语料、平行翻译语料</td> <td>前者补语言分布，后者建跨语言语义映射</td> </tr> <tr> <td>场景覆盖</td> <td>通用翻译、专业领域、真实场景、指令遵循</td> <td>让模型在进后训练前就见过“脏”输入和约束</td> </tr> </tbody> </table> <p>如果没有这 1T tokens，后面的语言家族分支会各自退化得太快——每个分支拿到的数据量其实变少了，底座必须先足够强。</p> <h2 id="三为什么要按语言家族拆开">三、为什么要按语言家族拆开</h2> <p>传统多语言模型的做法是把所有语言的数据混在一起训。听起来很合理：数据越多越好。但混合训练有个隐含代价——<strong>模型要在同一组参数里同时适配差异极大的分布。</strong></p> <p>西欧语言的词形变化、东亚语言的语序和文字系统、中东从右往左书写的语言，它们在 tokenizer 层面的切分方式都不一样。混在一起训，模型不是学不会，而是学得“平均”：每个语族都留一点余量，谁也不够锐利。</p> <p>FCPT 的做法是反过来：<strong>先分，再合。</strong></p> <p><img src="/assets/img/blog/hy-mt2-family-centric-post-training/fig-02-fcpt.png" alt="FCPT 三个阶段"></p> <p><em>每个语言家族一条分支，各自经过 RG-OPD 和 RL 得到教师，最后由 Cross-family OPD 汇总。</em></p> <p>论文里明确列出的分支包括西欧语言、东亚语言和中东 RTL 语言。每条分支内部都吃同一套四类数据：通用翻译、专业领域、真实场景、指令遵循。这样每个教师面对的语言分布更一致，训练干扰更小。</p> <p>这里有个容易误解的点：<strong>分支不是最终产物。</strong> 最终发布的是一套统一权重，不是每个语族一个模型。分支只是“培养教师”的临时容器，蒸馏完就丢掉。</p> <p>这个思路其实可以迁移：任何“多分布混合导致互相拖累”的场景都适用——多领域、多任务、多模态，都可以先分头训出专家，再蒸馏合并。</p> <h2 id="四rg-opd教师不产出答案而是给分布">四、RG-OPD：教师不产出答案，而是给分布</h2> <p>FCPT 的第一阶段是 Reference-Guided On-Policy Distillation（参考引导的在线策略蒸馏）。</p> <p>先把两个概念区分清楚。</p> <p><strong>离线蒸馏</strong>是拿教师事先生成好的固定输出当标签，学生做监督学习。问题是：学生只在这些固定答案上被纠正，一旦它自己采样出别的路径，没人告诉它对不对。</p> <p><strong>在线策略蒸馏（OPD）</strong> 换成另一套逻辑：学生先按当前策略生成译文，教师再针对这条实际生成的结果给出评价分布。</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>源句 x
+  │
+  ├─&gt; 学生 π_θ 采样出译文 y      ← 学生自己的输出，不是标准答案
+  │
+  └─&gt; 教师对 (x, y) 给出分布 π_T
+          │
+          v
+     最小化 D_KL(π_T ‖ π_θ)
+</code></pre></div></div> <p>这样学生学到的是“如何评价和改进自己当前的结果”，而不只是“背诵一个参考答案”。</p> <p><strong>关键在于教师从哪里来。</strong> Hy-MT2 没有训练一个额外的巨型翻译教师，而是构造了 Chimera Teacher：</p> <p><img src="/assets/img/blog/hy-mt2-family-centric-post-training/fig-03-chimera.png" alt="Chimera Teacher"></p> <p><em>多个参考模型生成的候选译文，加上数据集原始标签，共同构成参考集合 R(x)。</em></p> <p>对每个源句 $x$，参考集合 $\mathcal{R}(x)$ 由两部分组成：</p> <ul> <li>多个 Hy 系列参考模型各自生成的候选译文；</li> <li>数据集里的原始标签（human reference 或自动构造的 reference）。</li> </ul> <p>Chimera Teacher 以 Hy3-Preview 为底座，把学生输出 $y$ 放到这个多源参考集合里打分，融合出教师分布 $\pi_T(\cdot \mid x, \mathcal{R}(x))$。训练目标是前向 KL：</p> \[\mathcal{L}_{\text{RG-OPD}} = D_{\mathrm{KL}}\left(\pi_T(\cdot \mid x, \mathcal{R}(x)) \;\Big\|\; \pi_\theta(\cdot \mid x)\right)\] <p>为什么叫 Chimera？论文脚注写得很直白：取自神话里由不同动物拼成的生物，这里指教师信号由多个参考源融合而成。</p> <p>这个设计有两个现实好处。第一，<strong>省掉了一个大教师</strong>——不用为了蒸馏再训一个 70B 级的翻译模型。第二，<strong>参考集合天然带多样性</strong>：不同模型会在“直译还是意译”“术语用哪个”上做出不同选择，教师的分布因此比单一标签更宽。</p> <p>顺带说一句，Chimera 这个名字在混元系列里不是第一次出现。2025 年 9 月开源的 Hunyuan-MT-Chimera-7B 就是一个“把多个候选译文合并成一个更好译文”的模型。Hy-MT2 的 Chimera Teacher 是同一个思路的延续：<strong>多源融合，而不是单点监督。</strong></p> <h3 id="一个值得注意的选择前向-kl">一个值得注意的选择：前向 KL</h3> <p>前向 KL $D_{\mathrm{KL}}(\pi_T | \pi_\theta)$ 是 mode-covering 的：学生必须覆盖教师分布里所有有概率质量的地方，否则惩罚会很大。反过来，后向 KL $D_{\mathrm{KL}}(\pi_\theta | \pi_T)$ 是 mode-seeking 的：学生只要找到一个教师也认可的模式就行，其他模式可以忽略。</p> <p>论文没有解释为什么 RG-OPD 选前向、Cross-family OPD 选后向。但从性质上看，这个搭配是合理的：</p> <ul> <li>RG-OPD 阶段，学生刚进入某个语族，需要<strong>尽量吸收</strong>教师覆盖的多种译法，前向 KL 逼它别漏；</li> <li>Cross-family 阶段，学生要<strong>收敛</strong>到一个统一策略上，后向 KL 允许它聚焦，不必为每个教师的所有模式买单。</li> </ul> <p>这个对称性是我读论文时觉得最有意思的一处：同一套 OPD 框架，靠 KL 方向完成“扩散”和“收敛”两种相反的操作。</p> <h2 id="五家族专属-rl奖励函数是这套方案里最工程化的部分">五、家族专属 RL：奖励函数是这套方案里最工程化的部分</h2> <p>RG-OPD 之后，每条分支拿到一个已经适配该语族的模型，接着进入 Family-specific RL Training。</p> <p>算法是 GRPO，论文写得很明确。但真正值得看的是奖励怎么算——这里能看出团队被 reward hacking 咬过。</p> <p><strong>第一层：规则预过滤。</strong> 译文如果出现严重重复或语言混杂，直接判 0 分，不送进 LLM 评审。这一层几乎不花成本，却拦掉了最典型的退化输出。</p> <p><strong>第二层：MQM 五维评审。</strong> 通过预过滤的译文交给 LLM judge，按多维质量指标（MQM）的错误类型打分，而不是给一个整体印象分：</p> <table> <thead> <tr> <th>维度</th> <th>检查什么</th> </tr> </thead> <tbody> <tr> <td>术语 Terminology</td> <td>术语错误、与术语表不一致、全文用法不统一</td> </tr> <tr> <td>准确性 Accuracy</td> <td>误译、过度翻译、漏译、增删内容、未译片段、语言混杂</td> </tr> <tr> <td>语言规范 Linguistic Conventions</td> <td>语法、标点、拼写、不可读、语篇与地区习惯</td> </tr> <tr> <td>风格 Style</td> <td>与外部参考不一致、语域错误、表达生硬、风格前后不一</td> </tr> <tr> <td>指令遵循 Instruction Following</td> <td>目标语言错误、未执行翻译任务、未遵从术语/格式/风格/上下文约束</td> </tr> </tbody> </table> <p><strong>第三层：扣分规则。</strong> 从 100 分起扣。致命错误（比如整段用错语言、根本没翻译）直接判 0；重大错误每处扣 10–20 分；轻微错误每处扣 2–5 分。下限为 0。</p> <p><strong>第四层：长度惩罚。</strong> 这一条最能说明问题。给定参考译文长度 $L_{gt}$ 和生成长度 $L_y$：</p> \[P_{\text{len}} = \min\left(0.5 \times \frac{|L_{gt} - L_y|}{L_{gt}},\; 0.5\right)\] <p>最终奖励是 MQM 分数归一化到 $[0,1]$、减去长度惩罚、再截断到不小于 0。</p> <p>为什么需要长度惩罚？因为只按质量打分的奖励函数有一个著名漏洞：<strong>模型会学会生成极短、极保守、几乎不会出错的句子。</strong> 翻译任务里尤其明显——“你好”永远比完整句子安全。长度惩罚把这种策略的收益打掉一半，同时也压制了另一个方向：为凑分而注水。</p> <p>这套奖励设计不新鲜，但四个层次的分工很清楚：规则过滤管“明显坏的”，LLM judge 管“细微坏的”，扣分规则管“严重程度”，长度惩罚管“钻空子的”。</p> <h2 id="六cross-family-opd把几个教师合回一个学生">六、Cross-family OPD：把几个教师合回一个学生</h2> <p>分支训练的代价是部署成本。三条分支就是三套权重，再乘上三个模型规格，运维会崩。</p> <p>所以 FCPT 的最后一阶段是 Cross-family On-Policy Distillation：把各语族教师的能力迁移回一个统一学生模型。</p> <p>结构和 RG-OPD 很像，但有两处关键差异。</p> <p><strong>差异一：教师是路由的。</strong> 给定样本 $x$，教师选择函数 $\tau(x)$ 按 $x$ 所属语言家族挑出对应教师：</p> \[\mathcal{L}_{\text{Cross-OPD}} = D_{\mathrm{KL}}\Big(\pi_\theta(\cdot \mid x) \;\Big\|\; \pi_{T_{\tau(x)}}(\cdot \mid x)\Big)\] <p><strong>差异二：多了一个通用指令教师。</strong> 翻译样本走语族教师，通用指令样本走 Hy Instruct 教师。</p> <p>第二条特别重要。一个只训翻译的模型，很容易在强化翻译能力的同时把“听懂人话”的能力磨掉——用户让它输出 JSON，它给你一段散文。Cross-family OPD 在最后一步把通用指令数据混进来，本质上是<strong>在能力合并时做一次抗遗忘</strong>。</p> <p>所以论文把这一阶段称为“统一的多教师蒸馏”：多个语族教师 + 一个指令教师，按样本类型分发。</p> <h2 id="七moe30b-a3b-省了什么没省什么">七、MoE：30B-A3B 省了什么，没省什么</h2> <p><img src="/assets/img/blog/hy-mt2-family-centric-post-training/fig-04-moe.png" alt="MoE 结构"></p> <p><em>每个 token 只走被路由选中的专家，但所有专家权重都得存着。</em></p> <p>Hy-MT2-30B-A3B 用的是混合专家架构。30B 是总参数，A3B 是单 token 激活参数约 3B。</p> <p>论文给的理由很直接：继续堆 dense 参数能提升复杂翻译场景的理解和表达能力，但推理成本受不了。TransGemma-27B 这类翻译模型是 dense 的，服务端部署很贵。MoE 让模型保留 30B 的容量，单 token 计算量却接近 3B 的模型。</p> <p>但这里必须泼一盆冷水，很多宣传会含糊过去：</p> <p><strong>激活参数 ≠ 部署显存。</strong> 3B 激活只说明一次前向算了多少，不说明要装多少。30B 的专家权重、KV Cache、运行时缓冲、框架开销，一个都少不了。按 3B dense 模型去估算 30B-A3B 的显存，一定会翻车。</p> <p>MoE 省的是<strong>算力</strong>，不是<strong>容量</strong>。这个区别在端侧尤其致命：手机上跑 MoE，权重照样要占存储，只是每次少算一点。</p> <h2 id="八指令遵循七类模板和一条-json-红线">八、指令遵循：七类模板和一条 JSON 红线</h2> <p>Hy-MT2 把翻译指令整理成了可枚举的模板。README 里给了中英对照的七类：</p> <table> <thead> <tr> <th>类型</th> <th>约束的是什么</th> </tr> </thead> <tbody> <tr> <td>Default Translation</td> <td>只输出译文，不加解释</td> </tr> <tr> <td>Terminology</td> <td>指定术语映射，全句保持一致</td> </tr> <tr> <td>Style</td> <td>指定风格（文言文、口语、正式书面……）</td> </tr> <tr> <td>Personalization</td> <td>用户偏好列表（简洁、术语保留英文等）</td> </tr> <tr> <td>Delimiters</td> <td>分隔符数量、位置、不可转义</td> </tr> <tr> <td>Structured Data 1</td> <td>JSON/HTML 等结构锁定，只译可见文本</td> </tr> <tr> <td>Structured Data 2</td> <td>结合背景信息消歧后再译</td> </tr> </tbody> </table> <p>结构化数据这一类最贴近工程实践。一个典型的请求长这样：</p> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"title"</span><span class="p">:</span><span class="w"> </span><span class="s2">"User Management"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Manage user accounts for ${tenant}"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"button"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Save"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"placeholder"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Enter your username"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div> <p>用户的要求是：保持结构、只译值、不动 key、不动 <code class="language-plaintext highlighter-rouge">${tenant}</code> 这类占位符。</p> <p>模型确实能做到——但这里有一条必须说清楚的红线：<strong>模型能遵循结构化指令，不等于它可以替代解析器。</strong> 生产环境里，输出必须再过一遍 JSON 解析、Schema 校验和占位符比对。原因很简单：模型的输出是概率性的，而程序结构是二值的。一次花括号丢失就可能让整个 i18n 流水线挂掉。</p> <h2 id="九ifmtbench把听话变成可计算的分数">九、IFMTBench：把“听话”变成可计算的分数</h2> <p>传统翻译评测（BLEU、COMET、xCOMET）只看语义等价。问题是：一段丢掉了术语表约束、破坏了 JSON 结构的译文，语义可能完全正确，分数照样很高。</p> <p>IFMTBench 就是来补这个洞的。它是独立论文（<a href="https://arxiv.org/abs/2605.28218" rel="external nofollow noopener" target="_blank">arXiv 2605.28218</a>），随 Hy-MT2 一起开源。</p> <p>规模：7,344 条，其中 4,506 条单约束、2,838 条多约束；覆盖中、英、德、法、日、韩、西七种目标语言；<strong>指令本身也用这七种语言各写一遍</strong>——这一条设计很关键，它把“看不懂指令”和“翻不好”分开了。</p> <p>约束分成七个维度，按性质又分两类：</p> <table> <thead> <tr> <th>类型</th> <th>维度</th> <th>判定方式</th> </tr> </thead> <tbody> <tr> <td>硬门控</td> <td>术语表、结构化数据、布局/占位符、代码保留、代码标签</td> <td>规则检查，0/1</td> </tr> <tr> <td>软约束</td> <td>风格、上下文一致性</td> <td>rubric LLM judge，0–1</td> </tr> </tbody> </table> <p>聚合方式是这套评测最巧妙的地方：</p> \[\text{IF-Score}(p) = \underbrace{\prod_{c_g \in \mathcal{G}_p} s(c_g)}_{\text{gating product}} \times \underbrace{\frac{1}{|\mathcal{S}_p|}\sum_{c_s \in \mathcal{S}_p} s(c_s)}_{\text{mean of soft scores}}\] <p>门控项是<strong>连乘</strong>：只要有一条硬约束失败，整条样本直接归零。论文给的理由是工程直觉——结构坏掉的译文，风格再优美也没法用。而软约束取均值。</p> <p>这个设计同时否掉了一种常见的作弊方式：如果采用加法平均，模型可以用高分风格项掩盖硬约束失败。做奖励信号时，这种掩盖是致命的。</p> <p>评测还额外报了第二个轴：xCOMET-XXL 翻译质量分。两个轴分开看，才能识别出“译文很流畅但压根没听指令”的模型。</p> <h3 id="结果里最有信息量的三个现象">结果里最有信息量的三个现象</h3> <table> <thead> <tr> <th>模型</th> <th>单约束 IF</th> <th>单约束 xCOMET</th> <th>多约束 IF</th> <th>多约束 xCOMET</th> <th>总分</th> </tr> </thead> <tbody> <tr> <td>Hy-MT2-1.8B</td> <td>76.76</td> <td>80.74</td> <td>57.61</td> <td>67.80</td> <td>69.36</td> </tr> <tr> <td>Hy-MT2-7B</td> <td>89.73</td> <td>84.29</td> <td>72.67</td> <td>72.76</td> <td>83.14</td> </tr> <tr> <td>Hy-MT2-30B-A3B</td> <td>91.94</td> <td>85.55</td> <td>75.80</td> <td>74.79</td> <td>85.70</td> </tr> <tr> <td>Qwen3.5-27B</td> <td>82.48</td> <td>82.64</td> <td>78.81</td> <td>69.29</td> <td>81.06</td> </tr> <tr> <td>gemma4-31B</td> <td>84.00</td> <td>83.56</td> <td>72.64</td> <td>69.50</td> <td>79.61</td> </tr> <tr> <td>Gemini 3.1 Pro</td> <td>91.95</td> <td>83.31</td> <td>84.53</td> <td>69.65</td> <td>89.08</td> </tr> </tbody> </table> <p><strong>第一，单约束上 30B-A3B 已经追平 Gemini 3.1 Pro（91.94 对 91.95），多约束上却差 8.7 分。</strong> 这个转折点比总分更有意思：翻译专用后训练能把单条约束做到极致，但“同时追踪多条异质约束”仍然是前沿闭源模型的优势。多约束退化率 17.6% 对 8.1%，差距被放大了一倍多。</p> <p><strong>第二，指令遵循对模型规模的敏感度，远高于翻译质量。</strong> Qwen3.5 从 0.8B 到 27B，单约束分从 40.92 涨到 82.48，多约束从 7.46 涨到 78.81——十倍。而 xCOMET 那条线只从 70.21 走到 82.64。也就是说，2B 以下的模型基本没有多约束能力，不是“差一点”，是“不会”。</p> <p><strong>第三，难度分布很集中。</strong> 术语表和结构化格式是两道坎，布局和代码保留类约束则接近饱和——几乎所有模型都能保住分隔符，但保住术语表一致性的少得多。这和实际业务里的痛点完全对得上。</p> <p>论文还提了一个反向指标：单约束下 xCOMET 减 IF 分。正值意味着“译文流畅但约束没听”，负值意味着“为了守约束牺牲了流畅度”。Hy-MT2 的 7B 和 30B-A3B 是负值（−5.44、−6.39），1.8B 反而是 +3.98，Gemini 是 −8.64，而 gemma4 和 Qwen 基本是正的。这个符号差异，比任何单项排名都更能说明“训练目标偏向哪边”。</p> <h2 id="十量化4-个权重怎么塞进-5-个-bit">十、量化：4 个权重怎么塞进 5 个 bit</h2> <p><img src="/assets/img/blog/hy-mt2-family-centric-post-training/fig-05-quantization.png" alt="量化位宽与体积"></p> <p><em>1.8B 模型在不同位宽下的理论体积，以及实测的 440MB。</em></p> <p>Hy-MT2 提供了五档精度，但实现路径分三种：</p> <table> <thead> <tr> <th>档位</th> <th>方法</th> <th>关键点</th> </tr> </thead> <tbody> <tr> <td>FP16 / 8-bit / 4-bit</td> <td>PTQ（训练后量化）</td> <td>少量标定数据估计分布，不重训</td> </tr> <tr> <td>2-bit</td> <td>QAT + SEQ</td> <td>权重压到 ±0.5 / ±1.5 四个值</td> </tr> <tr> <td>1.25-bit</td> <td>QAT + Sherry</td> <td>稀疏三值 {-1, 0, +1}，3:4 稀疏</td> </tr> </tbody> </table> <p>2-bit 用的 SEQ（Stretched Elastic Quantization）把权重映射到 ${-1.5, -0.5, +0.5, +1.5}$。四个电平、等间距、无零值——这是有意为之：没有零，意味着每个权重都必须表态，量化误差被摊到符号上而不是被零吸收。</p> <p>1.25-bit 用的 Sherry 更有意思。它把权重压成三值 ${-1, 0, +1}$，然后加一条硬约束：<strong>每 4 个权重一组，恰好 1 个零、3 个纯符号位。</strong></p> <p>这个约束带来两个后果：</p> <ul> <li> <strong>存储上</strong>，一组 4 个权重只需要 5 bit（3 个符号位 + 2 bit 记录零的位置），平均 1.25 bit/权重。这是“1.25-bit”这个名字的由来，不是每个权重独立存 1.25 个二进制位。</li> <li> <strong>计算上</strong>，5 bit 对齐是对 SIMD 友好的粒度。论文专门对比了常规 2-bit 打包和 1.67-bit 不规则打包，结论是 1.25-bit 的规则稀疏在压缩率和推理效率之间更平衡。</li> </ul> <p><strong>QAT 阶段还叠了蒸馏。</strong> 低精度模型当学生，高精度模型当教师，损失是 LM loss 加 KL 散度。KL 部分同时用前向和后向，权重不写死，而是按教师对每个 token 的置信度动态调整。这个细节很小，但很实用：高置信 token 用后向 KL 让学生大胆对齐，低置信 token 用前向 KL 让学生别乱猜。</p> <p>实际收益：1.8B 的 1.25-bit 版本约 440MB，在 Apple A15 上比 Hy-MT1.5-1.8B 的 4-bit 快约 1.5 倍。</p> <p>注意这里的对比基准是<strong>上一代的 4-bit</strong>，不是本代的 FP16。这个对比方式是对的——端侧用户关心的是“换代之后有没有更快更小”，而不是“量化损失了多少”。</p> <h2 id="十一部署四条路径各自的坑">十一、部署：四条路径，各自的坑</h2> <p>官方给了四套推理方式，成熟度差别很大。</p> <h3 id="transformers">Transformers</h3> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">from</span> <span class="n">transformers</span> <span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+
+<span class="n">model_path</span> <span class="o">=</span> <span class="sh">"</span><span class="s">tencent/Hy-MT2-30B-A3B</span><span class="sh">"</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">bfloat16</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="sh">"</span><span class="s">auto</span><span class="sh">"</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">).</span><span class="nf">eval</span><span class="p">()</span>
+
+<span class="n">prompt</span> <span class="o">=</span> <span class="sh">"</span><span class="s">将以下文本翻译成英语，注意只需要输出翻译后的结果，不要额外解释：</span><span class="se">\n\n</span><span class="s">今天天气真好。</span><span class="sh">"</span>
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="sh">"</span><span class="s">role</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">user</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">content</span><span class="sh">"</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}]</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">.</span><span class="nf">apply_chat_template</span><span class="p">(</span>
+    <span class="n">messages</span><span class="p">,</span> <span class="n">add_generation_prompt</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="sh">"</span><span class="s">pt</span><span class="sh">"</span>
+<span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">4096</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">inputs</span><span class="p">[</span><span class="sh">"</span><span class="s">input_ids</span><span class="sh">"</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:],</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+</code></pre></div></div> <p>需要 <code class="language-plaintext highlighter-rouge">transformers&gt;=5.6.0</code>。</p> <p><strong>一个容易踩的点：采样参数按规格分两套。</strong> 1.8B 和 7B 推荐 <code class="language-plaintext highlighter-rouge">temperature=0.7, top_p=0.6, top_k=20, repetition_penalty=1.05</code>；30B-A3B 推荐 <code class="language-plaintext highlighter-rouge">temperature=0.7, top_p=1.0, top_k=-1, repetition_penalty=1.0</code>。而且模型<strong>没有默认 system prompt</strong>——别自作主张塞一个进去，那会改变它的输出分布。</p> <h3 id="vllm--sglang">vLLM / SGLang</h3> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>vllm serve tencent/Hy-MT2-30B-A3B <span class="nt">--tensor-parallel-size</span> 1
+</code></pre></div></div> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python3 <span class="nt">-m</span> sglang.launch_server <span class="nt">--model</span> tencent/Hy-MT2-30B-A3B <span class="nt">--tp</span> 1
+</code></pre></div></div> <p>两条命令背后都有一个前提：<strong>从源码构建</strong>。README 给的是 clone + editable install 的流程，不是 <code class="language-plaintext highlighter-rouge">pip install vllm</code>。这意味着升版本时不能只看 pip 的解析结果。</p> <h3 id="llamacpp">llama.cpp</h3> <p>GGUF 版本能跑，但依赖 STQ kernel，实现在 <a href="https://github.com/ggml-org/llama.cpp/pull/22836" rel="external nofollow noopener" target="_blank">llama.cpp PR #22836</a>。也就是说：<strong>任意版本的 llama.cpp 不一定能读全部 Hy-MT2 GGUF。</strong></p> <p>还有一个发布节奏上的细节：README 的模型表里，30B-A3B 只列了原始版和 FP8，但 Hugging Face 上已经能找到 30B-A3B-GGUF，社区还有 MLX 的 4-bit 转换。<strong>文档表格往往落后于实际发布。</strong></p> <h2 id="十二能不能接着训">十二、能不能接着训</h2> <p>可以，而且路径给得很全：全参微调、LoRA、DeepSpeed ZeRO 多种配置、LLaMA-Factory 集成。</p> <p>这对企业场景的意义在于，Hy-MT2 不只是“一个能用的翻译模型”，而是“一个可以变成自家翻译模型的底座”：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Hy-MT2 基础模型
+      │
+      ├─ 企业术语表 + 历史译文
+      ├─ 领域语料（医疗/法律/金融）
+      └─ 人工审核过的平行句对
+      │
+      v
+   LoRA / 全参微调
+      │
+      v
+   IFMTBench + 业务集评测
+      │
+      v
+   企业翻译服务
+</code></pre></div></div> <p>但要说清楚：微调不能替代术语管理。术语一致性靠的是术语表在推理时进 prompt，加上输出后的校验，而不是指望权重里“记住”每一个词。微调真正改变的是<strong>表达习惯和领域语感</strong>，不是精确的字符串映射。</p> <h2 id="十三局限">十三、局限</h2> <p>按重要性排：</p> <p><strong>1. 多约束指令仍然是短板。</strong> 30B-A3B 单约束追平 Gemini，多约束差 8.7 分。复杂业务场景里，“同时守住术语、结构、风格、格式”这类需求，目前还不能完全交给模型。</p> <p><strong>2. 评测分数是项目方报告值。</strong> 解码参数、judge 模型、prompt 模板都会影响结果。IFMTBench 用 gpt-oss-120b 在 temperature 0 下当 judge，换一个 judge 排序可能变化。</p> <p><strong>3. 极低比特不是无损。</strong> 1.25-bit 的三值约束对术语密集、低资源语言、长句结构的影响需要单独测。论文给的是总体结果，不是每个语种的结果。</p> <p><strong>4. MoE 不省显存。</strong> 见第七节。</p> <p><strong>5. 结构化输出必须外部校验。</strong> 见第八节。</p> <p><strong>6. 语言数量的口径要对齐。</strong> 论文和 README 都写 33 种语言（对应 FLORES-200 的 33 种），但 README 的语种表实际列了 38 个条目——多出来的是繁体中文、粤语、藏语、维吾尔语等。<strong>“支持 33 种语言”这句话，按哪个口径理解，会影响你对它覆盖面的判断。</strong></p> <h2 id="十四我的判断多教师蒸馏到底蒸馏了什么">十四、我的判断：多教师蒸馏到底蒸馏了什么</h2> <p>这套方案里我最想弄明白的，不是“怎么训”，而是<strong>多个教师的能力究竟以什么形式进入了学生</strong>。</p> <p>从表面看，Cross-family OPD 只是让学生去拟合一个路由后的教师分布。但这里有一个隐含的张力：三个语族教师的策略在两两重叠的区域（比如英译中，既是西欧分支也是东亚分支的输入侧）可能给出不同的偏好。学生只有一套参数，它必须在这几个分布之间找到一个折中。</p> <p>这个折中发生在哪里？是输出层概率的加权平均，还是中间表示层面的某种合并？论文没有回答，而这正好是可以测的：</p> <ul> <li>用 NNsight 或 pyvene 在 Cross-family OPD 前后取同一批样本的隐藏状态，看语族间的表示距离是变大还是变小；</li> <li>对比学生和各个教师在特定层的表征相似度（CKA、procrustes），看它更像“三个教师的平均”，还是“按语族切换的子空间”；</li> <li>在 MoE 模型上，直接看路由：不同语族的 token 是否自然聚到不同的专家上——如果是，那 FCPT 的分支结构其实被 MoE 的路由“记住”了。</li> </ul> <p>第三个问题尤其有意思。<strong>如果 MoE 的路由模式本身就复现了语言家族的划分，那 Family-Centric Post-training 可能不只是训练技巧，而是在利用架构里本来就存在的归纳偏置。</strong> 这个假设用现成的工具就能验证，不需要重训模型。</p> <p>顺带说，这套“先分头训专家、再蒸馏合并”的范式，可迁移性比翻译本身大得多。任何“多分布混合训练互相拖累”的场景——多领域、多任务、多模态——都可以套用。真正稀缺的不是算力，而是<strong>怎么定义“分”的边界</strong>：Hy-MT2 按语言家族分，是因为语言家族有语言学依据；换一个场景，边界从哪来？</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li><a href="https://github.com/Tencent-Hunyuan/Hy-MT2" rel="external nofollow noopener" target="_blank">GitHub 仓库</a></li> <li><a href="https://github.com/Tencent-Hunyuan/Hy-MT2/blob/main/README_CN.md" rel="external nofollow noopener" target="_blank">中文 README</a></li> <li><a href="https://huggingface.co/collections/tencent/hy-mt2" rel="external nofollow noopener" target="_blank">Hugging Face 模型集合</a></li> <li><a href="https://arxiv.org/abs/2605.22064" rel="external nofollow noopener" target="_blank">Hy-MT2 技术报告（arXiv 2605.22064）</a></li> <li><a href="https://arxiv.org/abs/2605.28218" rel="external nofollow noopener" target="_blank">IFMTBench 论文（arXiv 2605.28218）</a></li> <li><a href="https://github.com/Tencent-Hunyuan/Hy-MT2/tree/main/IFMTBench" rel="external nofollow noopener" target="_blank">IFMTBench 数据集</a></li> <li><a href="https://github.com/Tencent/AngelSlim" rel="external nofollow noopener" target="_blank">AngelSlim 压缩工具链</a></li> </ul> <p>模型采用 Apache-2.0 许可；IFMTBench 有独立的许可文件，商用前分别核对。本文数字来自论文与仓库 README，性能结论对应论文的评测配置，实际部署会受硬件、精度和采样参数影响。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/boubou-local-voice-runtime/">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/safetensors-weight-format/">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pyvene-intervention-framework/">pyvene：深入模型内部，理解并干预神经网络行为的开源工具</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deleting-weights-deletion-tuning/">删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/freetoken-edge-moe-serving/">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>

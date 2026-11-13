@@ -1,0 +1,488 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/boubou-local-voice-runtime/"> <meta property="og:description" content="从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/boubou-local-voice-runtime.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时"> <meta name="twitter:description" content="从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/boubou-local-voice-runtime.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/boubou-local-voice-runtime/",
+        "@type": "BlogPosting",
+        "description": "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        "headline": "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/boubou-local-voice-runtime/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>文本模型的本地部署已经被 Ollama 这类工具拉平了：下载、运行、调 API，三步。</p> <p>语音不行。</p> <p>不是因为语音模型弱，而是因为语音这件事<strong>没有“一次请求、一次响应”的形状</strong>。麦克风一直在出数据，扬声器一直在放声音，用户随时可能插话，系统必须随时判断“现在该听还是该说”。这一层没人替你写，模型再好也用不起来。</p> <p>Boubou 做的就是这一层。它是一个 Rust 写的命令行工具，一条命令在本地跑起开源语音模型，再加一条命令，把麦克风借给同一 Wi-Fi 上的手机、浏览器和机器人。代码 MIT，项目在 Beta。</p> <ul> <li>GitHub：<a href="https://github.com/runboubou/boubou" rel="external nofollow noopener" target="_blank">runboubou/boubou</a> </li> <li>官网：<a href="https://runboubou.com/" rel="external nofollow noopener" target="_blank">runboubou.com</a> </li> </ul> <h2 id="一语音-ai-卡在哪一层">一、语音 AI 卡在哪一层</h2> <p>把语音对话拆开，至少六个部件：</p> <table> <thead> <tr> <th>部件</th> <th>作用</th> <th>常见坑</th> </tr> </thead> <tbody> <tr> <td>ASR</td> <td>语音转文字</td> <td>采样率、静音切分、口音</td> </tr> <tr> <td>LLM</td> <td>理解与生成</td> <td>首 token 延迟</td> </tr> <tr> <td>TTS</td> <td>文字转语音</td> <td>首包延迟、音色一致性</td> </tr> <tr> <td>VAD</td> <td>判断有没有人在说</td> <td>阈值、环境噪声</td> </tr> <tr> <td>AEC</td> <td>消掉扬声器回传的声音</td> <td>参考信号对齐、非线性失真</td> </tr> <tr> <td>Audio Runtime</td> <td>设备、缓冲、线程、进程</td> <td>抖动、爆音、设备抢占</td> </tr> </tbody> </table> <p>前三个是模型问题，后三个是系统问题。而<strong>系统问题决定了体验</strong>：模型再好，如果它听不见你插话，或者把自己的回声当成用户输入，对话就没法进行。</p> <p>传统做法是自己把这些拼起来：装 Whisper、装 llama.cpp、装 TTS、写音频环回、处理采样率转换、再想办法把“停止生成”的信号送到模型进程里。能跑通，但每个项目重来一遍。</p> <p>Boubou 的定位就是把这一层收进一个二进制里。</p> <h2 id="二三条命令的边界">二、三条命令的边界</h2> <p>它的使用面很窄，也很清楚：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npx boubou@beta run LFM3-Audio-2B    <span class="c"># 在本机对着麦克风说话</span>
+npx boubou@beta serve LFM3-Audio-2B  <span class="c"># 把这次对话共享到局域网</span>
+npx boubou@beta ask LFM3-Omni-2B photo.png <span class="s2">"What is in this picture?"</span>
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">run</code> 是终端里的语音聊天：Esc 暂停，Enter 继续，Ctrl+C 退出。第一次运行会下载约 1.4GB，并请求麦克风权限。</p> <p><code class="language-plaintext highlighter-rouge">serve</code> 打印一个浏览器链接和一张二维码，手机扫码就能对着电脑上的模型说话。</p> <p><code class="language-plaintext highlighter-rouge">ask</code> 用的则是 Omni 模型的多模态能力——除了听和说，它还能看图。</p> <p>配套命令也都是“模型运维”那一套：<code class="language-plaintext highlighter-rouge">list</code> 列模型、<code class="language-plaintext highlighter-rouge">pull</code> 预下载、<code class="language-plaintext highlighter-rouge">doctor</code> 检查运行环境、<code class="language-plaintext highlighter-rouge">run --offline</code> 离线跑。模型和运行时缓存在 <code class="language-plaintext highlighter-rouge">~/Library/Caches/boubou</code>（macOS）或 <code class="language-plaintext highlighter-rouge">~/.cache/boubou</code>（Linux），可以用 <code class="language-plaintext highlighter-rouge">BOUBOU_HOME</code> 换位置。</p> <h2 id="三两种模式和它们的价目表">三、两种模式，和它们的价目表</h2> <p>Boubou 支持两条完全不同的技术路径，这是它最值得看的设计。</p> <p><img src="/assets/img/blog/boubou-local-voice-runtime/fig-01-two-modes.png" alt="两种模式"></p> <p><em>Integrated 一个模型全包，Pipeline 三段拼接；下面的运行时是共用的。</em></p> <p><strong>Integrated</strong>：一个模型同时听见、思考、说话，跑在 llama.cpp 上。默认的 LFM3-Audio-2B 就是这一类，液态 AI 的音频模型，18 种语言、2 个音色。</p> <p><strong>Pipeline</strong>：语音识别 → 语言模型 → 语音合成，三段各自独立。Boubou 的模块化模型是一个<strong>锁定版本的 Hugging Face speech-to-speech 流水线</strong>（v1.1.0），ASR 默认 Whisper，LLM 默认 Qwen，TTS 可以换。</p> <p>两种模式在代价上差距很大，官网的模型库把账算得很清楚：</p> <table> <thead> <tr> <th>模型</th> <th>类型</th> <th>语言 / 音色</th> <th>下载</th> <th>内存</th> </tr> </thead> <tbody> <tr> <td>LFM3-Audio-2B</td> <td>Integrated</td> <td>18 / 2</td> <td>1.40 GB</td> <td>8 GB+</td> </tr> <tr> <td>LFM3-Omni-2B</td> <td>Integrated</td> <td>23 / 2，支持视觉</td> <td>1.61 GB</td> <td>16 GB+</td> </tr> <tr> <td>LFM2.5-Audio-1.5B</td> <td>Integrated</td> <td>仅英文</td> <td>1.27 GB</td> <td>未标注</td> </tr> <tr> <td>qwen3-tts</td> <td>Pipeline</td> <td>10 / 9</td> <td>3.75 GB 起</td> <td>16 GB+</td> </tr> <tr> <td>pocket-tts</td> <td>Pipeline</td> <td>7 / 27</td> <td>5.63 GB 起</td> <td>16 GB+</td> </tr> <tr> <td>kokoro</td> <td>Pipeline</td> <td>8 / 54</td> <td>5.91 GB 起</td> <td>32 GB+</td> </tr> <tr> <td>supertonic</td> <td>Pipeline</td> <td>31 / 10</td> <td>5.98 GB</td> <td>未标注</td> </tr> <tr> <td>omnivoice</td> <td>Pipeline</td> <td>646，支持克隆</td> <td>8.85 GB</td> <td>未标注</td> </tr> <tr> <td>chattts / mms-tts</td> <td>Pipeline</td> <td>中英 / 英文</td> <td>5.9 GB 左右</td> <td>—</td> </tr> </tbody> </table> <p><strong>多数 Pipeline 一上来就是 5.6GB 起</strong>（qwen3-tts 稍低，3.75GB 起），因为它其实一次装了三个模型：Whisper、一个 Qwen、一个 TTS。Integrated 只要 1.4GB，是因为它把三件事塞进了一个模型。</p> <p>这就是“统一模型 vs 拼接流水线”的老账：拼接灵活、可替换、每个环节都能挑最好的；统一模型省资源、省延迟、少一次文本中转（也就少丢一层语气和停顿）。</p> <p>还有一条容易被忽略的平台事实：官网按系统筛，<strong>Linux 纯 CPU 只有 3 个模型可用</strong>，就是三个 Integrated；Pipeline 在 Linux 上基本要求 NVIDIA GPU，qwen3-tts 和 chattts 则要 macOS 15+。</p> <h2 id="四rust-在守什么">四、Rust 在守什么</h2> <p><img src="/assets/img/blog/boubou-local-voice-runtime/fig-02-layers.png" alt="运行时分层"></p> <p><em>Rust 层不跑推理，它跑的是“持续存在”这件事。</em></p> <p>看到“用 Rust 写的语音 AI”，很容易误以为是“推理用 Rust”，其实不是。Boubou 的推理交给 llama.cpp 或 Python 的 speech-to-speech 流水线，Rust 负责的是另一件事：<strong>唯一持续持有音频的那个进程</strong>。</p> <p>这件事必须由一个长期存活的进程来做，原因很具体：</p> <ul> <li> <strong>音频设备是独占的</strong>。麦克风被别的应用抢走，采集就断了；采样率协商失败，出来的就是噪声。</li> <li> <strong>回声消除需要参考信号</strong>。AEC 要把“我刚刚播放的声音”和“麦克风收到的声音”做对齐，所以播放和采集必须在同一个地方拿到——分给两个进程就没法对齐。</li> <li> <strong>VAD 需要连续的历史</strong>。判断“这句话说完了没有”，看的是过去几百毫秒的能量和过零率，不是单个音频块。</li> <li> <strong>打断需要能随时杀死生成</strong>。用户一开口，得立刻停止播放、停止生成、清掉队列，再开新一轮。这套状态机放在哪个进程里，决定了打断有多快。</li> </ul> <p>所以架构是：Rust 持有设备与会话，模型是<strong>被管理的子进程</strong>（llama.cpp server 或 pipeline），两者之间用本地接口通信。模型崩了可以重启，设备不能。</p> <p>这也解释了一个官方细节：LFM2.5-Audio-1.5B 的说明里写着“打断需要更久，因为 Boubou 会重启它的服务”。<strong>同一个运行时，不同模型的可打断性不一样</strong>，区别就在这个模型服务能不能被单独叫停。</p> <h2 id="五打断体验的分水岭">五、打断：体验的分水岭</h2> <p><img src="/assets/img/blog/boubou-local-voice-runtime/fig-04-barge-in.png" alt="打断时序"></p> <p><em>一轮对话被插话打断时，两边各自在做什么。</em></p> <p>大多数语音助手是“回合制”的：你说完，它想，它说完，你再说。用户插话？等着。</p> <p>真人的对话不是这样。你说到一半发现对方理解偏了，会直接插一句“等等，我是说……”。系统必须能在这个过程中停下来。</p> <p>Boubou 把这件事拆成两个延迟：</p> <ul> <li> <strong>首段延迟</strong>：VAD 判定你说完了 → ASR 出字 → LLM 出第一个 token → TTS 出第一段音频。这一段决定“它反应快不快”。</li> <li> <strong>打断延迟</strong>：VAD 听到人声 → 停播放 → 停生成 → 清队列 → 开始处理新输入。这一段决定“它像不像在听你说话”。</li> </ul> <p>两者的优化手段完全不同。首段延迟靠模型小、靠流式、靠并行（ASR 边说边出字，TTS 边出字边合成）。打断延迟靠的是<strong>架构</strong>：能不能向模型进程发一个“停”的信号，以及这个信号要多久才生效。</p> <p>这也是我觉得最值得测的一个指标。官方已经承认 LFM2.5 需要重启服务才能打断，那就意味着这类模型的打断延迟是“进程重启级”的（数百毫秒到数秒）；而 LFM3 这类可以被直接叫停的模型，延迟应该是“信号级”的。同样叫“支持打断”，体验是两个物种。</p> <h2 id="六serve把麦克风借出去">六、serve：把麦克风借出去</h2> <p><img src="/assets/img/blog/boubou-local-voice-runtime/fig-03-serve.png" alt="serve 拓扑"></p> <p><em>主机算模型，客户端只负责采集和播放。</em></p> <p><code class="language-plaintext highlighter-rouge">serve</code> 是 Boubou 最有产品感的部分。它解决的是一个很实际的痛点：<strong>语音模型跑得动的地方，往往不是你说话的地方。</strong></p> <p>笔记本在书桌上，你在厨房；模型在 Mac mini 上，你在客厅。把模型搬到手机上不现实，但把音频送到电脑上很现实。</p> <p>于是拓扑变成：手机采集音频、通过 HTTPS/WSS 送给主机、主机推理、把音频流回手机。手机不需要 GPU，也不需要下载模型。</p> <p>这里有三层设计值得单独说。</p> <h3 id="1-默认-https而且证书能过">1. 默认 HTTPS，而且证书能过</h3> <p>局域网 IP 没法直接申请证书——CA 不给 <code class="language-plaintext highlighter-rouge">192.168.1.20</code> 签证书。而浏览器只在安全上下文里给麦克风权限，<code class="language-plaintext highlighter-rouge">http://192.168.x.x</code> 连麦克风都拿不到。</p> <p>Boubou 的做法是：<strong>把 IP 编进域名</strong>。地址长这样：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://192-168-1-20.….lan.runboubou.com
+</code></pre></div></div> <p>Boubou 会向 <code class="language-plaintext highlighter-rouge">lan.runboubou.com</code> 申请一张覆盖这个域名的证书；私钥在本机生成、也留在本机，签发服务只经手请求。于是浏览器看到的是一个正常域名配正常证书，麦克风权限和 WSS 都成立。</p> <p>这个技巧不新（很多本地开发工具都用类似的 wildcard DNS），但用在“手机扫码就能说话”这个场景里，体验差别巨大——用户不需要装根证书，也不需要点过警告页。</p> <p>不想用这个服务也可以：<code class="language-plaintext highlighter-rouge">--local</code> 只监听本机，<code class="language-plaintext highlighter-rouge">--self-signed</code> 自签名（需要在浏览器里信任），<code class="language-plaintext highlighter-rouge">--offline</code> 完全离线。</p> <h3 id="2-密钥在链接里也在二维码里">2. 密钥在链接里，也在二维码里</h3> <p>终端打印的链接带访问密钥。扫码即授权，等于“谁拿到链接谁就能用麦克风”。</p> <p>这带来一个很直白的安全结论：<strong>不要把链接发到群里，也不要截图发社交媒体。</strong> 官方 README 专门写了这一句。</p> <h3 id="3-无密钥设备走终端点头">3. 无密钥设备走“终端点头”</h3> <p>机器人、嵌入式设备往往只能填“地址 + 端口”，塞不进一长串带密钥的 URL。Boubou 的处理是：这类连接进来时，终端弹一句“某 IP 想不用密钥连进来，允许吗？”，按 y 之后记住，存在 <code class="language-plaintext highlighter-rouge">serve/allowed</code> 里。</p> <p>这个设计很务实：<strong>用人在场的那一刻做信任决策</strong>，而不是让设备去实现一套密钥管理。代价是首次连接必须有人守着终端。</p> <p>顺带说清楚边界：只有 Pipeline 模型提供 OpenAI 兼容的 Realtime 接口和语音合成接口，Integrated 模型暂时没有；WebRTC 也不支持，走的是 WebSocket。</p> <h2 id="七npm-当分发通道一个容易被低估的工程决定">七、npm 当分发通道：一个容易被低估的工程决定</h2> <p>Boubou 的入口是 <code class="language-plaintext highlighter-rouge">npx boubou@beta</code>。用 npm 分发一个 Rust 二进制，看起来别扭，但解决了几个真问题。</p> <p>它的启动器在每次执行命令前会检查更新，跑 release channel 上的最新版（beta 可以毕业成 stable）。几个细节值得注意：</p> <ul> <li>更新装进用户缓存，<strong>不需要管理员权限</strong>；</li> <li>更新使用你<strong>用户级/全局的 npm 配置</strong>，不读当前项目的 <code class="language-plaintext highlighter-rouge">.npmrc</code>——避免某个项目把 registry 改成内网镜像时静默失败；</li> <li>检查失败就警告，然后用上一个可用版本，不阻塞使用；</li> <li> <code class="language-plaintext highlighter-rouge">doctor</code>、<code class="language-plaintext highlighter-rouge">--offline</code>、<code class="language-plaintext highlighter-rouge">BOUBOU_NO_UPDATE_CHECK=1</code> 都可以跳过检查。</li> </ul> <p>模型不随包更新而重下，运行时更新会复用已校验的文件，只有版本和服务端都支持时才做增量下载。</p> <p>这是一个典型的取舍：<strong>用 npm 换“零安装门槛”，代价是多了一层启动器和更新逻辑。</strong> 对 Beta 项目来说，这个取舍是对的——先让人跑起来，比先让人装对更重要。</p> <h2 id="八安全本地不等于安全">八、安全：本地不等于安全</h2> <p>“本地推理”经常被当成安全属性。它不是。</p> <p>Boubou 在 <code class="language-plaintext highlighter-rouge">run</code> 模式下的隐私承诺是实的：不要账号、不要云端 API Key、不上传音频和转录、下载完可以离线、没有遥测。这一层没有问题。</p> <p>但 <code class="language-plaintext highlighter-rouge">serve</code> 打开了另一面：</p> <table> <thead> <tr> <th>风险</th> <th>具体形态</th> <th>缓解</th> </tr> </thead> <tbody> <tr> <td>链接泄露</td> <td>密钥在 URL 里，截图/转发即授权</td> <td>只发给自己的设备；用完 Ctrl+C</td> </tr> <tr> <td>明文回退</td> <td>HTTP/WS 不加密</td> <td>优先用默认的 HTTPS/WSS</td> </tr> <tr> <td>局域网嗅探</td> <td>同一 Wi-Fi 下的其他人</td> <td>WPA2/3 + 不共享网络</td> </tr> <tr> <td>公网暴露</td> <td>端口转发到公网</td> <td>不要做；这不是多租户服务</td> </tr> <tr> <td>无密钥设备</td> <td>地址+端口即可发起连接</td> <td>终端逐个批准，记录在 <code class="language-plaintext highlighter-rouge">serve/allowed</code> </td> </tr> </tbody> </table> <p>还有一条架构约束：<strong>一次会话只能有一个客户端</strong>。这更像是单条音频会话的必然结果，而不是没做完——AEC 的参考信号只有一路，两个客户端同时说话时，回声消除和 VAD 都会失去依据。要多客户端，得先做会话隔离和音频资源调度，那是另一个产品。</p> <h2 id="九和-ollamallamacppwhisper-的关系">九、和 Ollama、llama.cpp、Whisper 的关系</h2> <p>这四个东西经常被放在一起比较，其实不在同一层：</p> <table> <thead> <tr> <th>项目</th> <th>解决什么</th> <th>类比</th> </tr> </thead> <tbody> <tr> <td>llama.cpp</td> <td>模型怎么推理</td> <td>引擎</td> </tr> <tr> <td>Whisper / Kokoro / Qwen3-TTS</td> <td>单项能力</td> <td>零件</td> </tr> <tr> <td>Ollama</td> <td>文本模型怎么被管理和调用</td> <td>文本的模型服务器</td> </tr> <tr> <td>Boubou</td> <td>语音会话怎么被组织和共享</td> <td>语音的会话服务器</td> </tr> </tbody> </table> <p>Boubou 自己就用 llama.cpp 跑 Integrated 模型，用 Hugging Face 的 speech-to-speech 跑 Pipeline。它不是替代品，是<strong>编排层</strong>。</p> <p>这个位置的价值在于：模型会换，运行时可以不变。今天默认 LFM3，明天换一个更好的音频模型，用户侧的命令和接口不用改。</p> <h2 id="十局限">十、局限</h2> <p>按重要性排：</p> <ol> <li> <strong>Beta。</strong> 命令、参数、模型列表都在动，别拿它当生产依赖。</li> <li> <strong>平台窄。</strong> macOS 要 Apple Silicon + 13.3+；Linux 纯 CPU 只有 3 个模型；Windows 不在 README 的支持范围内，不要假设能用。</li> <li> <strong>单客户端。</strong> 见第八节，这是音频会话的结构性约束，不是修个 bug 就能放开。</li> <li> <strong>打断质量取决于模型。</strong> 官方自己标了 LFM2.5 打断慢，说明“支持打断”这句话在不同模型上不等价。</li> <li> <strong>模型许可证不统一。</strong> 代码是 MIT，但模型不是：chattts、mms-tts、omnivoice 在模型库里明确标了 non-commercial。商用前逐个核对。</li> <li> <strong>替换组件不设防。</strong> <code class="language-plaintext highlighter-rouge">--model_name</code>、<code class="language-plaintext highlighter-rouge">--stt</code> 会直接从 Hugging Face 拉模型，Boubou 不校验你指定的模型。这既是自由，也是风险。</li> <li> <strong>回声消除不是万能的。</strong> 外放音量、房间混响、设备延迟都会影响效果，官方也没有承诺“任何设备上都能全双工”。</li> </ol> <h2 id="十一我的判断语音运行时有三场考试">十一、我的判断：语音运行时有三场考试</h2> <p>Boubou 的产品直觉是对的：<strong>本地 AI 的下一层不是更强的模型，而是“能力怎么被别的设备调用”。</strong> 但它能不能站住，取决于三场考试，而且都能测：</p> <p><strong>第一场：首段延迟的分解。</strong> 把“用户停止说话”到“第一段音频播出”拆成 VAD 判停窗口、ASR 出字、LLM 首 token、TTS 首包四段，各自计时。哪一段是大头，决定了该换模型还是该改流水线——这个测量用日志加时间戳就能做，不需要改代码。</p> <p><strong>第二场：打断延迟的分布。</strong> 不只是平均值，要看 P95。用户插话十次，有九次在 200ms 内停住，一次卡了 2 秒，感受就是“它有时候不听我说话”。而 LFM2.5 那种“重启服务”的实现，分布形状会完全不同。</p> <p><strong>第三场：真实房间里的 AEC。</strong> 官方 demo 都是安静环境、内置麦克风、中等音量。真正的考验是外放音量拉满、房间有混响、麦克风和扬声器离得近。这一场不过，<code class="language-plaintext highlighter-rouge">serve</code> 场景（手机外放 + 电脑麦克风）就会变成“它一直在自言自语”。</p> <p>如果这三场都过得去，Boubou 这类工具的位置会很稳：它不跟模型厂商竞争，它做的是<strong>把模型变成家里的一台设备</strong>。这个位置在文本侧已经被 Ollama 占了，语音侧还空着。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li><a href="https://github.com/runboubou/boubou" rel="external nofollow noopener" target="_blank">GitHub 仓库</a></li> <li><a href="https://runboubou.com/" rel="external nofollow noopener" target="_blank">官网</a></li> <li><a href="https://runboubou.com/models/" rel="external nofollow noopener" target="_blank">模型库（12 个模型，含下载体积与内存要求）</a></li> <li><a href="https://runboubou.com/connect/" rel="external nofollow noopener" target="_blank">手机接入说明</a></li> <li><a href="https://runboubou.com/connect/robots/" rel="external nofollow noopener" target="_blank">机器人与应用接入说明</a></li> <li><a href="https://github.com/huggingface/speech-to-speech" rel="external nofollow noopener" target="_blank">Hugging Face speech-to-speech（模块化流水线上游）</a></li> </ul> <p>代码 MIT；模型各自许可不同，商用前分别核对。本文数字来自项目 README、官网模型库与接入文档，实际体验会受设备、房间声学和模型版本影响。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hy-mt2-family-centric-post-training/">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/safetensors-weight-format/">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pyvene-intervention-framework/">pyvene：深入模型内部，理解并干预神经网络行为的开源工具</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deleting-weights-deletion-tuning/">删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/freetoken-edge-moe-serving/">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
