@@ -4,6 +4,7 @@
 #
 # - name: 站点名          # 必填，卡片标题
 #   url: https://...      # 必填，整张卡片可点击
+#   preview: /assets/img/sites/example.jpg # 可选，卡片里的 16:9 网站预览图
 #   description: 一句话    # 可选，说明这个站点为什么值得收藏
 #   tags: [AI, 工具]      # 可选，卡片底部的小标签，同时用作页面顶部的筛选
 #   icon: "◆"             # 可选，卡片左上角图标（emoji 或单字）；留空则取站名首字
@@ -13,114 +14,133 @@
 
 - name: Anthropic
   url: https://www.anthropic.com/
+  preview: /assets/img/sites/anthropic.jpg
   description: Claude 的官方发布与研究入口，模型能力和 agent 设计的一手资料。
   tags: [AI, 模型]
   icon: "A"
 
 - name: Simon Willison's Weblog
   url: https://simonwillison.net/
+  preview: /assets/img/sites/simon-willison.jpg
   description: LLM 工具链最勤快的一手实践记录，新模型和新用法几乎当天就有评测。
   tags: [AI, 工具]
   icon: "S"
 
 - name: Lil'Log
   url: https://lilianweng.github.io/
+  preview: /assets/img/sites/lil-log.jpg
   description: 把 agent、强化学习和 LLM 的系统性综述写清楚，适合当索引反复回看。
   tags: [AI, 论文]
   icon: "L"
 
 - name: Hacker News
   url: https://news.ycombinator.com/
+  preview: /assets/img/sites/hacker-news.jpg
   description: 技术圈信息密度最高的讨论区之一，工程细节常出现在评论区。
   tags: [社区]
   icon: "Y"
 
 - name: GitHub Trending
   url: https://github.com/trending
+  preview: /assets/img/sites/github-trending.jpg
   description: 每天的开源热度榜，找参考实现、工具链和新项目的第一站。
   tags: [开源, 工具]
   icon: "G"
 
 - name: arXiv cs.CL
   url: https://arxiv.org/list/cs.CL/recent
+  preview: /assets/img/sites/arxiv-cs-cl.jpg
   description: 计算语言学方向的最新预印本，按提交时间排，适合扫标题。
   tags: [论文, AI]
   icon: "X"
 
 - name: Looseleaf
   url: https://kevintngo.github.io/looseleaf/
+  preview: /assets/img/sites/looseleaf.jpg
   description: 纸张纹理、胶带和手绘图表组成的手账风 UI，提供完整页面区块。
   tags: [设计, UI, 开源]
   icon: "L"
 
 - name: PlopUI
   url: https://plopui.com/
+  preview: /assets/img/sites/plopui.jpg
   description: 蓝色马克笔与贴纸头像风格的组件库，按钮按下时还有生动的挤压反馈。
   tags: [设计, UI, 动效]
   icon: "P"
 
 - name: Inkra
   url: https://inkrajs.github.io/
+  preview: /assets/img/sites/inkra.jpg
   description: 融合铅笔笔触和淡彩质感的手绘组件库，日历与地图等复杂组件也保持统一风格。
   tags: [设计, UI, 开源]
   icon: "I"
 
 - name: goopUI
   url: https://goop.timmcmasters.work/docs/components
+  preview: /assets/img/sites/goopui.jpg
   description: 会滴落和拉伸的黏液风格组件库，优先支持 Vue 与 Nuxt。
   tags: [设计, UI, Vue, 动效]
   icon: "G"
 
 - name: Solid Glass
   url: https://deeplethe.github.io/solid-glass/
+  preview: /assets/img/sites/solid-glass.jpg
   description: 克制的玻璃材质 AI 组件，覆盖 Agent 状态、工具执行步骤和 diff 展示。
   tags: [AI, UI, Agent, 开源]
   icon: "S"
 
 - name: AffectUI
   url: https://affectui.com/
+  preview: /assets/img/sites/affectui.jpg
   description: 面向 Agent 产品的组件库，包含 Agent 树、工具调用、审批与 trace；部分组件付费。
   tags: [AI, UI, Agent]
   icon: "A"
 
 - name: Prestige UI
   url: https://prestigeui.com/
+  preview: /assets/img/sites/prestige-ui.jpg
   description: 基于 React、Tailwind CSS 和 Motion 的动画组件库，提供丰富的落地页区块，部分内容付费。
   tags: [设计, UI, React, 动效]
   icon: "P"
 
 - name: BoardUI
   url: https://boardui.com/
+  preview: /assets/img/sites/boardui.jpg
   description: 面向仪表盘和 AI 工作台的组件库，覆盖表格、图表、日历与 Agent 聊天，部分组件付费。
   tags: [AI, UI, Agent, 仪表盘]
   icon: "B"
 
 - name: Scrolltide
   url: https://www.scrolltide.co/
+  preview: /assets/img/sites/scrolltide.jpg
   description: 收录 600 多个设计提示词，以及 200 多个附带完整源码的 3D 与滚动驱动组件。
   tags: [设计, UI, 动效, 工具]
   icon: "S"
 
 - name: Navbar Gallery
   url: https://www.navbar.gallery/
+  preview: /assets/img/sites/navbar-gallery.jpg
   description: 专注导航栏设计的灵感图库，覆盖静态、下拉、全屏、侧边栏与大型菜单等类型。
   tags: [设计, UI, 灵感]
   icon: "N"
 
 - name: Footer Design
   url: https://www.footer.design/
+  preview: /assets/img/sites/footer-design.jpg
   description: 精选高质量网站页脚案例，可按排版、网格、动画、明暗色等风格寻找参考。
   tags: [设计, UI, 灵感]
   icon: "F"
 
 - name: CTA Gallery
   url: https://cta.gallery/
+  preview: /assets/img/sites/cta-gallery.jpg
   description: 高转化 CTA 设计灵感合集，适合参考行动号召区块、文案和按钮布局。
   tags: [设计, UI, 灵感, 营销]
   icon: "C"
 
 - name: Refero Design Styles
   url: https://styles.refero.design/
+  preview: /assets/img/sites/refero-design-styles.jpg
   description: 从真实产品界面中整理设计风格，适合学习成熟产品的视觉语言与组件运用。
   tags: [设计, UI, 灵感]
   icon: "R"

@@ -103,7 +103,7 @@ _styles: |
     min-height: 12.25rem;
     flex-direction: column;
     gap: 0.7rem;
-    padding: 1.15rem;
+    padding: 0 0 1.15rem;
     overflow: hidden;
     color: var(--global-text-color);
     text-decoration: none;
@@ -141,6 +141,24 @@ _styles: |
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    padding: 0 1.15rem;
+  }
+  .ws-preview {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--ws-soft);
+    border-bottom: 1px solid var(--global-divider-color);
+  }
+  .ws-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: transform 0.28s ease;
+  }
+  .ws-card:hover .ws-preview img {
+    transform: scale(1.025);
   }
   .ws-icon {
     display: flex;
@@ -199,12 +217,15 @@ _styles: |
     font-size: 0.82rem;
     line-height: 1.65;
     color: var(--ws-muted);
+    padding: 0 1.15rem;
   }
   .ws-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
     padding-top: 0.2rem;
+    padding-right: 1.15rem;
+    padding-left: 1.15rem;
   }
   .ws-tag {
     padding: 0.18rem 0.5rem;
@@ -240,6 +261,7 @@ _styles: |
   @media (prefers-reduced-motion: reduce) {
     .ws-card,
     .ws-card::before,
+    .ws-preview img,
     .ws-arrow { transition: none; }
   }
 ---
@@ -286,6 +308,11 @@ _styles: |
         data-search="{{ item.name | append: ' ' | append: item.description | append: ' ' | append: item.tags | downcase | escape }}"
         aria-label="访问 {{ item.name }}（在新窗口打开）"
       >
+        {% if item.preview %}
+          <span class="ws-preview" aria-hidden="true">
+            <img src="{{ item.preview | relative_url }}" alt="" loading="lazy" width="720" height="405" />
+          </span>
+        {% endif %}
         <span class="ws-head">
           <span class="ws-icon" aria-hidden="true">
             {%- if item.logo -%}
