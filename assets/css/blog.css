@@ -9,9 +9,10 @@
  * 2. 颜色全部走主题 CSS 变量，深色模式自动跟随。
  */
 
-/* 博客页：窄版心 + 编辑式列表。正文列宽控制在中文舒适阅读区间，封面只在有 thumbnail 时占位。 */
+/* 博客页：居中版心 + 编辑式列表。1100px 与文章页正文（约 1000px）基本同宽，
+ * 列表标题能一行放下中文长标题，封面只在有 thumbnail 时占位。 */
 .post {
-  max-width: 900px;
+  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
 }
