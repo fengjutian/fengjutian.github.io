@@ -19,6 +19,10 @@ vendor
 # Local design previews and screenshots (not part of the published site)
 .mockups/
 
+# Scratch space for ad-hoc verification runs
+.shots/
+.tmp/
+
 # Python bytecode from bin/ helper scripts
 __pycache__/
 *.pyc
