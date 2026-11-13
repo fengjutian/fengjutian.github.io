@@ -3,6 +3,25 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const sites = [
+  ["finviz", "https://finviz.com/"],
+  ["stockanalysis", "https://stockanalysis.com/"],
+  ["seeking-alpha", "https://seekingalpha.com/"],
+  ["etf-database", "https://etfdb.com/"],
+  ["companies-market-cap", "https://companiesmarketcap.com/"],
+  ["koyfin", "https://koyfin.com/"],
+  ["macromicro", "https://en.macromicro.me/"],
+  ["fred", "https://fred.stlouisfed.org/"],
+  ["reddit", "https://www.reddit.com/"],
+  ["analysis-site", "https://analysissite.vercel.app/"],
+  ["hn-buzzing", "https://hn.buzzing.cc/"],
+  ["ars-technica", "https://arstechnica.com/"],
+  ["the-atlantic", "https://www.theatlantic.com/"],
+  ["the-economist", "https://www.economist.com/"],
+  ["phys-org", "https://phys.org/"],
+  ["github", "https://github.com/"],
+  ["news-on-japan", "https://newsonjapan.com/"],
+  ["upi", "https://www.upi.com/"],
+  ["drive", "https://www.drive.com.au/"],
   ["anthropic", "https://www.anthropic.com/"],
   ["simon-willison", "https://simonwillison.net/"],
   ["lil-log", "https://lilianweng.github.io/"],
@@ -26,6 +45,7 @@ const sites = [
 
 const outputDirectory = path.resolve("assets/img/sites");
 await mkdir(outputDirectory, { recursive: true });
+const requestedSites = new Set(process.argv.slice(2));
 
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
@@ -36,7 +56,9 @@ const context = await browser.newContext({
 });
 
 for (const [slug, url] of sites) {
+  if (requestedSites.size > 0 && !requestedSites.has(slug)) continue;
   const page = await context.newPage();
+  page.setDefaultTimeout(60_000);
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.waitForTimeout(2_000);
