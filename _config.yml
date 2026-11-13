@@ -103,9 +103,9 @@ bib_search: true
 
 # Dimensions
 # 版心宽度：同时驱动 `.container` 的 max-width、`--max-content-width` CSS 变量和
-# 文章页 75/25 的正文/目录分栏。原来 930px 在 2K 屏上两侧留白过多，
-# 调宽到 1200px 后正文约 830px、右侧目录固定 340px（见下方 post 的 _styles）。
-max_width: 1200px
+# 文章页的正文/目录分栏。原来 930px 在 2K 屏上两侧留白过多；现在 1320px，
+# 文章页正文约 1000px、右侧目录固定 320px（见下方 post 的 _styles）。
+max_width: 1320px
 
 # -----------------------------------------------------------------------------
 # Open Graph & Schema.org
@@ -341,17 +341,17 @@ defaults:
           scrollbar-width: thin;
           scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
         }
-        /* 大屏上把目录从 25% 比例换成固定 340px：比例宽度在 1200px 版心里只剩约
-           250px，中文标题几乎条条折行；固定宽度后正文吃满剩余空间。 */
+        /* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+           目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
         @media (min-width: 1200px) {
           .container > .row:has(#toc-sidebar) > .col-sm-9 {
             flex: 0 0 auto;
-            width: calc(100% - 340px);
-            max-width: calc(100% - 340px);
+            width: calc(100% - 320px);
+            max-width: calc(100% - 320px);
           }
           .container > .row:has(#toc-sidebar) > .col-sm-3 {
-            flex: 0 0 340px;
-            max-width: 340px;
+            flex: 0 0 320px;
+            max-width: 320px;
           }
         }
         /* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。

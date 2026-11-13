@@ -126,19 +126,19 @@ $$
 
 pyvene 不只提供固定操作，也提供带可训练参数的干预模块，把「怎么改表示」本身变成学习目标。仓库里目前有一批实现：
 
-| 干预类型                            | 主要用途                                     |
-| ----------------------------------- | -------------------------------------------- |
-| `ZeroIntervention`                  | 将选定表示置零，做消融                       |
-| `VanillaIntervention`               | 用 source 表示替换 base 表示                 |
-| `AdditionIntervention`              | 将 source 表示加到 base 上                   |
-| `SubtractionIntervention`           | 从 base 中减去 source 表示                   |
-| `CollectIntervention`               | 只收集、不改写，用于读取激活                 |
-| `RotatedSpaceIntervention`          | 在学习到的旋转空间中做干预（DAS）            |
-| `BoundlessRotatedSpaceIntervention` | 不依赖低维瓶颈的旋转干预                     |
-| `LowRankRotatedSpaceIntervention`   | 低秩旋转，参数更省                           |
-| `SigmoidMaskIntervention`           | 学习一个软掩码，再按阈值离散化               |
-| `AutoencoderIntervention`           | 在自编码器潜在空间中干预                     |
-| `NoiseIntervention`                 | 注入噪声，做鲁棒性测试                       |
+| 干预类型                            | 主要用途                          |
+| ----------------------------------- | --------------------------------- |
+| `ZeroIntervention`                  | 将选定表示置零，做消融            |
+| `VanillaIntervention`               | 用 source 表示替换 base 表示      |
+| `AdditionIntervention`              | 将 source 表示加到 base 上        |
+| `SubtractionIntervention`           | 从 base 中减去 source 表示        |
+| `CollectIntervention`               | 只收集、不改写，用于读取激活      |
+| `RotatedSpaceIntervention`          | 在学习到的旋转空间中做干预（DAS） |
+| `BoundlessRotatedSpaceIntervention` | 不依赖低维瓶颈的旋转干预          |
+| `LowRankRotatedSpaceIntervention`   | 低秩旋转，参数更省                |
+| `SigmoidMaskIntervention`           | 学习一个软掩码，再按阈值离散化    |
+| `AutoencoderIntervention`           | 在自编码器潜在空间中干预          |
+| `NoiseIntervention`                 | 注入噪声，做鲁棒性测试            |
 
 这些实现覆盖了原始表示空间、旋转后的表示空间和自编码器潜在空间三种位置。这一步让 pyvene 从「观察工具」跨到了「研究如何改写行为」。
 
@@ -258,12 +258,12 @@ model = pv.IntervenableModel(config, model=gpt2)
 clean, patched = model(
     base=tokenize("The capital of France is"),
     sources=[tokenize("The capital of Germany is")],
-    unit_locations={"sources->base": ([[[5]]], [[[5]]])},
+    unit_locations={"sources->base": 5},
     output_original_output=True,
 )
 ```
 
-`unit_locations` 里 `sources->base` 的写法是「用哪个 source 位置，替换哪个 base 位置」；嵌套的三层分别对应 batch、干预组和单元。
+`unit_locations` 里的 `sources->base` 表示「把 source 的这个位置换进 base 的这个位置」；这里 `5` 指两个输入的第 5 个 token。多 batch、多 source 时改写成嵌套列表即可。
 
 ### 4. 研究两个输入之间的因果关系
 
@@ -324,17 +324,17 @@ pyvene 的价值在于：它让「干预」成为验证机制假设的默认手�
 
 两者都能碰模型内部，但抽象层次不同：
 
-| 对比维度     | pyvene                                     | NNsight                                |
-| ------------ | ------------------------------------------ | -------------------------------------- |
-| 核心定位     | 内部表示干预框架                           | 内部追踪与干预的执行基础设施           |
-| 主要抽象     | Intervention（配置化）                     | Trace（代码化）                        |
-| 内部状态读取 | 支持                                       | 支持                                   |
-| 激活值替换   | 支持                                       | 支持                                   |
-| 激活值置零   | 支持                                       | 支持                                   |
-| 可训练干预   | 多种内置实现，直接接优化器                 | 可用追踪与修改机制自行搭建             |
-| 干预配置     | 结构化、可序列化、可分享                   | 以追踪代码与执行流程为核心             |
-| 研究重点     | 因果干预、表示修改、ReFT                   | 执行模型内部代码、远程运行大模型       |
-| 典型用户     | 机制可解释性、模型编辑研究者               | 模型分析、调试、大模型内部状态研究者   |
+| 对比维度     | pyvene                       | NNsight                              |
+| ------------ | ---------------------------- | ------------------------------------ |
+| 核心定位     | 内部表示干预框架             | 内部追踪与干预的执行基础设施         |
+| 主要抽象     | Intervention（配置化）       | Trace（代码化）                      |
+| 内部状态读取 | 支持                         | 支持                                 |
+| 激活值替换   | 支持                         | 支持                                 |
+| 激活值置零   | 支持                         | 支持                                 |
+| 可训练干预   | 多种内置实现，直接接优化器   | 可用追踪与修改机制自行搭建           |
+| 干预配置     | 结构化、可序列化、可分享     | 以追踪代码与执行流程为核心           |
+| 研究重点     | 因果干预、表示修改、ReFT     | 执行模型内部代码、远程运行大模型     |
+| 典型用户     | 机制可解释性、模型编辑研究者 | 模型分析、调试、大模型内部状态研究者 |
 
 两者不是替代关系。
 
