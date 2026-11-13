@@ -37,6 +37,59 @@
   display: none;
 }
 
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding-left: 1.15rem;
+  border-left: 1px solid var(--global-divider-color);
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-divider-color) 85%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-divider-color) 85%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.2rem 0.2rem 0.2rem 0.45rem;
+  color: var(--global-text-color-light);
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
   </style> <div class="post"> <header class="post-header"> <h1 class="post-title">把个人站从「魔改模板」改成「薄启动器」</h1> <p class="post-meta"> Created on October 18, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>我把这个站点的底层换成了 al-folio v1 的薄启动器架构。换句话说：<strong>站点仓库不再拥有任何布局、样式和前端脚本</strong>，运行时全部由版本化的 gem 提供。</p> <p>这不是审美问题，是一次故障率的重新分配。</p> <h2 id="改之前模板即运行时">改之前：模板即运行时</h2> <p>传统做法是把主题仓库整个 fork 下来，然后直接改 <code class="language-plaintext highlighter-rouge">_layouts/</code>、<code class="language-plaintext highlighter-rouge">_includes/</code>、<code class="language-plaintext highlighter-rouge">_sass/</code>。好处是灵活，代价是：</p> <ul> <li>每次升级上游都要手动 merge，冲突几乎必然出现在你最不想动的地方；</li> <li>你的 fork 里到底有多少是「上游的」，多少是「你自己的」，三个月后没人说得清；</li> <li>主题的一个 CSS 变量改名，能让你的站点样式静默失效，而错误信息是「看起来有点歪」。</li> </ul> <h2 id="改之后站点只管三件事">改之后：站点只管三件事</h2> <p>薄启动器的边界很硬，仓库里只允许存在这些东西：</p> <ol> <li> <strong>内容</strong> —— <code class="language-plaintext highlighter-rouge">_posts/</code>、<code class="language-plaintext highlighter-rouge">_projects/</code>、<code class="language-plaintext highlighter-rouge">_news/</code>、<code class="language-plaintext highlighter-rouge">_data/</code>；</li> <li> <strong>配置</strong> —— <code class="language-plaintext highlighter-rouge">_config.yml</code> 与 <code class="language-plaintext highlighter-rouge">Gemfile</code>，两者必须一致；</li> <li> <strong>接线</strong> —— 在 <code class="language-plaintext highlighter-rouge">_config.yml</code> 里声明用哪些插件、在 <code class="language-plaintext highlighter-rouge">Gemfile</code> 里锁定版本。</li> </ol> <p>运行时归 gem。想改布局？不改，先找拥有它的那个 gem；确实需要本地覆盖时，允许，但会被记录下来（<code class="language-plaintext highlighter-rouge">al-folio upgrade overrides audit</code>），不会变成没人知道的历史包袱。</p> <h2 id="最贵的部分静默失败">最贵的部分：静默失败</h2> <p>这个架构里有一个必须记住的坑——<strong>特性静默失败</strong>：</p> <blockquote> <p>一个特性要生效，需要同时满足三件事：gem 已加载、开关已打开、页面已声明接入。 任何一件不满足，Liquid 标签会输出一个空字符串，<strong>不报错、不警告</strong>。</p> </blockquote> <p>所以「我配置了功能但页面上没有」，绝大多数情况下不是 bug，是三件事里有一件没做。排查顺序应该是固定的：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem 在 Gemfile 和 _config.yml 里都出现了吗？
 → 配置里的 feature flag 打开了吗？
 → 这一页的 front matter 里接入了吗？
