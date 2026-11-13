@@ -8,7 +8,7 @@ tags: [AI, 开源]
 categories: [技术随笔, 工程实践]
 featured: true
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/freetoken-edge-moe-serving.jpg
 ---

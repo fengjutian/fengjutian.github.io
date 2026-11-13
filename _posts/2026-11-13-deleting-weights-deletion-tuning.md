@@ -7,7 +7,7 @@ description: 从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRP
 tags: [AI, 论文解读, 模型训练]
 categories: [技术随笔, 论文解读]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/deleting-weights.jpg
 ---

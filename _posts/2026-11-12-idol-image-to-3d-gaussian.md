@@ -7,7 +7,7 @@ description: Idol 通过单张图片推断三维结构，最多生成 1,048,576 
 tags: [AI, 开源]
 categories: [技术随笔]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/idol-image-to-3d-gaussian.jpg
 ---

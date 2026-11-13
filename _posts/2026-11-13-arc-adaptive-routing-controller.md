@@ -7,7 +7,7 @@ description: 从成功率预测、Token 成本估算、推理强度控制到 Pre
 tags: [AI, 开源, 架构设计]
 categories: [技术随笔, 工程实践]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/arc-adaptive-routing-controller.jpg
 ---

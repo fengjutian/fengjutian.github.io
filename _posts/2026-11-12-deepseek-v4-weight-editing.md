@@ -7,7 +7,7 @@ description: 从闭式权重编辑、MoE 架构、能力评测和部署方式出
 tags: [AI, 开源]
 categories: [技术随笔, 工程实践]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/deepseek-v4-weight-editing.jpg
 ---

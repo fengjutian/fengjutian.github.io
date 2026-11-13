@@ -7,7 +7,7 @@ description: 使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出�
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/train-llm-from-scratch.jpg
 ---

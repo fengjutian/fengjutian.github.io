@@ -323,6 +323,59 @@ defaults:
           display: none;
         }
 
+        /* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+           目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+        #toc-sidebar {
+          max-height: calc(100vh - 7rem);
+          padding-left: 1.15rem;
+          border-left: 1px solid var(--global-divider-color);
+          scrollbar-width: thin;
+          scrollbar-color: color-mix(in srgb, var(--global-divider-color) 85%, transparent) transparent;
+        }
+        #toc-sidebar::-webkit-scrollbar {
+          width: 5px;
+        }
+        #toc-sidebar::-webkit-scrollbar-thumb {
+          background: color-mix(in srgb, var(--global-divider-color) 85%, transparent);
+          border-radius: 999px;
+        }
+        #toc-sidebar.toc > .toc-list {
+          padding-left: 0;
+        }
+        #toc-sidebar .toc-list {
+          padding-left: 0.7rem;
+        }
+        #toc-sidebar .toc-list .toc-list {
+          margin: 0.15rem 0 0.4rem;
+          padding-left: 0.7rem;
+          border-left: 1px solid var(--global-divider-color);
+        }
+        #toc-sidebar .toc-link {
+          font-size: 0.8rem;
+          line-height: 1.5;
+          padding: 0.2rem 0.2rem 0.2rem 0.45rem;
+          color: var(--global-text-color-light);
+        }
+        #toc-sidebar .toc-link:hover {
+          color: var(--global-theme-color);
+        }
+        #toc-sidebar .toc-link::before {
+          width: 2px;
+          border-radius: 999px;
+          opacity: 0;
+        }
+        #toc-sidebar .toc-link.is-active-link {
+          color: var(--global-theme-color);
+          font-weight: 600;
+        }
+        #toc-sidebar .toc-link.is-active-link::before {
+          opacity: 1;
+        }
+        #toc-sidebar .toc-list .toc-list .toc-link {
+          font-size: 0.76rem;
+          color: var(--global-text-color-light);
+        }
+
 sass:
   style: compressed
 

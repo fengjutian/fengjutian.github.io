@@ -7,7 +7,7 @@ description: 从多账号管理、API Key 分发、账号调度、Token 级计�
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/sub2api-ai-api-gateway.jpg
 ---

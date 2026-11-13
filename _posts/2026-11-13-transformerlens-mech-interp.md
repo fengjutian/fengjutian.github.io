@@ -7,7 +7,7 @@ description: 从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架�
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 toc:
-  sidebar: left
+  sidebar: right
   collapse: auto
 og_image: /assets/img/blog/transformerlens-mech-interp.jpg
 ---
