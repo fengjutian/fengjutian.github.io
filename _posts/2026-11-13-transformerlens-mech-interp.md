@@ -15,7 +15,7 @@ _图片来源：[Transformer Explainer](https://poloclub.github.io/transformer-e
 
 这件事我们已经习以为常。但如果你追问一句：**它是怎么算出 Paris 的？** 我们手上其实什么都没有——只有一个输入字符串和一个输出字符串，中间那几十层矩阵乘法是一团不透明的黑箱。
 
-机制可解释性（Mechanistic Interpretability）想做的事，就是把这团黑箱拆成可以命名的零件：哪个 Attention Head 把 `France` 的信息搬到了最后一个位置？哪一层 MLP 把"国家"改写成"首都"？这些零件之间是不是构成了一条稳定的计算路径？
+机制可解释性（Mechanistic Interpretability）想做的事，就是把这团黑箱拆成可以命名的零件：哪个 Attention Head 把 `France` 的信息搬到了最后一个位置？哪一层 MLP 把“国家”改写成“首都”？这些零件之间是不是构成了一条稳定的计算路径？
 
 开源库 [TransformerLens](https://github.com/TransformerLensOrg/TransformerLens) 就是为此而生的工具。它由 Neel Nanda 创建，目前由 Bryce Meyer 和 Jonah Larson 维护，是这个领域事实上的基础设施。
 
@@ -139,9 +139,9 @@ Hook 在这一次前向结束后自动移除。这是做消融实验最常用的
 
 ## 四、四个因果分析工具，回答四类不同的问题
 
-有了读取和干预能力，接下来就是方法论问题：**怎么从"能改激活"走到"能下结论"。**
+有了读取和干预能力，接下来就是方法论问题：**怎么从“能改激活”走到“能下结论”。**
 
-TransformerLens 的 `tools.analysis` 里有一组工具。它们看起来都在回答"哪个组件重要"，但测的其实是完全不同的量。这一点如果搞混，结论就会错得离谱。
+TransformerLens 的 `tools.analysis` 里有一组工具。它们看起来都在回答“哪个组件重要”，但测的其实是完全不同的量。这一点如果搞混，结论就会错得离谱。
 
 | 我想知道                               | 用哪个                   | 它到底测量了什么           |
 | -------------------------------------- | ------------------------ | -------------------------- |
@@ -160,13 +160,13 @@ $$
 
 这就是 DLA。它能告诉你：在这一条 prompt 上，`Paris` 的分数里有多少来自 embedding，多少来自第 5 层某个 head，多少来自第 9 层 MLP。
 
-但有个必须记住的限定：**DLA 分数不是消融效应。** 把一个组件从模型里删掉，下游计算会跟着变，最终影响可能远大于它当场的直接贡献，也可能反向。DLA 测的是"它此刻往答案方向推了多少"，不是"没有它会怎样"。
+但有个必须记住的限定：**DLA 分数不是消融效应。** 把一个组件从模型里删掉，下游计算会跟着变，最终影响可能远大于它当场的直接贡献，也可能反向。DLA 测的是“它此刻往答案方向推了多少”，不是“没有它会怎样”。
 
-官方文档还有一个容易踩的坑：`unit="layer"` 返回的是**累计**读数（每一层之后的残差状态），不是可以相加的独立贡献。想要可加的分量，用 `unit="component"` 或 `unit="head"`。
+官方文档还有一个容易踩的坑：`unit="layer“` 返回的是**累计**读数（每一层之后的残差状态），不是可以相加的独立贡献。想要可加的分量，用 `unit=”component“` 或 `unit=”head"`。
 
 ### 2. Activation Patching：干净答案能不能被搬回来
 
-这是机制可解释性里最核心的实验范式，也是最能体现"因果"二字的：
+这是机制可解释性里最核心的实验范式，也是最能体现“因果”二字的：
 
 ```text
 Clean:      "The capital of France is"   →  Paris
@@ -192,7 +192,7 @@ logits = bridge.run_with_hooks(
 
 4.0 的 patching 工具比早期版本多了一层统计能力。传入返回 `[batch]` 的 metric 和 `reduce="none"`，每个格子的结果会保留**逐样本值**，并附带均值、标准误、bootstrap 置信区间，以及在 `baseline=True` 时的效应量和置换检验 p 值。
 
-这层统计很值得用，但也要正确理解：bootstrap 区间描述的是"在这批 prompt 上重采样，这个格子的均值会怎么浮动"。它**不**告诉你结论能否推广到这批 prompt 之外。四到八个样本的区间会非常宽，这是诚实的表现，不是工具的缺陷。
+这层统计很值得用，但也要正确理解：bootstrap 区间描述的是“在这批 prompt 上重采样，这个格子的均值会怎么浮动”。它**不**告诉你结论能否推广到这批 prompt 之外。四到八个样本的区间会非常宽，这是诚实的表现，不是工具的缺陷。
 
 ### 3. Attribution Patching：先筛，再验
 
@@ -204,7 +204,7 @@ $$
 \text{score} \approx (\text{clean} - \text{corrupt}) \cdot \nabla_{\text{corrupt}}
 $$
 
-也就是"激活差"乘"污染运行时的梯度"。一次前向加一次反向，就能给所有节点打分。
+也就是“激活差”乘“污染运行时的梯度”。一次前向加一次反向，就能给所有节点打分。
 
 它有两种粒度：**node**（某个 hook 点的激活）和 **edge**（某个 writer 到某个 reader 的路径）。边粒度的分数规模随 `O(seq_len × (layers × heads)²)` 增长，这个量级要心里有数。
 
@@ -212,7 +212,7 @@ $$
 
 ### 4. Direct Path Patching：把一条边钉死
 
-如果你已经锁定"第 5 层第 0 个 head 通过 K 分支影响了第 12 层"，那就需要一个只改这一条路径的工具。
+如果你已经锁定“第 5 层第 0 个 head 通过 K 分支影响了第 12 层”，那就需要一个只改这一条路径的工具。
 
 `get_act_patch_direct_path` 做的就是这件事：固定 source head，扫描后续层的 Q 头或 K/V 组，只把干净运行中该 source head 写进残差的分量加到目标分支上，其余读者仍然看到污染版本。
 
@@ -226,11 +226,11 @@ scores = get_act_patch_direct_path(
 # shape: [n_layers, n_kv_heads]
 ```
 
-在 pre-norm 架构上，这个分数就是精确的边干预效果。在 post-norm（Gemma 2/3、OLMo 2/3）、缩放残差（Granite）或并行 mixer（Falcon-H1）结构上，因为 head 的写入不再是简单的 `hook_z @ W_O`，工具会直接拒绝执行——**这种"拒绝"比给一个错误答案要好得多**。
+在 pre-norm 架构上，这个分数就是精确的边干预效果。在 post-norm（Gemma 2/3、OLMo 2/3）、缩放残差（Granite）或并行 mixer（Falcon-H1）结构上，因为 head 的写入不再是简单的 `hook_z @ W_O`，工具会直接拒绝执行——**这种“拒绝”比给一个错误答案要好得多**。
 
-### 5. faithfulness：把"电路"从故事变成假设
+### 5. faithfulness：把“电路”从故事变成假设
 
-做完一轮 patching，你手上会有一份"重要边"的排序。但排序不是结论。
+做完一轮 patching，你手上会有一份“重要边”的排序。但排序不是结论。
 
 `faithfulness()` 提供了一个可证伪的检验：把候选电路**之外**的所有边全部消融，看这个电路能恢复多少 clean 与 corrupt 之间的差距。
 
@@ -248,15 +248,15 @@ report = faithfulness(bridge, clean, corrupt, metric_fn, ranked.top_edges(k=50))
 print(report.recovered, report.circuit_size, report.total_edges)
 ```
 
-`recovered` 是分数不是百分比：1.0 表示电路完整复现了干净指标，0.0 表示它复现的是污染指标。超出 `[0, 1]` 也可能出现且有含义——电路可以"过冲"。
+`recovered` 是分数不是百分比：1.0 表示电路完整复现了干净指标，0.0 表示它复现的是污染指标。超出 `[0, 1]` 也可能出现且有含义——电路可以“过冲”。
 
-而且，判读这个数字时必须配一个**同规模的随机边集合做基线**。否则你无法区分"这个电路有意义"和"任意 50 条边也能恢复这么多"。
+而且，判读这个数字时必须配一个**同规模的随机边集合做基线**。否则你无法区分“这个电路有意义”和“任意 50 条边也能恢复这么多”。
 
 ## 五、读残差流：Logit Lens 与 Jacobian Lens
 
-上面那组工具都在问"谁导致了结果"。还有另一类问题更朴素：**模型在第 6 层的时候，"以为"答案是什么？**
+上面那组工具都在问“谁导致了结果”。还有另一类问题更朴素：**模型在第 6 层的时候，“以为”答案是什么？**
 
-Logit Lens 的做法很直接：把每一层的残差，用模型自己的 `ln_final` 和 `W_U` 投影回词表，看每一层的"临时预测"。
+Logit Lens 的做法很直接：把每一层的残差，用模型自己的 `ln_final` 和 `W_U` 投影回词表，看每一层的“临时预测”。
 
 ```python
 from transformer_lens.tools.analysis import logit_lens
@@ -267,15 +267,15 @@ result.rank_trajectory(" Paris")   # 每层 Paris 的排名
 
 有一个细节很漂亮：最后一层的读数**精确等于**模型自己的 logits（在 raw weights 模式下）。这给了这个工具一个自洽性保证。而在兼容模式下，因为 `center_unembed` 会给每个位置的 logit 加一个常数，跨模式比较时应该比 log-prob 或排名，而不是比原始 logit。
 
-Jacobian Lens 则是它的进阶版：不再假设"残差直接过 unembedding"，而是拟合一个从某层到输出的传输映射。代价是需要训练或加载一个 lens artifact，并且必须和模型版本严格匹配。
+Jacobian Lens 则是它的进阶版：不再假设“残差直接过 unembedding”，而是拟合一个从某层到输出的传输映射。代价是需要训练或加载一个 lens artifact，并且必须和模型版本严格匹配。
 
 这里有一条贯穿全文的纪律，官方文档写得非常克制但很重要：
 
-> 中间层的读数是**观察**，不是**干预**。第 6 层排名第一的 token，只说明"如果模型在这里停下，unembedding 会这么说"，它不证明后面的层没有在工作。
+> 中间层的读数是**观察**，不是**干预**。第 6 层排名第一的 token，只说明“如果模型在这里停下，unembedding 会这么说”，它不证明后面的层没有在工作。
 
 ## 六、从单个 head 到计算电路
 
-机制可解释性真正有意思的成果，几乎都是"电路"级别的：不是"某个 head 重要"，而是"这几个组件这样配合，完成了这个任务"。
+机制可解释性真正有意思的成果，几乎都是“电路”级别的：不是“某个 head 重要”，而是“这几个组件这样配合，完成了这个任务”。
 
 几个经典研究对象：
 
@@ -285,7 +285,7 @@ Jacobian Lens 则是它的进阶版：不再假设"残差直接过 unembedding"�
 
 研究路径通常是：先用 DLA 看哪些组件在给答案加分，用 Attention Patching 找信息瓶颈层，用 Path Patching 锁定具体路径，最后用 `faithfulness()` 检验这条电路是否真的能解释行为。
 
-这条链路里，每一步都能被证伪。这正是它比"看注意力图讲故事"更可靠的原因。
+这条链路里，每一步都能被证伪。这正是它比“看注意力图讲故事”更可靠的原因。
 
 ## 七、4.0 的变化：把执行引擎也抽象掉
 
@@ -293,7 +293,7 @@ Jacobian Lens 则是它的进阶版：不再假设"残差直接过 unembedding"�
 
 **2026 年 9 月 21 日发布的 4.0**，核心变化是 **Driver（执行后端）系统**。
 
-3.0 已经用 `TransformerBridge` + 架构适配器，解决了"不同模型实现"的问题——把 Hugging Face 的模型映射到统一的组件树和 Hook 接口上。4.0 解决的则是"不同执行引擎"的问题：同名的 Hook、同一份 cache、同一套干预接口，现在可以跑在 vLLM 上，或者跑在 `inspect_ai` 的评估流程里。
+3.0 已经用 `TransformerBridge` + 架构适配器，解决了“不同模型实现”的问题——把 Hugging Face 的模型映射到统一的组件树和 Hook 接口上。4.0 解决的则是“不同执行引擎”的问题：同名的 Hook、同一份 cache、同一套干预接口，现在可以跑在 vLLM 上，或者跑在 `inspect_ai` 的评估流程里。
 
 ```text
         TransformerLens API（统一 hook 名 / cache / 干预）
@@ -367,7 +367,7 @@ bridge.enable_compatibility_mode()   # 需要旧版数值行为时
 
 TransformerLens 的适配器已经覆盖 Mamba-1、Mamba-2，以及 gated-delta-net（Qwen3.5 / Qwen3-Next）、NemotronH、GraniteMoeHybrid 等混合架构。
 
-对 Mamba 这类状态空间模型，最自然的对照物是"等效注意力矩阵"。`ActivationCache.compute_ssm_effective_attention(layer=...)` 可以把 SSD 推导出的注意力矩阵显式地生成出来，直接和 Transformer 的 attention pattern 比较。
+对 Mamba 这类状态空间模型，最自然的对照物是“等效注意力矩阵”。`ActivationCache.compute_ssm_effective_attention(layer=...)` 可以把 SSD 推导出的注意力矩阵显式地生成出来，直接和 Transformer 的 attention pattern 比较。
 
 README 把这块标为实验性支持。能跑通前向、能挂 Hook、能生成，不等于所有分析工具都已经适配——官方在每类工具下都写了明确的架构限制（比如 DLA 会拒绝 Mamba/SSM/Mixer/LinearAttention 的混合布局）。**工具会报错，是好事。**
 
@@ -414,7 +414,7 @@ print(clean[0, -1, paris].item(), "->", ablated[0, -1, paris].item())
 
 1. **`model.eval()` 不等于 `torch.no_grad()`。** 前者关掉 dropout 等训练行为，后者关掉梯度记录。梯度类分析（Attribution Patching、Jacobian Lens）如果在 `no_grad()` 里跑，会直接失败。
 2. **答案 token 必须是一个 token。** ` Paris` 和 `Paris` 的 tokenization 可能不同，前导空格经常是坑。
-3. **比较用差值，不要用单点。** 常见做法是 `logit(Paris) - logit(Berlin)`，把问题变成"模型更偏向哪个"，比绝对分数稳定得多。
+3. **比较用差值，不要用单点。** 常见做法是 `logit(Paris) - logit(Berlin)`，把问题变成“模型更偏向哪个”，比绝对分数稳定得多。
 
 ## 十、方法论上的几个坑
 
@@ -427,30 +427,30 @@ print(clean[0, -1, paris].item(), "->", ablated[0, -1, paris].item())
 DLA 分数低的组件，删掉后可能影响巨大；DLA 分数高的组件，删掉后可能被其他路径补偿。两者回答的是不同问题。
 
 **3. 单个 prompt 的结论不算结论。**
-一两个例子上得到的"第 9 层关键"，很可能只是这两个句子的巧合。至少用一批 prompt，并且看逐样本结果，不要只看均值。
+一两个例子上得到的“第 9 层关键”，很可能只是这两个句子的巧合。至少用一批 prompt，并且看逐样本结果，不要只看均值。
 
 **4. 置信区间不负责外推。**
-bootstrap 区间只描述这批 prompt 的重采样波动。要谈"模型的一般机制"，需要在留出集上再验一次。
+bootstrap 区间只描述这批 prompt 的重采样波动。要谈“模型的一般机制”，需要在留出集上再验一次。
 
 **5. 记录复现信息。**
 模型和 tokenizer 的 revision、dtype、是否开启兼容模式、hook 名、位置、metric 定义、随机种子——这些不记，三个月后你自己也复现不出来。
 
 **6. 兼容模式和原始权重的 cache 不能混用。**
-换权重处理方式就要重新采 cache。这条违反起来毫无报错，只会给你一堆"看起来差不多但统计上显著不同"的诡异结果。
+换权重处理方式就要重新采 cache。这条违反起来毫无报错，只会给你一堆“看起来差不多但统计上显著不同”的诡异结果。
 
 ## 十一、总结
 
-TransformerLens 解决的问题很基础，也很少被认真对待：**让"看模型内部"这件事变得像调用一个函数一样简单。**
+TransformerLens 解决的问题很基础，也很少被认真对待：**让“看模型内部”这件事变得像调用一个函数一样简单。**
 
 它提供的东西可以归成三层：
 
 - **读取层**：统一的 Hook 名 + `ActivationCache`，把中间张量变成可寻址对象。
-- **干预层**：`run_with_hooks`、patching 工具，把"如果改这里会怎样"变成可执行的实验。
+- **干预层**：`run_with_hooks`、patching 工具，把“如果改这里会怎样”变成可执行的实验。
 - **推断层**：DLA、Attribution Patching、faithfulness、Logit Lens，把干预结果转成关于组件的定量陈述。
 
-而 4.0 的 Driver 架构，把它的适用范围从"本地 Hugging Face 模型"扩展到了"任何能跑前向并触发 Hook 的引擎"。它对机制可解释性的意义，类似于 PyTorch 对深度学习的意义：**不是提出新理论，而是让一整类实验变得便宜。**
+而 4.0 的 Driver 架构，把它的适用范围从“本地 Hugging Face 模型”扩展到了“任何能跑前向并触发 Hook 的引擎”。它对机制可解释性的意义，类似于 PyTorch 对深度学习的意义：**不是提出新理论，而是让一整类实验变得便宜。**
 
-当然，工具再好也只是工具。这个领域最难的从来不是"怎么读激活"，而是"怎么设计一个能证伪的实验"。TransformerLens 把前者的成本压到接近零，剩下的部分，还是得靠人。
+当然，工具再好也只是工具。这个领域最难的从来不是“怎么读激活”，而是“怎么设计一个能证伪的实验”。TransformerLens 把前者的成本压到接近零，剩下的部分，还是得靠人。
 
 ## 项目与参考资料
 
