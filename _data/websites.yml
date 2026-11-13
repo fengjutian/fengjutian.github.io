@@ -94,3 +94,33 @@
   description: 面向仪表盘和 AI 工作台的组件库，覆盖表格、图表、日历与 Agent 聊天，部分组件付费。
   tags: [AI, UI, Agent, 仪表盘]
   icon: "B"
+
+- name: Scrolltide
+  url: https://www.scrolltide.co/
+  description: 收录 600 多个设计提示词，以及 200 多个附带完整源码的 3D 与滚动驱动组件。
+  tags: [设计, UI, 动效, 工具]
+  icon: "S"
+
+- name: Navbar Gallery
+  url: https://www.navbar.gallery/
+  description: 专注导航栏设计的灵感图库，覆盖静态、下拉、全屏、侧边栏与大型菜单等类型。
+  tags: [设计, UI, 灵感]
+  icon: "N"
+
+- name: Footer Design
+  url: https://www.footer.design/
+  description: 精选高质量网站页脚案例，可按排版、网格、动画、明暗色等风格寻找参考。
+  tags: [设计, UI, 灵感]
+  icon: "F"
+
+- name: CTA Gallery
+  url: https://cta.gallery/
+  description: 高转化 CTA 设计灵感合集，适合参考行动号召区块、文案和按钮布局。
+  tags: [设计, UI, 灵感, 营销]
+  icon: "C"
+
+- name: Refero Design Styles
+  url: https://styles.refero.design/
+  description: 从真实产品界面中整理设计风格，适合学习成熟产品的视觉语言与组件运用。
+  tags: [设计, UI, 灵感]
+  icon: "R"
