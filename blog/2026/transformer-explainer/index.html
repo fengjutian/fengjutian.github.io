@@ -1,0 +1,510 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/transformer-explainer/"> <meta property="og:description" content="从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/transformer-explainer.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己"> <meta name="twitter:description" content="从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/transformer-explainer.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/transformer-explainer/",
+        "@type": "BlogPosting",
+        "description": "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        "headline": "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/transformer-explainer/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>先给三个数字，它们说明这个项目的量级。</p> <ul> <li> <strong>490,000</strong>：这个工具上线以来吸引的用户数，覆盖 200 多个国家。</li> <li> <strong>90</strong>：论文里对照实验的参与者人数，比较对象是博客文章和视频。</li> <li> <strong>124M</strong>：浏览器里真正在跑的那个模型，GPT-2 Small。</li> </ul> <p>Transformer Explainer 是佐治亚理工 Polo Club 的作品，2024 年先以 IEEE VIS 海报拿了个最佳海报奖，扩写后的完整论文发在 CHI 2026。项目 MIT 开源，在线版打开就能用。</p> <ul> <li>在线体验：<a href="https://poloclub.github.io/transformer-explainer/" rel="external nofollow noopener" target="_blank">poloclub.github.io/transformer-explainer</a> </li> <li>仓库：<a href="https://github.com/poloclub/transformer-explainer" rel="external nofollow noopener" target="_blank">poloclub/transformer-explainer</a> </li> <li>论文：<a href="https://arxiv.org/abs/2408.04619" rel="external nofollow noopener" target="_blank">arXiv 2408.04619</a>（CHI ‘26，DOI <a href="https://doi.org/10.1145/3772318.3791725" rel="external nofollow noopener" target="_blank">10.1145/3772318.3791725</a>）</li> </ul> <p>本文只讲一件事：<strong>它凭什么能在教学上站住脚——不是图画得好看，而是图里的每个数字都来自正在跑的那次前向计算。</strong></p> <h2 id="一它真正做的事一次前向两种产物">一、它真正做的事：一次前向，两种产物</h2> <p>静态架构图的问题是：它永远正确，也永远和你输入的那句话无关。</p> <p>你读到的“Attention 会计算相关性”，和你输入“Data visualization”之后模型实际算出的那个 5×5 矩阵，是两回事。前者是知识，后者是证据。</p> <p>Transformer Explainer 把这两件事合并了。你输入的文本进入浏览器里的 GPT-2，同一次前向计算产生两种产物：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>你的输入
+  → GPT-2（浏览器内，一次前向）
+      ├─ 产物 A：下一个 token 的概率（模型真正的输出）
+      └─ 产物 B：每一层的中间张量（被画成图的那部分）
+</code></pre></div></div> <p>第二列不是“再画一遍”，是<strong>顺手截下来的</strong>。所以当你在界面上看到某个 token 对另一个 token 的注意力权重是 0.31，那个 0.31 就是这次计算里真实发生的数。</p> <p><img src="/assets/img/blog/transformer-explainer/fig-01-flow.png" alt="一次前向的完整数据流"></p> <p><em>从上到下是数据流，从左到右是三档解释深度。</em></p> <p>同一张界面还组织了三档抽象层级：</p> <table> <thead> <tr> <th>层级</th> <th>你看到什么</th> <th>解决什么问题</th> </tr> </thead> <tbody> <tr> <td>overview</td> <td>Token 怎么一路变成概率</td> <td>建立全局地图</td> </tr> <tr> <td>expand</td> <td>点开 Embedding / Attention / Softmax</td> <td>看清某个组件内部</td> </tr> <tr> <td>math</td> <td>Q·K^T、缩放、Mask、Softmax、加权求和</td> <td>对上公式</td> </tr> </tbody> </table> <p>后文按这条线走：先讲数据怎么流，再讲每一站发生了什么，最后讲它为什么必须在浏览器里跑。</p> <h2 id="二分词结果比直觉更碎">二、分词：结果比直觉更碎</h2> <p>GPT-2 用的是 BPE，词表 50,257。切分结果经常不符合“一个词一个 token”的直觉。</p> <p>论文自己的例子：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Data visualization empowers
+→ ["Data", " visualization", " em", "powers"]
+</code></pre></div></div> <p>两个反直觉的地方：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">visualization</code> 是<strong>一个</strong> token，没有被切开；</li> <li> <code class="language-plaintext highlighter-rouge">empowers</code> 被切成 <code class="language-plaintext highlighter-rouge">em</code> + <code class="language-plaintext highlighter-rouge">powers</code>，而且第二个 token 带着前导空格。</li> </ul> <p>前导空格不是排版问题，是 GPT-2 的词表里真实存在 <code class="language-plaintext highlighter-rouge">Ġ</code>（代表空格）这种记号。你看到的“单词”，模型看到的是带空格的片段。</p> <p>这解释了一个常见困惑：为什么模型有时会把一个词续得很奇怪？因为它从来不是按词处理的。</p> <h2 id="三embedding-与位置把符号变成向量">三、Embedding 与位置：把符号变成向量</h2> <p>Token ID 只是个索引，没有语义。模型查一张 $50257 \times 768$ 的表，把每个 ID 换成一个 768 维向量：</p> \[H_0 = E_{\text{token}}(x) + E_{\text{pos}}(i)\] <p>位置信息是<strong>可学习的位置嵌入</strong>，直接加到 token 向量上。这里有个细节值得注意：加法意味着位置信息不是另开一路，而是和词义混在同一个 768 维空间里——这也是后来 RoPE 想换掉它的原因之一。</p> <p>界面上点开 Embedding，能看到两条向量相加的过程，以及结果里那些正负交替的小数。数字本身没有可读含义，但有可读的结构：<strong>同一位置、不同 token 的向量差异，和不同位置的同一 token 的向量差异，是两种不同的方向。</strong></p> <h2 id="四block一个模板重复十二次">四、Block：一个模板重复十二次</h2> <p><img src="/assets/img/blog/transformer-explainer/fig-02-block.png" alt="Block 内部"></p> <p><em>GPT-2 的 Pre-LN 结构：先归一化，再进子层，出来加残差。</em></p> <p>GPT-2 Small 的 12 层是同一个结构复制 12 次。它不是最强的模型，但结构完整、推理够快，正好适合“当场算给你看”。每层两件事：</p> <ol> <li> <strong>多头自注意力</strong>：让 token 之间交换信息。</li> <li> <strong>MLP</strong>：对每个 token 单独做非线性变换。</li> </ol> <p>两处残差加法，两处 LayerNorm。GPT-2 用的是 <strong>Pre-LN</strong>——归一化放在子层<strong>之前</strong>。这和原始 Transformer 的 Post-LN 相反，好处是梯度能沿着残差直通到底，深层模型更好训；代价是最后要补一个 LayerNorm（GPT-2 的 <code class="language-plaintext highlighter-rouge">ln_f</code>），否则输出尺度不对。</p> <p>MLP 的维度变化是 768 → 3072 → 768，中间用 GELU。<strong>参数量上，MLP 比 Attention 大得多</strong>：GPT-2 每层 Attention 约 2.4M 参数，MLP 约 4.7M，接近两倍。这一点常被忽视——大家盯着 Attention 看，但模型里一半以上的参数在 MLP 里。</p> <p>这个图在工具里是可以点开的：点 Attention 进去看 Q、K、V，点 MLP 进去看升维和激活。<strong>层级不是靠滚动条切换的，是靠展开动画切换的</strong>，而且展开时上下文不丢——这一点后面讲设计时会再提。</p> <h2 id="五attention五步和一个三角形">五、Attention：五步，和一个三角形</h2> <p>这是整个工具信息密度最高的部分。</p> <p><img src="/assets/img/blog/transformer-explainer/fig-03-attention.png" alt="Attention 与因果遮罩"></p> <p><em>左边的矩阵是这次前向真实算出来的；上三角的 × 是遮罩，不是数据。</em></p> <p>五个步骤，每一步对应界面里的一层展开：</p> <p><strong>① 算分。</strong> 每个 token 的 query 和其他 token 的 key 做点积，得到两两之间的相关性分数。</p> <p><strong>② 缩放。</strong> 除以 $\sqrt{d_k}$。GPT-2 的 $d_k = 64$，所以除以 8。不除的话，点积会随维度增大而变大，softmax 之后几乎变成 one-hot，梯度就死了。</p> <p><strong>③ 遮罩。</strong> 未来位置加 $-\infty$，softmax 之后权重变 0。界面上就是那个上三角的 ×。</p> <p><strong>④ softmax。</strong> 每一行归一化成权重，和为 1。</p> <p><strong>⑤ 加权求和。</strong> 用权重把各 token 的 value 加起来，得到这一层的新表示。</p> <p>写成一个式子：</p> \[\mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}+M\right)V\] <p>其中 $M$ 是因果遮罩矩阵。<strong>注意遮罩加在 softmax 之前</strong>，不是之后；加在之后会把归一化破坏掉。</p> <p>那个三角形值得多看两眼。行是“当前 token”，列是“它能看的位置”，左下三角填充、右上三角是 ×。它把“自回归”这个抽象约束变成了一张可以直接读的图：<strong>第一个 token 只能看自己，最后一个 token 能看全部。</strong></p> <p>工具里还可以切换头、悬停查看单个 token 的注意力分布——这时你会看到一些很直观的现象，比如某个头几乎只关注前一个 token，另一个头在关注句首。</p> <h2 id="六多头12-个-64-维不是-12-个模型">六、多头：12 个 64 维，不是 12 个模型</h2> <p>GPT-2 Small 有 12 个头，每个头 64 维，拼起来 768 维，再过一层线性投影。</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>768 维
+  ├─ Head 1  (64 维)
+  ├─ Head 2  (64 维)
+  │      ...
+  └─ Head 12 (64 维)
+        │
+     concat → 768 维
+        │
+     W_O → 768 维输出
+</code></pre></div></div> <p>这里有三个常见误解：</p> <ul> <li> <strong>不是 12 个独立模型</strong>。它们共享同一份输入，只是用不同的投影矩阵看不同的子空间，最后拼回去。</li> <li> <strong>不是“每个头负责一种语法”</strong>。头与功能的对应关系因模型、因层而异，得靠实验判断，不能靠命名。</li> <li> <strong>头的维度变小了，总计算量没变</strong>。12×64 和 1×768 的参数量一样，多头换来的是“多个视角”，不是“更多算力”。</li> </ul> <p>界面里可以逐个切换头，看到同一个句子在不同头下的注意力模式完全不同。这是我觉得比读论文更有说服力的一幕。</p> <h2 id="七输出层把创造力拆成三个旋钮">七、输出层：把“创造力”拆成三个旋钮</h2> <p>12 层走完，最后一层 hidden state 乘上 $W_{out}$（和 embedding 矩阵转置共享），得到 50,257 维的 logits，再 softmax 成概率。</p> <p>到这里，模型的工作就结束了。<strong>接下来发生的事不是模型做的，是采样策略做的。</strong></p> <p><img src="/assets/img/blog/transformer-explainer/fig-04-sampling.png" alt="采样参数"></p> <p><em>同一组 logits，四个面板：温度改形状，top-k 砍数量，top-p 砍累计质量。</em></p> <p>温度就是把 logits 除以 $T$ 再 softmax：</p> \[P_i=\mathrm{softmax}\!\left(\frac{z_i}{T}\right)\] <p>$T&lt;1$ 让分布更尖，$T&gt;1$ 让分布更平。它<strong>不改变模型的知识</strong>，只改变你从分布里抽样的方式。</p> <p>top-k 保留概率最高的 K 个；top-p 按累计概率截断，候选集合大小是动态的。三者的作用环节不同：</p> <table> <thead> <tr> <th>参数</th> <th>作用对象</th> <th>一句话</th> </tr> </thead> <tbody> <tr> <td>Temperature</td> <td>分布形状</td> <td>决定“多敢选低概率词”</td> </tr> <tr> <td>Top-k</td> <td>候选数量</td> <td>固定砍掉长尾</td> </tr> <tr> <td>Top-p</td> <td>累计质量</td> <td>按概率动态截断</td> </tr> </tbody> </table> <p>工具里拖动滑块，右侧概率条会立刻重排。这比任何“temperature 是创造力参数”的解释都清楚——<strong>你会亲眼看到它没有创造任何新东西，只是把已有的分布压扁或拉尖。</strong></p> <h2 id="八浏览器里跑-gpt-2650mb-与一条本地推理链路">八、浏览器里跑 GPT-2：650MB 与一条本地推理链路</h2> <p><img src="/assets/img/blog/transformer-explainer/fig-05-browser-stack.png" alt="浏览器推理栈"></p> <p><em>没有服务器：分词、推理、可视化都在同一个页面里。</em></p> <p>这是整个项目工程上最有意思的部分。技术栈不是“用了几个库”，而是<strong>每个库解决一个具体障碍</strong>：</p> <table> <thead> <tr> <th>层</th> <th>用的东西</th> <th>为什么是它</th> </tr> </thead> <tbody> <tr> <td>框架</td> <td>Svelte 5 + SvelteKit</td> <td>细粒度响应式，数据变图就变，不用手动 diff</td> </tr> <tr> <td>数据流布局</td> <td>D3 + <code class="language-plaintext highlighter-rouge">d3-sankey</code> </td> <td>token 流本来就是一张有向图</td> </tr> <tr> <td>转场</td> <td>GSAP</td> <td>展开/收起要保持上下文，纯 CSS 做不到</td> </tr> <tr> <td>公式</td> <td>KaTeX</td> <td>数学排版不能靠图片</td> </tr> <tr> <td>分词</td> <td><code class="language-plaintext highlighter-rouge">@xenova/transformers</code></td> <td>浏览器里跑 GPT-2 的 BPE，不用回服务端</td> </tr> <tr> <td>推理</td> <td> <code class="language-plaintext highlighter-rouge">onnxruntime-web</code> 1.23</td> <td>把 ONNX 模型跑在 WASM/WebGPU 上</td> </tr> <tr> <td>托管</td> <td>GitHub Pages（<code class="language-plaintext highlighter-rouge">adapter-static</code>）</td> <td>纯静态，没有后端、没有 API Key</td> </tr> </tbody> </table> <p>模型本身是 GPT-2 Small 转成的 ONNX 文件。打开仓库会看到它被切成了 <strong>63 个分片，合计约 650MB</strong>——静态托管放单文件不现实，分片还能并行下载。</p> <p>这里有个必须说清楚的取舍：<strong>“浏览器运行”不等于“零成本”</strong>。第一次打开要下几百 MB，推理要吃本地 CPU/GPU 和内存。项目选 GPT-2 Small 而不是更大的模型，正是因为这个成本必须留在“打开就能用”的范围内。</p> <p>另外，界面要能展开到 Q、K、V 这一层，就意味着模型除了最终的概率，还得把中间张量一起交出来。<strong>这层开销是静态图不需要付的</strong>，也是这类工具真正的工程门槛：不是能不能跑模型，而是跑完之后能不能把中间结果低成本地送到渲染层。</p> <h2 id="九教学设计为什么它比博客和视频有效">九、教学设计：为什么它比博客和视频有效</h2> <p>论文的做法不是“我们做了个工具，用户很喜欢”，而是做了对照实验：90 名参与者，分成工具组和传统材料组（博客文章 + 视频），学同样的 Transformer 概念，然后做理解测验和主观评分。</p> <p>结论是工具组在理解度和参与度上有统计显著优势。论文把有效的原因归到三个设计上：</p> <p><strong>① Token-centric flow-based visualization。</strong> 以 token 为中心画数据流，而不是以组件为中心画框图。好处是学习者始终知道“现在这个数是从哪来的、要去哪”。</p> <p><strong>② Multi-level explanation。</strong> 允许在整体架构和底层数学之间来回切换。只看公式会对不上结构，只看动画会不知道发生了什么运算，两层必须能互相跳。</p> <p><strong>③ Interactive experimentation。</strong> 改输入、改参数，看结果怎么变。这是它和交互式文章（explorable explanation）的分界线——文章的故事线是作者定的，工具的实验是用户定的。</p> <p>还有一个容易被低估的设计：<strong>引导式学习卡片</strong>。对非专业用户来说，最大的门槛不是数学，是“不知道该点哪”。卡片把概念讲解和具体操作绑在一起，点一步、讲一步。</p> <h2 id="十局限">十、局限</h2> <p>按重要性排：</p> <ol> <li> <strong>GPT-2 不是现代 LLM。</strong> 它没有 RoPE、没有 GQA/MQA、没有 RMSNorm、没有 SwiGLU、没有 MoE、没有 KV Cache 的工程复杂度。用它建立的直觉，到 Llama 或 DeepSeek 那一代会有一半要重学。</li> <li> <strong>注意力权重不是解释。</strong> 看到某个头关注某个词，不等于“模型因为这个才输出那个 token”。注意力是信息路由的一个快照，不是因果链。</li> <li> <strong>只有前向，没有干预。</strong> 你能看，但不能改：不能把某个头的激活置零、不能替换某个位置的 residual stream、不能做 activation patching。观察和实验之间还差一层。</li> <li> <strong>首屏成本。</strong> 650MB 的模型文件，弱网下体验会崩。这是“零安装”的代价。</li> <li> <strong>结论的边界。</strong> 90 人、非专家、短期测验，能说明“入门教学有效”，不能说明“深度理解有效”。</li> </ol> <h2 id="十一我的判断从-explainer-到-intervention-studio">十一、我的判断：从 Explainer 到 Intervention Studio</h2> <p>这个项目最值得学的不是某个可视化技巧，而是它的<strong>产品结构</strong>：</p> <blockquote> <p>模型负责产生真实数值，界面负责解释数值，交互负责让人建立因果直觉。</p> </blockquote> <p>三者必须在同一个进程里，缺一个就退化成动画。这也是为什么它非要在浏览器里跑模型——不是为了炫技，是为了让“解释”和“计算”共享同一份数据。</p> <p>顺着这个结构往下推，还差一步：<strong>从“看”到“改”</strong>。</p> <p>如果给它加一层干预能力，它会立刻从教学工具变成研究工具：</p> <ul> <li> <strong>Hidden state 探针</strong>：把 Layer 6 的 residual stream 投影到词表（logit lens），看预测是怎么一层层收敛的；</li> <li> <strong>Head 消融</strong>：点一下某个头把它置零，看输出概率怎么变——这比看注意力权重更能说明因果；</li> <li> <strong>Activation patching</strong>：把 A 句某个位置的激活换到 B 句，看哪个位置决定了输出。</li> </ul> <p>这三件事在 PyTorch 里用 NNsight 或 pyvene 都只要几行，难的是<strong>把它做进浏览器、并且和现有可视化拼在一起</strong>。而这恰好是 Transformer Explainer 已经解决的那一半工程问题：模型在本地、中间张量能拿到、界面能实时更新。</p> <p>所以我认为它更像一个<strong>平台雏形</strong>，而不是一个成品教学页。它的下一站不是“支持更多模型”，而是“支持对模型的干预”。前者是内容扩展，后者是能力升级。</p> <p>顺带说一句，Polo Club 这条产品线本身也值得看：CNN Explainer、GAN Lab、Diffusion Explainer，加上这一个，四代模型、四种可视化范式。这套东西的方法论比单个工具更有价值。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li><a href="https://poloclub.github.io/transformer-explainer/" rel="external nofollow noopener" target="_blank">在线体验</a></li> <li> <a href="https://github.com/poloclub/transformer-explainer" rel="external nofollow noopener" target="_blank">GitHub 仓库</a>（MIT）</li> <li> <a href="https://arxiv.org/abs/2408.04619" rel="external nofollow noopener" target="_blank">论文（CHI ‘26）</a>｜<a href="https://doi.org/10.1145/3772318.3791725" rel="external nofollow noopener" target="_blank">ACM DOI</a> </li> <li><a href="https://youtu.be/TFUc41G2ikY" rel="external nofollow noopener" target="_blank">演示视频</a></li> <li>同系列：<a href="https://poloclub.github.io/cnn-explainer" rel="external nofollow noopener" target="_blank">CNN Explainer</a>、<a href="https://poloclub.github.io/ganlab" rel="external nofollow noopener" target="_blank">GAN Lab</a>、<a href="https://poloclub.github.io/diffusion-explainer" rel="external nofollow noopener" target="_blank">Diffusion Explainer</a> </li> </ul> <p>本文数字来自论文、README 与仓库文件清单（模型分片大小按仓库实际文件累加）。界面截图未使用，配图为按论文与实现重绘的示意图；实际交互请以在线版为准。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/boubou-local-voice-runtime/">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hy-mt2-family-centric-post-training/">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/safetensors-weight-format/">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pyvene-intervention-framework/">pyvene：深入模型内部，理解并干预神经网络行为的开源工具</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deleting-weights-deletion-tuning/">删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/freetoken-edge-moe-serving/">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
