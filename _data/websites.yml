@@ -46,3 +46,51 @@
   description: 计算语言学方向的最新预印本，按提交时间排，适合扫标题。
   tags: [论文, AI]
   icon: "X"
+
+- name: Looseleaf
+  url: https://kevintngo.github.io/looseleaf/
+  description: 纸张纹理、胶带和手绘图表组成的手账风 UI，提供完整页面区块。
+  tags: [设计, UI, 开源]
+  icon: "L"
+
+- name: PlopUI
+  url: https://plopui.com/
+  description: 蓝色马克笔与贴纸头像风格的组件库，按钮按下时还有生动的挤压反馈。
+  tags: [设计, UI, 动效]
+  icon: "P"
+
+- name: Inkra
+  url: https://inkrajs.github.io/
+  description: 融合铅笔笔触和淡彩质感的手绘组件库，日历与地图等复杂组件也保持统一风格。
+  tags: [设计, UI, 开源]
+  icon: "I"
+
+- name: goopUI
+  url: https://goop.timmcmasters.work/docs/components
+  description: 会滴落和拉伸的黏液风格组件库，优先支持 Vue 与 Nuxt。
+  tags: [设计, UI, Vue, 动效]
+  icon: "G"
+
+- name: Solid Glass
+  url: https://deeplethe.github.io/solid-glass/
+  description: 克制的玻璃材质 AI 组件，覆盖 Agent 状态、工具执行步骤和 diff 展示。
+  tags: [AI, UI, Agent, 开源]
+  icon: "S"
+
+- name: AffectUI
+  url: https://affectui.com/
+  description: 面向 Agent 产品的组件库，包含 Agent 树、工具调用、审批与 trace；部分组件付费。
+  tags: [AI, UI, Agent]
+  icon: "A"
+
+- name: Prestige UI
+  url: https://prestigeui.com/
+  description: 基于 React、Tailwind CSS 和 Motion 的动画组件库，提供丰富的落地页区块，部分内容付费。
+  tags: [设计, UI, React, 动效]
+  icon: "P"
+
+- name: BoardUI
+  url: https://boardui.com/
+  description: 面向仪表盘和 AI 工作台的组件库，覆盖表格、图表、日历与 Agent 聊天，部分组件付费。
+  tags: [AI, UI, Agent, 仪表盘]
+  icon: "B"
