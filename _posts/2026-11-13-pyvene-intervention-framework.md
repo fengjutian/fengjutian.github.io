@@ -1,7 +1,7 @@
 ---
 layout: post
 title: pyvene：深入模型内部，理解并干预神经网络行为的开源工具
-date: 2026-11-13 15:05:00 +0800
+date: 2026-11-13 14:20:00 +0800
 thumbnail: assets/img/blog/pyvene-intervention-framework.jpg
 description: 从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。
 tags: [AI, 开源, 可解释性]
