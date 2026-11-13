@@ -125,7 +125,6 @@ _styles: |
     transition: opacity 0.18s ease, transform 0.18s ease;
   }
   .ws-card[hidden] { display: none; }
-  .ws-card--text-only { padding-top: 1.15rem; }
   .ws-card:hover {
     color: var(--global-text-color);
     text-decoration: none;
@@ -300,8 +299,9 @@ _styles: |
   <div class="ws-grid">
     {% for item in sites %}
       {% assign host = item.url | remove_first: "https://" | remove_first: "http://" | remove_first: "www." | split: "/" | first %}
+      {% assign preview = item.preview | default: "/assets/img/sites/default-preview.jpg" %}
       <a
-        class="ws-card{% unless item.preview %} ws-card--text-only{% endunless %}"
+        class="ws-card"
         href="{{ item.url }}"
         target="_blank"
         rel="noopener noreferrer"
@@ -309,11 +309,9 @@ _styles: |
         data-search="{{ item.name | append: ' ' | append: item.description | append: ' ' | append: item.tags | downcase | escape }}"
         aria-label="访问 {{ item.name }}（在新窗口打开）"
       >
-        {% if item.preview %}
-          <span class="ws-preview" aria-hidden="true">
-            <img src="{{ item.preview | relative_url }}" alt="" loading="lazy" width="720" height="405" />
-          </span>
-        {% endif %}
+        <span class="ws-preview" aria-hidden="true">
+          <img src="{{ preview | relative_url }}" alt="" loading="lazy" width="720" height="405" />
+        </span>
         <span class="ws-head">
           <span class="ws-icon" aria-hidden="true">
             {%- if item.logo -%}

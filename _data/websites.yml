@@ -4,7 +4,7 @@
 #
 # - name: 站点名          # 必填，卡片标题
 #   url: https://...      # 必填，整张卡片可点击
-#   preview: /assets/img/sites/example.jpg # 可选，卡片里的 16:9 网站预览图
+#   preview: /assets/img/sites/example.jpg # 可选；留空时自动显示统一的默认预览图
 #   description: 一句话    # 可选，说明这个站点为什么值得收藏
 #   tags: [AI, 工具]      # 可选，卡片底部的小标签，同时用作页面顶部的筛选
 #   icon: "◆"             # 可选，卡片左上角图标（emoji 或单字）；留空则取站名首字
