@@ -8,7 +8,7 @@ tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 ---
 
-![Unified LLM API Gateway](https://images.openai.com/static-rsc-4/S4thnyRlU9GbMZblagTk_wECgMoazkFCPPlMPdxan4PwbHjDDphJjy5DJvaDf0E5W147vNzbT-e6VLagXEXKr0_W1N_HCmPnA-ehF8zG5D4JS5PDVNYQoggnEs29n3LfgT26RDsqCRTBm8ESDo968jAYKdLATzAfu-Poinb4t1Y?purpose=inline)
+![Unified LLM API Gateway]({{ '/assets/img/blog/sub2api-ai-api-gateway/fig-01.jpg' | relative_url }})
 
 _图片来源：[ANG YAO AI · Unified LLM API Gateway](https://github.com/Wei-Shaw/sub2api)_
 

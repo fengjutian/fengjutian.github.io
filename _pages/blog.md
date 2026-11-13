@@ -33,12 +33,12 @@ pagination:
 {% if site.display_tags or site.display_categories %}
     <div class="blog-filters">
       {% for tag in site.display_tags %}
-        <a href="{{ tag | slugify | prepend: '/blog/tag/' | relative_url }}"><span class="blog-filter-hash">#</span>{{ tag }}</a>
+        <a href="{{ tag | slugify | prepend: '/blog/tag/' | relative_url }}/"><span class="blog-filter-hash">#</span>{{ tag }}</a>
         {% unless forloop.last %}<span class="blog-filter-sep">·</span>{% endunless %}
       {% endfor %}
       {% if site.display_tags and site.display_categories %}<span class="blog-filter-sep">·</span>{% endif %}
       {% for category in site.display_categories %}
-        <a href="{{ category | slugify | prepend: '/blog/category/' | relative_url }}">{{ category }}</a>
+        <a href="{{ category | slugify | prepend: '/blog/category/' | relative_url }}/">{{ category }}</a>
         {% unless forloop.last %}<span class="blog-filter-sep">·</span>{% endunless %}
       {% endfor %}
     </div>
@@ -55,7 +55,19 @@ pagination:
 {% if featured_posts.size > 0 and is_first_page %}
     <div class="pinned-posts">
       {% for post in featured_posts %}
-        {% assign read_time = post.content | number_of_words | divided_by: 180 | plus: 1 %}
+        {% comment %}
+          阅读时长按正文字符估算：`number_of_words` 按空格分词，中文几乎没有空格，
+          会把十几分钟的长文标成几分钟，代码块多时又反向虚高。这里以 `</pre>` 为界
+          取每段代码之后的正文，去掉空白后按 700 字符/分钟折算。
+        {% endcomment %}
+        {% assign prose_chunks = post.content | split: '<pre' %}
+        {% assign prose_chars = 0 %}
+        {% for chunk in prose_chunks %}
+          {% assign tail = chunk | split: '</pre>' | last %}
+          {% assign plain = tail | strip_html | strip_newlines | replace: ' ', '' %}
+          {% assign prose_chars = prose_chars | plus: plain.size %}
+        {% endfor %}
+        {% assign read_time = prose_chars | divided_by: 700 | plus: 1 | round %}
         <a class="pinned-post" href="{{ post.url | relative_url }}">
           <div class="pinned-label"><i class="fa-solid fa-thumbtack fa-xs" aria-hidden="true"></i> 置顶</div>
           <h2 class="pinned-title">{{ post.title }}</h2>
@@ -78,11 +90,17 @@ pagination:
     {% endif %}
 
     {% for post in postlist %}
-      {% if post.external_source == blank %}
-        {% assign read_time = post.content | number_of_words | divided_by: 180 | plus: 1 %}
-      {% else %}
-        {% assign read_time = post.feed_content | strip_html | number_of_words | divided_by: 180 | plus: 1 %}
-      {% endif %}
+      {% comment %} 阅读时长算法与置顶块保持一致，改动时两处同步。 {% endcomment %}
+      {% assign body = post.content %}
+      {% if post.external_source != blank %}{% assign body = post.feed_content %}{% endif %}
+      {% assign prose_chunks = body | split: '<pre' %}
+      {% assign prose_chars = 0 %}
+      {% for chunk in prose_chunks %}
+        {% assign tail = chunk | split: '</pre>' | last %}
+        {% assign plain = tail | strip_html | strip_newlines | replace: ' ', '' %}
+        {% assign prose_chars = prose_chars | plus: plain.size %}
+      {% endfor %}
+      {% assign read_time = prose_chars | divided_by: 700 | plus: 1 | round %}
       {% assign primary_category = post.categories | first %}
       {% if primary_category == blank %}
         {% assign primary_category = post.tags | first %}

@@ -8,7 +8,7 @@ tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 ---
 
-![Transformer Explainer](https://images.openai.com/static-rsc-4/0YhDrIimsFnmW9Jm_WbVKvraeIS_x0vdlp01UdJax96uOk3ySUmNRL4PIOFys5_iJiejehNgVSEPAr7GhVRB0kyGywbdKHV8mAipgp24ySucvjxQvRT8iQoYz5pEbUWCX-VHjhW1XsN58m8v7vpdzPcn81sjvivSAijTKUp-xfM?purpose=inline)
+![Transformer Explainer]({{ '/assets/img/blog/transformerlens-mech-interp/fig-01.jpg' | relative_url }})
 
 _图片来源：[Transformer Explainer](https://poloclub.github.io/transformer-explainer/)_
 

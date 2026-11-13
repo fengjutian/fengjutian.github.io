@@ -8,7 +8,7 @@ tags: [AI, 开源]
 categories: [技术随笔, 工程实践]
 ---
 
-![DeepSeek V4 模型封面图](https://images.openai.com/static-rsc-4/_WiTzs7yqceq0QYZQgnM89A0E2zGkeEltRyd2eE4AN945tPDs0nEtuxxx5zTlaNW3UjQlgIjRUf9N1PN_-cpVZ8tkYJN8iEIQyeF7jYiL7DwXN0Q6VPU2kG3tm1ANZBjgooqHKH8uWyuXSG2gbdP0KSlUF7IMOGDFCg0xLMCB_E?purpose=inline)
+![DeepSeek V4 模型封面图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-01.jpg' | relative_url }})
 
 _图片来源：[TechSifted](https://techsifted.com/posts/deepseek-v4-review-april-2026/)_
 
@@ -32,7 +32,7 @@ MoonMath.ai 发布的 DeepSeek-V4.1-Flash-1017-Uncensored，提供了一个值�
 
 根据 MoonMath.ai 的模型说明，它采用了一种叫作 Closed-form Weight Edit（闭式权重编辑）的技术，直接修改模型权重，并将修改结果合并到原生 FP8 Checkpoint 中。
 
-![模型权重原理图](https://images.openai.com/static-rsc-4/oQqLfHCxbuim6wfYsuyebgSVD3xhDyGNVbdU9ZYlytWbHyKz1kUb2vs9fozJspskQ7vjArFZ2KMxXoXvf3iei91UFkJJcwK-TNcZDLLQw99NuGy4W80xiri5e0ee790A5K84Ci6PrM7pmO0MqmmgI5mJq0dQzBOYk3Yt8UQbLb8?purpose=inline)
+![模型权重原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-02.jpg' | relative_url }})
 
 _图片来源：[楠楠自瑜：什么是模型权重](https://cnutshell.net/tutorial/what-is-model-weights/)_
 
@@ -59,7 +59,7 @@ _图片来源：[楠楠自瑜：什么是模型权重](https://cnutshell.net/tut
 
 MoonMath.ai 采用的是第三种方法。
 
-![权重编辑原理图](https://images.openai.com/static-rsc-4/p8wvC4ASUtpyCt8dF61aw-iHDXsGvca20U02HFYML8oAoC_1Kes8UPMwiMmIP0u46otpSY2tFAJEFcVxm6K-L5SSuZ3ed0FF573U8_doN-iRkxiwtqqVCCadx2Q9MyjIgGMQGpJUYhL4V37ecEAXvePwIUq_MZuxekoX2ccOCow?purpose=inline)
+![权重编辑原理图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-03.jpg' | relative_url }})
 
 _图片来源：[Yong Cao](https://x.com/YongCaoPlus)_
 
@@ -94,7 +94,7 @@ Weight Editing 则采用不同的思路。
 
 ## 三、模型架构：763B 参数的 MoE 模型
 
-![MoE 模型架构示意图](https://images.openai.com/static-rsc-4/luVoesxYBARLAR0Ghsn6pbsed13C3fqwpJyU6RljA4MDxNEcW2zp0vAwQp0kZiwPXJX3idhG3RGD_8ITTWuRzVnPklWB6apkYmO_bwcasqsXXzvetA9ZxxGXqCev_svOL7I9lnjPB2dZlul8C4tBxNO-d1g1ACMbuB6fcoeAFy4?purpose=inline)
+![MoE 模型架构示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-04.jpg' | relative_url }})
 
 _图片来源：[Founders Creative](https://www.founderscreative.org/model-architecture-behind-deepseek-r1/)_
 
@@ -134,7 +134,7 @@ MoE（Mixture of Experts，混合专家架构）是目前大规模语言模型�
 
 MoonMath.ai 对基础模型和修改模型使用相同的评测流程，公布了以下结果。
 
-![大模型评测数据示意图](https://images.openai.com/static-rsc-4/g93aoW19jrX82nMfm15HvwC8p5_ettR2vCDEPfbgO7SQzTF3LNxWrVw4QGo8_dGQypkuE_q_Z68o7Jg7yky2_hT8wKjQl7GJOV5_JaHiU0mChUVOZ97PB1A7pHrvzqVjz9zN-ns6kZ49eVsTE5eDrKq39MUp7OxpQyOotMDxtRo?purpose=inline)
+![大模型评测数据示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-05.jpg' | relative_url }})
 
 _图片来源：[LG AI Research](https://www.lgresearch.ai/blog/view?seq=618)_
 
@@ -173,7 +173,7 @@ MoonMath.ai 对模型进行了有害问题和正常问题的测试。
 - 有害问题测试集：1,410 个问题。
 - 正常问题测试集：350 个问题。
 
-![AI 安全与红队测试示意图](https://images.openai.com/static-rsc-4/KNp0yyICwJDvmGm39zDQVrekzCuJaB-2eb_hyJ4hZsHB82CJPY9bQQR-P9nSQDFlURMn3N7Y7SyHgmSZDzNUBHNaTXMr06Du1Cyddj3MBPLzLNOzvr7AtNnMSb7O5uZQ0sm_bnfqf3Nf0AzWU7_bL69ccnh8Y9lOxCwoK0oQHhk?purpose=inline)
+![AI 安全与红队测试示意图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-06.jpg' | relative_url }})
 
 _图片来源：[AI Roads](https://airoads.org/electives/module-d/)_
 
@@ -197,7 +197,7 @@ _图片来源：[AI Roads](https://airoads.org/electives/module-d/)_
 
 官方推荐 SGLang。
 
-![大模型并行部署架构图](https://images.openai.com/static-rsc-4/dlDduZF4BgtHJS-75zKgF66rI2A2ToTzApE3r-L4171abUVF-cFokQ74wbz5wMH_MC9GesDmXKRGyUU2pLnlA1iphY4BWOL63Lk58PJLrum92zRhJaJjVTLahwohFWNM4mPrRdknwn7pu2JvNhHZ0qVWIMhlXgewhNuOkPTgY1Y?purpose=inline)
+![大模型并行部署架构图]({{ '/assets/img/blog/deepseek-v4-weight-editing/fig-07.jpg' | relative_url }})
 
 _图片来源：[Jarvis Labs](https://jarvislabs.ai/blog/expert-parallelism-mixed-strategies-vllm)_
 

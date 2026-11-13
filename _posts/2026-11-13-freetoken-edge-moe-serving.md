@@ -8,7 +8,7 @@ tags: [AI, 开源, 工程实践]
 categories: [技术随笔, 工程实践]
 ---
 
-![FreeToken 桌面端控制台](https://raw.githubusercontent.com/FlashML-org/FreeToken/main/assets/desktop-console.png)
+![FreeToken 桌面端控制台]({{ '/assets/img/blog/freetoken-edge-moe-serving/desktop-console.png' | relative_url }})
 
 _图片来源：[FreeToken 仓库](https://github.com/FlashML-org/FreeToken)_
 

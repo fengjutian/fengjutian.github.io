@@ -8,7 +8,7 @@ tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
 ---
 
-![从零训练大语言模型](https://images.openai.com/static-rsc-4/ulnIQPfz-5W7h0GbDzrSTeSTVfcQrBC49yzuCqNNlSB3NrF1InOJ60Z_HbJ-3gqZdkOYqloiTl-EkoU9qpXdu5kH4PQ1s00yMd6eQ1f31m2wKFJCuUeWSU-aDG9UNu1E_oOVMITX4Qdbf4hC_AmkCFUnBInJlZRbMcagt5iRV5Y?purpose=inline)
+![从零训练大语言模型]({{ '/assets/img/blog/train-llm-from-scratch/fig-01.jpg' | relative_url }})
 
 当我们使用 DeepSeek、ChatGPT 或 Qwen 时，通常只需要调用一个 API，就能获得强大的语言模型能力。
 
@@ -76,7 +76,7 @@ DPO / PPO / GRPO
 
 ## 二、从 Tokenizer 开始：让模型理解文字
 
-![Tokenizer 与文本处理](https://images.openai.com/static-rsc-4/N6Y_viJs7wx9ji20cNPX2Loo2mi6L9_0WYt9fcMUD0GW78ZzMe2AOJe2_Yu3Eb6hajEJ09x0gyOIOoAK5oB6ySomMTBFXuTJp5p9fD6tZQ6sI4J5EiETLuxlNlptpcmmWuIPbclk4IEfTYB87d4xv8DRt071hYr0xFuXO-lgkTY?purpose=inline)
+![Tokenizer 与文本处理]({{ '/assets/img/blog/train-llm-from-scratch/fig-02.jpg' | relative_url }})
 
 大语言模型并不直接理解人类看到的文字，它真正处理的是数字序列。
 
@@ -111,7 +111,7 @@ Token IDs：
 
 ## 三、使用 PyTorch 从零实现 Transformer
 
-![Transformer 模型架构](https://images.openai.com/static-rsc-4/-kxmOlChEtPVGTPj0wBgnoXztKRGv4_qH61PnKARimOOy6bR-TfJZZ7V0_FfPyQJhgBhleueRMEFk61eN-4ydcBUr0BpJqz-Ivbgk7dgxhTVNHP_WkQoLo1R-PAtDodwtiOwSSc-yJc6w9-atcAMdaX1QlTXf8S7AdZ8aXPQBwc?purpose=inline)
+![Transformer 模型架构]({{ '/assets/img/blog/train-llm-from-scratch/fig-03.jpg' | relative_url }})
 
 Transformer 是当前主流大语言模型的核心架构。
 
@@ -183,7 +183,7 @@ class Block(nn.Module):
 
 ## 五、Pretraining：让模型学会预测下一个 Token
 
-![模型预训练](https://images.openai.com/static-rsc-4/CzgWpyeB56_SGAxfasSaNbyE_shZcZb35ELOUbpHLZz2TDyWhhMGe5IQEMEHFUtsRjFhioGEw9mCgnt5qDCoE7oeoSFbtuKHTcfQC3CjPyFjsAVxdquh0GcomUApoZvtJz5l4NcwUSPQTyiNMcO3OeKVvFPyLFxTHtyoH67qs-8?purpose=inline)
+![模型预训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-04.jpg' | relative_url }})
 
 预训练是大语言模型建立语言能力的基础。
 
@@ -289,7 +289,7 @@ PPO 通过奖励信号优化模型生成策略。
 
 ### 5. GRPO：组相对策略优化
 
-![GRPO 后训练](https://images.openai.com/static-rsc-4/6265erMQbXPcJord-IgppLaZQnKvSsMQFePaRG6YAdaRJm3YrB1RJN7mGlXGc4PSOqq_LIr1UB24Yo3u7q6phSB7Qw95X2mu4mVl80UWILy5T2jwefl4gcB_NT7OuZxeFcdxMu8OfZiOPJIw_YWY-dhtcTkEQi2VyfMZWx5NtLQ?purpose=inline)
+![GRPO 后训练]({{ '/assets/img/blog/train-llm-from-scratch/fig-05.jpg' | relative_url }})
 
 GRPO 是 DeepSeek-R1 技术路线中受到广泛关注的方法。
 

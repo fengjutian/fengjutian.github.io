@@ -31,7 +31,7 @@ categories: [技术随笔]
 
 下面是一张 AI 生成的黄色机器人鸭子图片。
 
-![Idol 输入图片：黄色机器人鸭子](https://speridlabs.com/assets/research/idol/inputs/iris-robot-duck_s1_s42.webp)
+![Idol 输入图片：黄色机器人鸭子]({{ '/assets/img/blog/idol-image-to-3d-gaussian/fig-01.jpg' | relative_url }})
 
 这是一张普通的二维图片，只有一个观察角度。
 
@@ -41,7 +41,7 @@ Idol 的任务是根据这张图片，推断物体的三维结构，并生成一
 
 另一个案例是复古薄荷绿色踏板摩托车：
 
-![Idol 输入图片：复古薄荷绿色踏板摩托车](https://speridlabs.com/assets/research/idol/inputs/iris-scooter_s1_s42.webp)
+![Idol 输入图片：复古薄荷绿色踏板摩托车]({{ '/assets/img/blog/idol-image-to-3d-gaussian/iris-scooter_s1_s42.jpg' | relative_url }})
 
 这些案例展示了 Idol 的基本能力：输入可以来自现实照片，也可以来自 AI 生成图片或三维渲染图。
 
@@ -59,7 +59,7 @@ Idol 的任务是根据这张图片，推断物体的三维结构，并生成一
 
 它使用大量分布在三维空间中的高斯基元来表达物体。
 
-![3D Gaussian Splatting 三维高斯点云可视化](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/teaser.png)
+![3D Gaussian Splatting 三维高斯点云可视化]({{ '/assets/img/blog/idol-image-to-3d-gaussian/teaser.jpg' | relative_url }})
 
 每个 Gaussian 都包含一组属性：
 
@@ -138,7 +138,7 @@ PLY 文件可以交给支持 Gaussian Splatting 的查看器进行渲染。
 
 Idol 支持不同规模的 Gaussian 输出。
 
-![Idol 不同 Gaussian 数量的细节等级展示](https://speridlabs.com/assets/research/idol/loops/budget-fur-lamp-tiffany.webp)
+![Idol 不同 Gaussian 数量的细节等级展示]({{ '/assets/img/blog/idol-image-to-3d-gaussian/fig-04.jpg' | relative_url }})
 
 根据官方公开资料：
 
