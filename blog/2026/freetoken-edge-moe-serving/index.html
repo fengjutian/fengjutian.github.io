@@ -1,0 +1,337 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。"> <meta name="keywords" content="AI, AI agent, developer tools, knowledge management, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/freetoken-edge-moe-serving/"> <meta property="og:description" content="从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计"> <meta name="twitter:description" content="从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/freetoken-edge-moe-serving/",
+        "@type": "BlogPosting",
+        "description": "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        "headline": "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 930px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/freetoken-edge-moe-serving/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">开源仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-hashtag fa-sm"></i> 工程实践</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p><img src="https://raw.githubusercontent.com/FlashML-org/FreeToken/main/assets/desktop-console.png" alt="FreeToken 桌面端控制台"></p> <p><em>图片来源：<a href="https://github.com/FlashML-org/FreeToken" rel="external nofollow noopener" target="_blank">FreeToken 仓库</a></em></p> <p>先说一个数字：<strong>在 32GB 显存的游戏台式机上，跑 284B 参数的 DeepSeek-V4-Flash；在单张 96GB 工作站 GPU 上，跑 753B 的 GLM-5.2。</strong></p> <p>不是量化到 2bit 的玩具版本，是能接 Codex、Claude Code 这类真实 agent 的推理服务。</p> <p>这件事听起来像营销话术，但它背后有一篇正经的系统论文：<a href="https://arxiv.org/abs/2608.16157" rel="external nofollow noopener" target="_blank">FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution</a>（arXiv 2608.16157，2026 年 8 月），作者来自 Berkeley、MIT、UT Austin 等机构，包括 Ion Stoica、Matei Zaharia、Song Han、Kurt Keutzer。</p> <p>开源仓库：<a href="https://github.com/FlashML-org/FreeToken" rel="external nofollow noopener" target="_blank">FlashML-org/FreeToken</a>，Apache-2.0。</p> <p>这篇文章想讲清楚一件事：<strong>为什么“把模型卸载到 CPU”这种老思路不够用，以及 FreeToken 换了一套什么样的资源观。</strong></p> <h2 id="一本地推理的真正瓶颈从来不只是显存">一、本地推理的真正瓶颈，从来不只是显存</h2> <p>先把常见误解拆掉。</p> <p>“跑不动大模型”通常被归因于显存不够。于是直觉方案是：权重放 CPU 内存，用时搬到 GPU。llama.cpp 的 <code class="language-plaintext highlighter-rouge">--n-gpu-layers</code>、KTransformers 的专家放置，本质都在这个框架里。</p> <p>但这个框架有一个隐含假设：<strong>瓶颈是容量。</strong></p> <p>真实的瓶颈是<strong>带宽</strong>，而且不止一种带宽。</p> <p>看一组数字就够了：</p> <table> <thead> <tr> <th>资源</th> <th>典型带宽</th> </tr> </thead> <tbody> <tr> <td>RTX 4090 / 5090 显存</td> <td>1–1.8 TB/s</td> </tr> <tr> <td>双通道 DDR5 系统内存</td> <td>80–90 GB/s</td> </tr> <tr> <td>双通道 DDR4 系统内存</td> <td>~50 GB/s</td> </tr> <tr> <td>PCIe 5.0 ×16</td> <td>~60 GB/s</td> </tr> <tr> <td>PCIe 4.0 ×16</td> <td>~25 GB/s</td> </tr> <tr> <td>笔记本常见的 ×8 链路</td> <td>更低</td> </tr> </tbody> </table> <p>显存和系统内存之间有 <strong>10–20 倍</strong>的带宽差。这意味着：一旦某个专家的权重不在显存里，它要么走 PCIe 搬过来（慢一个数量级），要么就地用 CPU 算（也慢一个数量级）。</p> <p>所谓“卸载”，只是把慢的那一步藏起来或者摊薄，并没有消除它。</p> <p>FreeToken 的出发点不是“怎么卸载得更好”，而是：<strong>在给定这台机器的实际带宽组合下，每一步应该把多少工作分给谁。</strong></p> <p>这是一个调度问题，不是一个容量问题。</p> <h2 id="二moe机会与麻烦是同一件事">二、MoE：机会与麻烦是同一件事</h2> <p>MoE 让前沿模型在消费级硬件上“有可能”运行，原因很简单：<strong>总参数量 ≠ 每个 token 的激活参数量。</strong></p> <p>论文里给了 DeepSeek-V4-Flash 的具体结构：</p> <ul> <li>43 层，每层 256 个 routed experts；</li> <li>每个 token 只激活其中 <strong>6 个</strong>；</li> <li>总参数 284B，<strong>单 token 实际参与计算约 13B</strong>。</li> </ul> <p>13B 的激活权重，在部署精度下能塞进 RTX 5090 的 32GB 显存。</p> <p>但紧接着就是那个转折：</p> <blockquote> <p>稀疏性降低了每个 token 的计算量，却没有按比例降低存储完整专家池所需的内存。</p> </blockquote> <p>也就是说，<strong>显存里放得下“这次要算的”，放不下“可能要用到的”。</strong> 剩下那 271B 的专家，必须待在主机内存里，按需进入执行路径。</p> <p>于是问题的形状变得非常具体：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>              Router（GPU 上）
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+   命中显存的专家        未命中的专家
+   （直接 GPU 算）            │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+              PCIe 搬到 GPU      留在 CPU 上算
+              （占链路带宽）      （占内存带宽）
+</code></pre></div></div> <p><strong>关键洞察在这里：这两条路不是互斥的，它们消耗的是同一种资源——主机侧内存带宽。</strong></p> <h2 id="三三个阶段三种不同的失败模式">三、三个阶段，三种不同的失败模式</h2> <p>论文把边缘 MoE 服务拆成三个阶段，每个阶段的瓶颈完全不同。这个拆法本身就是全文最有价值的部分之一。</p> <h3 id="1-prefill稀疏性在这里失效">1. Prefill：稀疏性在这里失效</h3> <p>Decode 时每个 token 只碰 6 个专家，但 <strong>prefill 一次要处理几千个 token</strong>。</p> <p>几千个 token 的路由并集，几乎覆盖每一层的全部专家。于是：</p> <blockquote> <p>prefill 阶段实际会把<strong>整个专家池</strong>流过一遍 CPU–GPU 互联链路。</p> </blockquote> <p>论文给了一个很具体的账：DeepSeek-V4-Flash 的 FP4 部署，prefill 需要搬运约 <strong>140GB</strong> 专家权重。</p> <table> <thead> <tr> <th>平台</th> <th>链路带宽</th> <th>搬运耗时</th> </tr> </thead> <tbody> <tr> <td>RTX 5090（PCIe 5.0 ×16）</td> <td>~60 GB/s</td> <td>~2 秒</td> </tr> <tr> <td>RTX 4090 / 3090（PCIe 4.0 ×16）</td> <td>~25 GB/s</td> <td>~5 秒</td> </tr> <tr> <td>笔记本常见 ×8 链路</td> <td>更低</td> <td>10 秒以上</td> </tr> </tbody> </table> <p>对一个“边想边调工具”的 agent 来说，每一轮都多等 2–10 秒，体验直接崩塌。</p> <p>更麻烦的是第二个成本：<strong>重算</strong>。</p> <p>现代前沿模型大量使用混合注意力——DeepSeek-V4-Flash 交替使用全注意力和滑动窗口注意力，Qwen3.6-35B-A3B 用了 gated DeltaNet，Kimi-K3 用了 Kimi Delta Attention。</p> <p>这类层把整段历史压缩成<strong>一个状态</strong>。好处是省内存，坏处是：这个状态没法部分复用。</p> <p>而 agent 框架几乎每轮都在改上下文：</p> <ul> <li>OpenClaw 会剥掉除最新一轮外的 thinking 块；</li> <li>OpenCode 把窗口之外的工具输出替换成占位符；</li> <li>SWE-agent 只保留最近 n 条观察。</li> </ul> <p>改完之后，<strong>改动位置之后的所有 checkpoint 全部失效</strong>，引擎只能回退到最后一个有效点，把中间几千个 token 重新 prefill 一遍。</p> <p>在消费级 GPU 上，这段重算藏不住——RTX 5090 的稠密 BF16 吞吐大约只有 H100 的五分之一、B200 的十分之一。</p> <h3 id="2-decode命中率与-cpu-上限">2. Decode：命中率与 CPU 上限</h3> <p>Decode 是相反的形态：稀疏，但每一步都可能 miss。</p> <p>现有引擎的做法是<strong>静态放置</strong>：加载时决定哪些专家放 GPU，其余留 CPU。问题是路由随 token、随任务变化，预填充时定下的布局，很快就与实际流量脱节。</p> <p>那“全部交给 CPU 算”行不行？也不行。</p> <p>论文算了一笔很干脆的账：decode 小批量时专家计算是<strong>内存带宽受限</strong>的，每个 token 要把路由到的专家权重完整读一遍。消费级 CPU 挂的是双通道内存，DDR5 也就 80–90 GB/s，而 GPU 显存是 TB/s 级。</p> <p>结论：<strong>CPU-only 路径的速度上限，与核心数无关，只由内存带宽决定。</strong></p> <h3 id="3-资源管理边缘设备上没有专用">3. 资源管理：边缘设备上没有“专用”</h3> <p>数据中心里 GPU 是独占的。个人电脑不是。</p> <p>浏览器、桌面合成器、游戏，随时可能抢走几个 GB 显存。于是：</p> <ul> <li>可用显存<strong>每次启动都不一样</strong>；</li> <li>运行过程中还会<strong>动态变化</strong>；</li> <li>KV Cache 随上下文增长，专家缓存的需求却基本恒定——<strong>启动时算好的划分，几十轮之后必然失衡</strong>。</li> </ul> <p>再加上一个容易被忽视的成本：<strong>启动</strong>。140GB 的专家池，从 7GB/s 的 NVMe 读一遍就要 20 秒，还没算预热。</p> <p>而边缘用户的行为模式是：用的时候打开，不用就关掉；换个模型也重启一次。</p> <h2 id="四freetoken-的核心结构两级专家内存">四、FreeToken 的核心结构：两级专家内存</h2> <p>面对这三个问题，FreeToken 的架构选择是：<strong>不做“部分卸载”，而是把 GPU 剩余显存做成一个全局共享的弹性专家缓存。</strong></p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GPU
+ ├── 非专家权重（常驻）
+ ├── KV Cache（分页）
+ └── 全局专家缓存（弹性，所有层共享）
+       └── 每个 slot = 一个 (layer, expert)
+            ▲
+            │  PCIe
+            ▼
+CPU 内存
+ └── 完整专家池（source of truth，常驻且 pin）
+</code></pre></div></div> <p>两个设计决定值得单独说：</p> <p><strong>第一，缓存按逻辑 <code class="language-plaintext highlighter-rouge">(layer, expert)</code> 寻址，而不是按张量分片。</strong> 一个 slot 装的是评估某个 <code class="language-plaintext highlighter-rouge">(layer, expert)</code> 所需的<strong>全部</strong>张量（gate、up、down 投影）。这样驻留、查找、执行都围绕同一个逻辑标识，而不是一堆碎片的拼装。这也直接决定了后面 FTW 格式的设计。</p> <p><strong>第二，CPU 池是唯一真相源（source of truth）。</strong> 这一条是整个弹性内存管理的前提：<strong>GPU 显存只影响性能，永远不影响正确性。</strong> 缓存可以随时被重建、缩小、清空，模型输出不变。</p> <h2 id="五prefill把搬运藏在计算背后">五、Prefill：把搬运藏在计算背后</h2> <p>既然 prefill 注定要搬完整层专家，那就别按需搬，<strong>按层搬</strong>。</p> <p>FreeToken 采用 <strong>全层双缓冲（full-layer double buffering）</strong>：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>时间 ────────────────────────────────────────►
+
+Buffer A:  [GPU 计算 layer l  ] [加载 layer l+2]
+Buffer B:  [加载 layer l+1   ] [GPU 计算 layer l+1]
+                  ▲
+             两者交换角色
+</code></pre></div></div> <p>关键点在于它<strong>加载的是完整一层，而不是“这一层被路由到的专家”</strong>。</p> <p>这个选择初看很浪费，但它是刻意的：</p> <ul> <li>加载可以在<strong>路由结果出来之前</strong>就开始，流水线不会断；</li> <li>传输流与计算流并行，互相不等待；</li> <li>缓冲区与 decode 的专家缓存<strong>共用同一个 slot 池</strong>，没有独立的 prefill 缓存，也没有阶段切换的握手成本。</li> </ul> <p>论文特别提到一个细节：prefill 期间留在缓存里的条目，会<strong>直接成为 decode 阶段的热数据</strong>。这是一次免费的热启动。</p> <p>当然有兜底：如果 slot 池腾不出两个整层，FreeToken 退回按需加载，而不是硬撑到显存溢出。</p> <h3 id="语义锚点让-recurrent-state-熬过上下文编辑">语义锚点：让 recurrent state 熬过上下文编辑</h3> <p>第二个问题——重算——解法更巧妙。</p> <p>全注意力层的 KV 可以用 radix 前缀树复用，这是 SGLang 一类系统的标准做法。但 recurrent 层不行：它把整个前缀压成一个状态，<strong>没法部分复用</strong>，只能靠 checkpoint。</p> <p>而 checkpoint 很贵：一个状态占的内存相当于几百个 token 的 KV，所以只能存很少几个。<strong>存在哪里，决定了它们值不值钱。</strong></p> <p>FreeToken 的答案是：存在<strong>语义边界</strong>上。</p> <p>具体说，就是那些特殊 token 标记出来的位置——thinking 段的起止、工具调用、工具输出、对话轮次。理由很直接：<strong>agent 框架的编辑，本质上就是整块地删除或替换这些边界之间的内容。</strong></p> <ul> <li>OpenClaw 剥 thinking 块；</li> <li>OpenCode 换工具输出；</li> <li>SWE-agent 删旧观察。</li> </ul> <p>它们删的都是“特殊 token 划定的整块”，而<strong>编辑点之前的前缀被原样保留</strong>。</p> <p>于是，锚定在语义边界上的 checkpoint，存活概率远高于随机位置。当一次编辑发生后，引擎从“最深的、位置仍然有效的锚点”恢复：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>原始上下文:  [轮1][thinking][工具调用][工具输出][轮2]...
+编辑后:      [轮1][thinking][工具调用][✂ 截断][新增内容]
+                                    ▲
+                            从这里的锚点恢复
+                            只重算新增的后缀
+</code></pre></div></div> <p>全注意力层从前缀树复用 KV，recurrent 层从锚点恢复状态，<strong>只有真正新增的后缀需要 prefill</strong>。</p> <p>这是全文我认为最“懂 agent”的一个设计：它不是从模型结构出发的优化，而是从<strong>agent 框架实际怎么改上下文</strong>反推出来的。</p> <h2 id="六decodeq-策略一个公式解决所有硬件">六、Decode：q* 策略，一个公式解决所有硬件</h2> <p>现在到了最核心的部分。</p> <p>假设某一层有 $m$ 个专家未命中。这些专家可以：</p> <ul> <li>走 PCIe 搬进显存，在 GPU 上算，<strong>并留在缓存里供以后复用</strong>；</li> <li>留在 CPU 上就地算，<strong>不改变缓存状态</strong>。</li> </ul> <p>问题是：$m$ 个里面，几个该搬，几个该就地算？</p> <p>FreeToken 的推导很干净。令 $S$ 为单个专家的字节数，$B_P$ 为实测的 PCIe 专家传输带宽，$B_H$ 为实测的 CPU 侧专家处理带宽。</p> <p>关键前提：<strong>两者读的是同一套主机内存。</strong> 所以当 PCIe 跑满时，留给 CPU 的残余带宽是：</p> \[B_R = \max(B_H - B_P,\ 0)\] <p>于是两条并行分支的耗时分别是：</p> \[T_{\text{fill}}(q) \approx \frac{qS}{B_P}, \qquad T_{\text{cpu}}(m-q) \approx \frac{(m-q)S}{B_H - B_P}\] <p>令两者相等，就得到最优切分：</p> \[q^{\star} \approx m \cdot \frac{B_P}{B_H}\] <p>这就是 <strong>q* 策略</strong>。</p> <p>它有几个很漂亮的性质：</p> <p><strong>第一，它自动覆盖所有硬件形态。</strong> 当 $B_H$ 接近 $B_P$（比如链路极快、内存极慢），$q^\star \to m$，系统退化为“全部搬进缓存”，不需要单独的执行分支。反过来，当 PCIe 很慢而内存带宽充裕，$q^\star$ 变小，更多专家留给 CPU 就地算。</p> <p><strong>第二，它把“这台机器上该怎么分工”变成一个可测量的量。</strong> $B_P$ 和 $B_H$ 都是部署时在目标硬件上<strong>实测</strong>的，用的是实际的张量形状，不是规格书上的理论值。论文特别强调这一点：最优配比<strong>读不出来，只能量出来</strong>。</p> <p><strong>第三，两条分支的结果可以精确合并。</strong> CPU 和 GPU 各自算部分和，然后相加。<strong>没有近似，没有精度损失。</strong> 这一点很重要——很多“异构推理”方案在这里就开始丢数值一致性了。</p> <p>代价是复杂度：调度逻辑、miss 检测、受害者选择全部要放进 CUDA Graph 里，否则每个 MoE 层都要一次主机同步，性能直接归零。</p> <p>论文的解法是<strong>把所有路由相关的控制流变成 GPU 上的数据</strong>：一个 kernel 完成去重、驻留判定、算 $q$、选受害者、把逻辑 ID 重写成物理 slot ID 或“交给 CPU”标记。受害者选择用单趟扫描一次找出 $K$ 个 LRU 候选，避免“每淘汰一个扫一遍全缓存”的经典陷阱。</p> <p>CPU 分支也被捕获进同一张图：固定的 pinned I/O 缓冲、持久化的任务描述符、host function 提交节点，重放时整条异构流水线一次跑完，不需要每个 token 过一次 Python。</p> <h2 id="七弹性内存与-ftw让启动和调整不再昂贵">七、弹性内存与 FTW：让“启动”和“调整”不再昂贵</h2> <p>三个机制，对应三个现实约束。</p> <p><strong>1. 运行时重建缓存。</strong> 在调度器的安全点上，FreeToken 可以按新的显存预算<strong>重新划分并重建</strong> GPU 专家缓存，不需要重启引擎，也不需要重新加载 CPU 侧的专家池。</p> <p>因为 CPU 池是真相源，这一步天然安全：缓存没了，性能降一点；缓存回来，性能恢复。<strong>正确性始终不受影响。</strong></p> <p><strong>2. 快速启动。</strong> 传统做法是：先 pin 一块空内存，再从磁盘读数据填进去。问题是 pin 之后写入会触发缺页和清零，几个 GB 白白浪费。</p> <p>FreeToken 反过来：<strong>先从磁盘直接读进最终的主机布局，读完再 pin。</strong> 再加上“冷缓存直接服务第一个请求”（第一次 miss 走正常 decode 路径，缓存自然热起来），预热阶段被整个删掉。</p> <p><strong>3. FTW 权重格式。</strong> FTW（FreeToken Weight）不是量化算法，而是一种<strong>预排版</strong>格式。</p> <p>模型原始 checkpoint 的专家权重是散落在各处的张量。FreeToken 在转换时就把它们按运行时 bank 布局合并好，用 <code class="language-plaintext highlighter-rouge">layer × E + expert</code> 作为首维。加载时不需要再做张量发现和重排，直接按对齐块并行直读进预先算好大小的 bank。</p> <p>前面说的“逻辑 ID 统一”在这里兑现：GPU kernel 和 CPU 执行器共享同一套专家身份，所以<strong>一份索引列表可以同时驱动所有 bank 的传输</strong>，一次固定形状的 launch 搞定。</p> <h2 id="八实测数字比架构更能说明问题">八、实测：数字比架构更能说明问题</h2> <p>论文在 6 台机器上做了评测，从 8GB 的 RTX 4060 笔记本到单张 RTX PRO 6000（96GB），跑了 4 个真实 agent 工作负载，对比 llama.cpp、Ollama、KTransformers 和 MoE-Infinity。</p> <table> <thead> <tr> <th>场景</th> <th>结果</th> </tr> </thead> <tbody> <tr> <td>RTX 5090 跑 Qwen3.6-35B-A3B</td> <td>77–83 tok/s</td> </tr> <tr> <td>RTX 5090 跑 DeepSeek-V4-Flash（284B）</td> <td>22–25 tok/s</td> </tr> <tr> <td>相对 SOTA 边缘引擎</td> <td>1.5–2.3× decode 吞吐</td> </tr> <tr> <td>8GB RTX 4060 笔记本跑 35B</td> <td>39.3 tok/s（超过 Codex 生产流量的中位数 33 tok/s）</td> </tr> <tr> <td>32GB 游戏台式机</td> <td>可交互地服务 284B 模型</td> </tr> <tr> <td>单张 RTX PRO 6000</td> <td>服务 753B GLM-5.2，约为 llama.cpp 的 2 倍</td> </tr> <tr> <td>五台消费级机器的整体提升</td> <td>1.3–2.1×</td> </tr> </tbody> </table> <p>还有两个数字很能说明工程完成度：</p> <p><strong>稳定性。</strong> 从单轮对话切到多轮 agent，FreeToken 的 decode 速率保持在单轮设置的 <strong>12%</strong> 以内，而对比系统明显退化。原因不难理解：agent 负载的核心特征是“上下文频繁被编辑”，而这正是语义锚点要解决的问题。</p> <p><strong>尾延迟。</strong> FreeToken 在所有负载下的最差 TTFT 都低于 <strong>44 秒</strong>；而每个基线都至少有一个设置超过 <strong>150 秒</strong>——足够让真实的 agent 客户端触发超时。</p> <p>这两个数字比平均吞吐更有意义。<strong>边缘推理的体验由最差的那一次决定，不是由平均值决定。</strong></p> <h2 id="九怎么上手">九、怎么上手</h2> <p>两条路径，覆盖两种使用习惯。</p> <p><strong>桌面端。</strong> 从 <a href="https://www.flashml.ai/" rel="external nofollow noopener" target="_blank">flashml.ai</a> 下载 Windows 或 Linux 版本，安装器会把引擎和依赖配置好，界面里可以直接跑模型、对话、调推理参数。对不想碰命令行的用户，这是主要入口。</p> <p><strong>命令行。</strong> 用 uv 安装（推荐）：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uv pip <span class="nb">install</span> <span class="s2">"freetoken[accel]"</span>
+</code></pre></div></div> <p>或者从源码构建：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/FlashML-org/FreeToken.git
+<span class="nb">cd </span>FreeToken
+uv venv <span class="o">&amp;&amp;</span> <span class="nb">source</span> .venv/bin/activate
+uv pip <span class="nb">install</span> <span class="nt">-e</span> <span class="s2">".[accel]"</span>
+</code></pre></div></div> <p>装完之后最关键的一点：<strong>FreeToken 对外提供 Anthropic / OpenAI 兼容的 API。</strong> 这意味着 Codex、Claude Code、OpenCode、OpenClaw 这类现成的 agent 客户端，改个 base URL 就能接过来用。</p> <p>模型清单、CLI 参数和故障排查都在仓库 <code class="language-plaintext highlighter-rouge">docs/</code> 下，其中「加载失败」有一份专门的诊断脚本，对第一次跑大模型的人来说挺实用。</p> <h2 id="十和现有方案到底差在哪">十、和现有方案到底差在哪</h2> <table> <thead> <tr> <th>维度</th> <th>llama.cpp / Ollama</th> <th>KTransformers</th> <th>FreeToken</th> </tr> </thead> <tbody> <tr> <td>专家放置</td> <td>加载时确定</td> <td>预热专家 pin 在 GPU</td> <td>运行时 LRU 跟随路由</td> </tr> <tr> <td>Prefill</td> <td>按需取专家</td> <td>部分优化</td> <td>全层双缓冲流水</td> </tr> <tr> <td>miss 处理</td> <td>单一路径</td> <td>CPU 为主</td> <td>q* 按带宽切分</td> </tr> <tr> <td>显存调整</td> <td>需重启</td> <td>需重启</td> <td>安全点热重建</td> </tr> <tr> <td>上下文编辑</td> <td>回退重算</td> <td>回退重算</td> <td>语义锚点 + 前缀树</td> </tr> <tr> <td>权重格式</td> <td>GGUF</td> <td>自有</td> <td>FTW（预排版 bank）</td> </tr> </tbody> </table> <p>公平地说，llama.cpp 的 GGUF 生态和跨平台能力仍然是 FreeToken 短期比不了的；KTransformers 在特定 CPU 平台上做了很深的内核优化。FreeToken 的差异化在于<strong>它把“这台机器有多少带宽”当成一等公民</strong>，而不是把所有机器都当成“小一号的数据中心 GPU”。</p> <p>论文自己也承认借鉴了很多：架构上跟随 SGLang/vLLM 的 GPU-centric serving，复用了 FlashInfer、flash-linear-attention 的 kernel，也参考了 mini-sglang 的设计。</p> <h2 id="十一边界这套东西不适合什么">十一、边界：这套东西不适合什么</h2> <p>写完优点，得写清楚它不解决什么。</p> <p><strong>1. “能跑”不等于“跑得快”。</strong> 5090 上 22–25 tok/s 的 284B，是“可用”级别，不是“流畅”级别。对比一下：跑 7B 模型能到几百 tok/s。</p> <p><strong>2. 它对硬件有明确偏好。</strong> RTX 30/40/50 系列，CUDA 环境，足够的 PCIe 带宽。PCIe ×8 的笔记本链路会让 prefill 传输成本翻几倍——q* 能优化 decode，但<strong>优化不了物理带宽</strong>。</p> <p><strong>3. 内存容量仍然是硬门槛。</strong> 284B 的 FP4 权重约 140GB，需要相应的主机内存。显存小可以靠缓存策略缓解，内存小是没救的。</p> <p><strong>4. 平台兜底路径会明显变慢。</strong> 当系统无法 pin 内存或注册 DMA 时（某些操作系统和驱动配置），FreeToken 退回纯 CPU MoE 后端：专家全在可分页内存里，只有激活值过 PCIe。能用，但放弃了快路径的全部收益。</p> <p><strong>5. 单机优化，不是分布式。</strong> 它的目标是“把这台机器榨干”，不是“把几台机器连起来”。多机场景它没有优势。</p> <p><strong>6. 前沿模型的适配需要持续投入。</strong> 20+ 个 MoE 模型的适配列表听起来不少，但每出一个新架构（新的注意力变体、新的专家路由方式），适配层就要跟进。</p> <h2 id="十二总结边缘推理的重心正在从容量转向带宽">十二、总结：边缘推理的重心正在从“容量”转向“带宽”</h2> <p>FreeToken 最值得学的地方，不是某个具体技巧，而是它<strong>重新定义了问题</strong>。</p> <p>传统思路问的是：<strong>怎么把放不下的权重塞进去？</strong> FreeToken 问的是：<strong>在给定的带宽组合下，每一步的工作该分给谁？</strong></p> <p>这个转变带来了一整套连锁设计：</p> <ul> <li>prefill 因为“注定要搬完整层”，所以干脆按层流水，把搬运藏进计算；</li> <li>decode 因为“两条路抢同一份内存带宽”，所以用一个 $q^\star = m B_P / B_H$ 的公式精确切分；</li> <li>上下文因为“agent 是按语义块编辑的”，所以把稀缺的 checkpoint 预算花在语义边界上；</li> <li>显存因为“随时会被别的应用抢走”，所以把它做成可热重建的弹性资源。</li> </ul> <p>四条设计，对应四个从真实使用场景里长出来的观察。这不是“把数据中心方案缩小”，而是<strong>为边缘设备重新推导了一遍服务栈</strong>。</p> <p>如果说前几年本地推理的竞争是“谁的量化更狠”，那么接下来的竞争可能是：<strong>谁更懂这台机器。</strong></p> <h2 id="项目与参考资料">项目与参考资料</h2> <ul> <li><a href="https://github.com/FlashML-org/FreeToken" rel="external nofollow noopener" target="_blank">GitHub 仓库</a></li> <li><a href="https://arxiv.org/abs/2608.16157" rel="external nofollow noopener" target="_blank">论文：FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution</a></li> <li><a href="https://www.flashml.ai/" rel="external nofollow noopener" target="_blank">官网与桌面端下载</a></li> <li><a href="https://github.com/FlashML-org/FreeToken/blob/main/docs/install.md" rel="external nofollow noopener" target="_blank">安装文档</a></li> <li><a href="https://github.com/FlashML-org/FreeToken/blob/main/docs/quickstart.md" rel="external nofollow noopener" target="_blank">快速开始</a></li> <li><a href="https://github.com/FlashML-org/FreeToken/blob/main/docs/models.md" rel="external nofollow noopener" target="_blank">支持模型列表</a></li> </ul> <p>项目采用 Apache License 2.0。本文数据来自论文摘要与正文、仓库 README，性能数字对应论文的测试环境，实际表现取决于 CPU、内存容量与带宽、PCIe 链路、量化格式和上下文长度。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deepseek-v4-weight-editing/">DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/idol-image-to-3d-gaussian/">Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/css-minify-broke-tailwind/">一次 CSS 压缩把整站布局打散</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/thin-starter-architecture/">把个人站从「魔改模板」改成「薄启动器」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hello-world/">从这里开始</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "浏览我在 GitHub 上的全部公开仓库。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-开源仓库",
+          title: "开源仓库",
+          description: "从 AI 智能体到工程工具，持续构建有趣且实用的软件。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
