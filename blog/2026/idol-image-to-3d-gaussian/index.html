@@ -67,7 +67,7 @@ pip <span class="nb">install</span> <span class="nt">-e</span> <span class="nb">
            │
            ▼
       交互式 3D 场景
-</code></pre></div></div> <p>这里有一个重要的技术区别：</p> <p>Gaussian Splatting 并不是传统粒子系统，也不是普通 Mesh。</p> <p>如果要实现粒子动画，需要读取 PLY 中的高斯位置、颜色、透明度、尺度和旋转属性，再映射到自己的粒子系统中。</p> <p>也可以直接对 Gaussian 属性进行动态变换，保留其原有的渲染方式。</p> <p>这为 AI 三维生成与实时视觉创作之间的结合提供了新的可能性。</p> <h2 id="九总结">九、总结</h2> <p>Idol 展示了一种值得关注的 AI 三维生成方向：</p> <p><strong>从单张图片出发，通过生成模型推断三维结构，再利用 Gaussian Splatting 实现实时三维展示。</strong></p> <p>它并不能完全替代传统三维建模，也不能保证准确还原图片中不可见的真实结构。</p> <p>但它降低了创建三维视觉资产的门槛，让图片成为三维内容生产的一个入口。</p> <p>对于开发者来说，值得关注的不只是如何运行 Idol，更是如何将它集成到自己的产品中。</p> <p>当 AI 负责生成三维资产，实时渲染引擎负责展示，交互系统负责编辑，三维创作工具就可能从专业建模软件扩展为人人都能使用的 AI 创作平台。</p> <p><strong>一张图片，可能就是一个三维世界的开始。</strong></p> <hr> <p><strong>项目与参考资料</strong></p> <ul> <li>Idol 模型：https://huggingface.co/speridlabs/idol</li> <li>官方研究与案例：https://speridlabs.com/research/idol</li> <li>SDK 源码：https://github.com/speridlabs/idol-sdk</li> <li>3D Gaussian Splatting 原始研究：https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/</li> </ul> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deepseek-v4-weight-editing/">DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/css-minify-broke-tailwind/">一次 CSS 压缩把整站布局打散</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/thin-starter-architecture/">把个人站从「魔改模板」改成「薄启动器」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hello-world/">从这里开始</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 12, 2026. </div> </footer> <script>
+</code></pre></div></div> <p>这里有一个重要的技术区别：</p> <p>Gaussian Splatting 并不是传统粒子系统，也不是普通 Mesh。</p> <p>如果要实现粒子动画，需要读取 PLY 中的高斯位置、颜色、透明度、尺度和旋转属性，再映射到自己的粒子系统中。</p> <p>也可以直接对 Gaussian 属性进行动态变换，保留其原有的渲染方式。</p> <p>这为 AI 三维生成与实时视觉创作之间的结合提供了新的可能性。</p> <h2 id="九总结">九、总结</h2> <p>Idol 展示了一种值得关注的 AI 三维生成方向：</p> <p><strong>从单张图片出发，通过生成模型推断三维结构，再利用 Gaussian Splatting 实现实时三维展示。</strong></p> <p>它并不能完全替代传统三维建模，也不能保证准确还原图片中不可见的真实结构。</p> <p>但它降低了创建三维视觉资产的门槛，让图片成为三维内容生产的一个入口。</p> <p>对于开发者来说，值得关注的不只是如何运行 Idol，更是如何将它集成到自己的产品中。</p> <p>当 AI 负责生成三维资产，实时渲染引擎负责展示，交互系统负责编辑，三维创作工具就可能从专业建模软件扩展为人人都能使用的 AI 创作平台。</p> <p><strong>一张图片，可能就是一个三维世界的开始。</strong></p> <hr> <p><strong>项目与参考资料</strong></p> <ul> <li>Idol 模型：https://huggingface.co/speridlabs/idol</li> <li>官方研究与案例：https://speridlabs.com/research/idol</li> <li>SDK 源码：https://github.com/speridlabs/idol-sdk</li> <li>3D Gaussian Splatting 原始研究：https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/</li> </ul> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformerlens-mech-interp/">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deepseek-v4-weight-editing/">DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/css-minify-broke-tailwind/">一次 CSS 压缩把整站布局打散</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/thin-starter-architecture/">把个人站从「魔改模板」改成「薄启动器」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hello-world/">从这里开始</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
   window.alFolio = {
     compatBootstrap: false
   };
@@ -113,7 +113,29 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/news/";
           },
-        },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
         
           title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
         

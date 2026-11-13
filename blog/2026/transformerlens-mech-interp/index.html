@@ -1,0 +1,411 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。"> <meta name="keywords" content="AI, AI agent, developer tools, knowledge management, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/transformerlens-mech-interp/"> <meta property="og:description" content="从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部"> <meta name="twitter:description" content="从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/transformerlens-mech-interp/",
+        "@type": "BlogPosting",
+        "description": "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        "headline": "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 930px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/transformerlens-mech-interp/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">开源仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p><img src="https://images.openai.com/static-rsc-4/0YhDrIimsFnmW9Jm_WbVKvraeIS_x0vdlp01UdJax96uOk3ySUmNRL4PIOFys5_iJiejehNgVSEPAr7GhVRB0kyGywbdKHV8mAipgp24ySucvjxQvRT8iQoYz5pEbUWCX-VHjhW1XsN58m8v7vpdzPcn81sjvivSAijTKUp-xfM?purpose=inline" alt="Transformer Explainer"></p> <p><em>图片来源：<a href="https://poloclub.github.io/transformer-explainer/" rel="external nofollow noopener" target="_blank">Transformer Explainer</a></em></p> <p>给模型一句 <code class="language-plaintext highlighter-rouge">The capital of France is</code>，它输出 <code class="language-plaintext highlighter-rouge">Paris</code>。</p> <p>这件事我们已经习以为常。但如果你追问一句：<strong>它是怎么算出 Paris 的？</strong> 我们手上其实什么都没有——只有一个输入字符串和一个输出字符串，中间那几十层矩阵乘法是一团不透明的黑箱。</p> <p>机制可解释性（Mechanistic Interpretability）想做的事，就是把这团黑箱拆成可以命名的零件：哪个 Attention Head 把 <code class="language-plaintext highlighter-rouge">France</code> 的信息搬到了最后一个位置？哪一层 MLP 把“国家”改写成“首都”？这些零件之间是不是构成了一条稳定的计算路径？</p> <p>开源库 <a href="https://github.com/TransformerLensOrg/TransformerLens" rel="external nofollow noopener" target="_blank">TransformerLens</a> 就是为此而生的工具。它由 Neel Nanda 创建，目前由 Bryce Meyer 和 Jonah Larson 维护，是这个领域事实上的基础设施。</p> <h2 id="一它是什么给模型装一台显微镜">一、它是什么：给模型装一台显微镜</h2> <p>先把定位说清楚，避免误解：</p> <table> <thead> <tr> <th>工具</th> <th>你用它做什么</th> </tr> </thead> <tbody> <tr> <td>Hugging Face <code class="language-plaintext highlighter-rouge">transformers</code> </td> <td>加载和使用模型</td> </tr> <tr> <td>vLLM</td> <td>高吞吐地跑推理</td> </tr> <tr> <td><strong>TransformerLens</strong></td> <td><strong>看懂模型内部发生了什么</strong></td> </tr> </tbody> </table> <p>它不训练模型，不部署服务，也不提供 API。它的全部价值集中在一件事上：<strong>把前向传播过程中的每一个中间张量变成可寻址、可读取、可修改的一等公民。</strong></p> <p>官方 README 的说法是：支持 15,000+ 开源模型、140+ 架构家族，可以缓存任意内部激活，并在模型运行时编辑、移除或替换这些激活。</p> <p>这句话里有两个关键词，构成了整个库的设计骨架：</p> <ul> <li> <strong>可缓存</strong>：你能拿到 <code class="language-plaintext highlighter-rouge">blocks.5.attn.hook_pattern</code> 这样的张量，而不需要自己改模型源码加 <code class="language-plaintext highlighter-rouge">print</code>。</li> <li> <strong>可干预</strong>：你能在指定位置把激活置零、替换、缩放，然后观察输出怎么变。</li> </ul> <p>前者是观察，后者是实验。机制可解释性之所以是一门实验科学而不是文学批评，靠的就是后者。</p> <h2 id="二它到底暴露了什么">二、它到底暴露了什么</h2> <p>一个 Transformer 前向传播产生的中间量，大致是这些：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Token Embedding
+      │
+      ▼
+┌─────────────────────────────┐
+│  Block 0                    │
+│   ├── LayerNorm             │
+│   ├── Attention (Q/K/V)     │
+│   │      └── Pattern        │
+│   ├── Attention Output (z)  │
+│   ├── MLP                   │
+│   └── Residual Stream       │
+└─────────────────────────────┘
+      │
+     ...
+      │
+      ▼
+  Final LayerNorm
+      │
+      ▼
+    Logits
+</code></pre></div></div> <p>TransformerLens 给每个位置都起了名字，称为 <strong>Hook Point</strong>。命名规则本身值得记住，因为你后面写的每一行分析代码都要靠它：</p> <table> <thead> <tr> <th>Hook 名</th> <th>含义</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">hook_embed</code></td> <td>Token embedding 输出</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">blocks.{i}.attn.hook_q</code> / <code class="language-plaintext highlighter-rouge">hook_k</code> / <code class="language-plaintext highlighter-rouge">hook_v</code> </td> <td>第 i 层的 Q、K、V</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">blocks.{i}.attn.hook_pattern</code></td> <td>第 i 层的注意力概率矩阵</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">blocks.{i}.attn.hook_z</code></td> <td>第 i 层各 head 的输出（未过 $W_O$）</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">blocks.{i}.hook_resid_pre</code> / <code class="language-plaintext highlighter-rouge">_mid</code> / <code class="language-plaintext highlighter-rouge">_post</code> </td> <td>第 i 层残差流的三处快照</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">blocks.{i}.hook_mlp_out</code></td> <td>第 i 层 MLP 写入残差流的分量</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">ln_final.hook_normalized</code></td> <td>最终 LayerNorm 的输出</td> </tr> </tbody> </table> <p>4.0 之后，桥接层（TransformerBridge）还提供了更贴近上游架构的原生命名，例如 <code class="language-plaintext highlighter-rouge">blocks.5.attn.q.hook_out</code>、<code class="language-plaintext highlighter-rouge">embed.hook_out</code>，同时把上面这套旧名字保留为<strong>别名</strong>，指向同一个 Hook Point。这意味着大量基于旧教程写的代码仍然能跑——只要它只用到名字，不用到被删除的类。</p> <p>这些张量被收集进一个叫 <code class="language-plaintext highlighter-rouge">ActivationCache</code> 的对象。它长得像一个字典，但带了几个专门为分析准备的方法，比如 <code class="language-plaintext highlighter-rouge">decompose_resid()</code>（把残差流拆成 embedding + 各层 attn/mlp 分量）和 <code class="language-plaintext highlighter-rouge">apply_ln_to_stack()</code>（把一组向量统一过一遍 LayerNorm，方便和 unembedding 比较）。</p> <h2 id="三hook-系统三种用法一个陷阱">三、Hook 系统：三种用法，一个陷阱</h2> <p><code class="language-plaintext highlighter-rouge">HookPoint</code> 本质上是一个 <code class="language-plaintext highlighter-rouge">nn.Identity</code> 模块，插在模型的固定位置。运行时它原样传递输入，但你可以挂一个函数上去：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">hook_fn</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">hook</span><span class="p">):</span>
+    <span class="c1"># 读它、改它、或者整个换掉
+</span>    <span class="k">return</span> <span class="n">tensor</span>  <span class="c1"># 返回 None 表示不修改
+</span></code></pre></div></div> <p>基于这个机制，库提供了三种使用层次。</p> <p><strong>第一种：<code class="language-plaintext highlighter-rouge">run_with_cache</code>，跑一遍，全都拿回来。</strong></p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">logits</span><span class="p">,</span> <span class="n">cache</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, world</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="n">cache</span><span class="p">[</span><span class="sh">"</span><span class="s">blocks.0.attn.hook_pattern</span><span class="sh">"</span><span class="p">]</span>   <span class="c1"># [batch, head, q_pos, k_pos]
+</span><span class="n">cache</span><span class="p">[</span><span class="sh">"</span><span class="s">blocks.5.hook_resid_post</span><span class="sh">"</span><span class="p">]</span>     <span class="c1"># [batch, pos, d_model]
+</span></code></pre></div></div> <p>这是九成实验的起点。但要注意内存：GPT-2 small 缓存全部激活还好，一个 7B 模型缓存全量激活会直接把显存吃穿。所以实际使用时几乎总要加过滤器：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">logits</span><span class="p">,</span> <span class="n">cache</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">Hello, world</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">names_filter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">name</span><span class="p">:</span> <span class="n">name</span><span class="p">.</span><span class="nf">endswith</span><span class="p">(</span><span class="sh">"</span><span class="s">hook_resid_post</span><span class="sh">"</span><span class="p">),</span>
+    <span class="n">pos_slice</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>   <span class="c1"># 只留最后一个位置
+</span><span class="p">)</span>
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">pos_slice</code> 对长 prompt 尤其重要——注意力模式是 <code class="language-plaintext highlighter-rouge">[batch, head, seq, seq]</code>，序列长度翻倍，这个张量就是四倍。</p> <p><strong>第二种：<code class="language-plaintext highlighter-rouge">run_with_hooks</code>，只在这一个前向里动手。</strong></p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">zero_head_3</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">hook</span><span class="p">):</span>
+    <span class="n">z</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">z</span>
+
+<span class="n">logits</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_hooks</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">The capital of France is</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">fwd_hooks</span><span class="o">=</span><span class="p">[(</span><span class="sh">"</span><span class="s">blocks.5.attn.hook_z</span><span class="sh">"</span><span class="p">,</span> <span class="n">zero_head_3</span><span class="p">)],</span>
+<span class="p">)</span>
+</code></pre></div></div> <p>Hook 在这一次前向结束后自动移除。这是做消融实验最常用的形式。</p> <p><strong>第三种：<code class="language-plaintext highlighter-rouge">add_hook</code>，手动管理生命周期。</strong></p> <p>跨多次前向存在的 Hook（比如训练中）需要走这一层，并且要自己负责清理。</p> <p><strong>那个陷阱是</strong>：通过 <code class="language-plaintext highlighter-rouge">add_hook</code> 添加的临时 Hook <strong>不会</strong>自动清理，必须调用 <code class="language-plaintext highlighter-rouge">model.remove_all_hook_fns()</code>；而带 <code class="language-plaintext highlighter-rouge">is_permanent=True</code> 的 Hook 又不会被这个调用清掉，得再加 <code class="language-plaintext highlighter-rouge">including_permanent=True</code>。这个细节看起来琐碎，但它导致的 bug 极其隐蔽——你以为在做干净的对照实验，实际上上一次的 Hook 还挂着。</p> <h2 id="四四个因果分析工具回答四类不同的问题">四、四个因果分析工具，回答四类不同的问题</h2> <p>有了读取和干预能力，接下来就是方法论问题：<strong>怎么从“能改激活”走到“能下结论”。</strong></p> <p>TransformerLens 的 <code class="language-plaintext highlighter-rouge">tools.analysis</code> 里有一组工具。它们看起来都在回答“哪个组件重要”，但测的其实是完全不同的量。这一点如果搞混，结论就会错得离谱。</p> <table> <thead> <tr> <th>我想知道</th> <th>用哪个</th> <th>它到底测量了什么</th> </tr> </thead> <tbody> <tr> <td>哪些组件在给答案 token 加分？</td> <td>Direct Logit Attribution</td> <td>残差流读出的一次<strong>分解</strong> </td> </tr> <tr> <td>把某个激活换回干净版本，答案能恢复吗？</td> <td>Activation Patching</td> <td>一次<strong>因果干预</strong>的实际效果</td> </tr> <tr> <td>哪些位置值得做完整 patching？</td> <td>Attribution Patching</td> <td>干预效果的<strong>一阶近似</strong> </td> </tr> <tr> <td>某条 head→head 的路径是否影响指标？</td> <td>Direct Path Patching</td> <td>一条<strong>边</strong>的精确干预</td> </tr> </tbody> </table> <h3 id="1-direct-logit-attribution分解不是消融">1. Direct Logit Attribution：分解，不是消融</h3> <p>残差流是一个不断累加的过程。最后一层的残差，等于 embedding 加上每一层 attention 和 MLP 写进去的分量。既然最后的 logits 是残差过一个线性 unembedding 得到的，那就可以把这个 logit 按来源拆开：</p> \[\text{logit}_{\text{Paris}} = \sum_{c \in \text{components}} \langle c,\ W_U[\text{Paris}] \rangle\] <p>这就是 DLA。它能告诉你：在这一条 prompt 上，<code class="language-plaintext highlighter-rouge">Paris</code> 的分数里有多少来自 embedding，多少来自第 5 层某个 head，多少来自第 9 层 MLP。</p> <p>但有个必须记住的限定：<strong>DLA 分数不是消融效应。</strong> 把一个组件从模型里删掉，下游计算会跟着变，最终影响可能远大于它当场的直接贡献，也可能反向。DLA 测的是“它此刻往答案方向推了多少”，不是“没有它会怎样”。</p> <p>官方文档还有一个容易踩的坑：<code class="language-plaintext highlighter-rouge">unit="layer"</code> 返回的是<strong>累计</strong>读数（每一层之后的残差状态），不是可以相加的独立贡献。想要可加的分量，用 <code class="language-plaintext highlighter-rouge">unit="component"</code> 或 <code class="language-plaintext highlighter-rouge">unit="head"</code>。</p> <h3 id="2-activation-patching干净答案能不能被搬回来">2. Activation Patching：干净答案能不能被搬回来</h3> <p>这是机制可解释性里最核心的实验范式，也是最能体现“因果”二字的：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Clean:      "The capital of France is"   →  Paris
+Corrupted:  "The capital of Germany is"  →  Berlin
+</code></pre></div></div> <p>先跑干净输入，缓存所有激活；再跑污染输入，但在某一个位置把干净激活<strong>替换</strong>进去；看 <code class="language-plaintext highlighter-rouge">Paris</code> 的分数恢复了多少。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">_</span><span class="p">,</span> <span class="n">clean_cache</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span><span class="n">clean_tokens</span><span class="p">)</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">clean_cache</span><span class="p">[</span><span class="sh">"</span><span class="s">blocks.5.hook_resid_post</span><span class="sh">"</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">patch</span><span class="p">(</span><span class="n">resid</span><span class="p">,</span> <span class="n">hook</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">target</span>
+
+<span class="n">logits</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_hooks</span><span class="p">(</span>
+    <span class="n">corrupt_tokens</span><span class="p">,</span>
+    <span class="n">fwd_hooks</span><span class="o">=</span><span class="p">[(</span><span class="sh">"</span><span class="s">blocks.5.hook_resid_post</span><span class="sh">"</span><span class="p">,</span> <span class="n">patch</span><span class="p">)],</span>
+<span class="p">)</span>
+</code></pre></div></div> <p>对每一层、每一个位置都这么干一遍，就得到一张恢复率热图：哪个位置是信息瓶颈，一目了然。</p> <p>4.0 的 patching 工具比早期版本多了一层统计能力。传入返回 <code class="language-plaintext highlighter-rouge">[batch]</code> 的 metric 和 <code class="language-plaintext highlighter-rouge">reduce="none"</code>，每个格子的结果会保留<strong>逐样本值</strong>，并附带均值、标准误、bootstrap 置信区间，以及在 <code class="language-plaintext highlighter-rouge">baseline=True</code> 时的效应量和置换检验 p 值。</p> <p>这层统计很值得用，但也要正确理解：bootstrap 区间描述的是“在这批 prompt 上重采样，这个格子的均值会怎么浮动”。它<strong>不</strong>告诉你结论能否推广到这批 prompt 之外。四到八个样本的区间会非常宽，这是诚实的表现，不是工具的缺陷。</p> <h3 id="3-attribution-patching先筛再验">3. Attribution Patching：先筛，再验</h3> <p>完整 patching 的代价是每个格子一次前向。层数 × 位置数一乘，很快就跑不动了。</p> <p>Attribution Patching 用一阶泰勒展开做近似：</p> \[\text{score} \approx (\text{clean} - \text{corrupt}) \cdot \nabla_{\text{corrupt}}\] <p>也就是“激活差”乘“污染运行时的梯度”。一次前向加一次反向，就能给所有节点打分。</p> <p>它有两种粒度：<strong>node</strong>（某个 hook 点的激活）和 <strong>edge</strong>（某个 writer 到某个 reader 的路径）。边粒度的分数规模随 <code class="language-plaintext highlighter-rouge">O(seq_len × (layers × heads)²)</code> 增长，这个量级要心里有数。</p> <p>关键在定位：<strong>Attribution Patching 是筛子，不是秤。</strong> 线性近似在激活变化大、下游非线性强的时候会失准。官方文档的建议很明确：拿它挑候选，再用真实的激活替换去测量。</p> <h3 id="4-direct-path-patching把一条边钉死">4. Direct Path Patching：把一条边钉死</h3> <p>如果你已经锁定“第 5 层第 0 个 head 通过 K 分支影响了第 12 层”，那就需要一个只改这一条路径的工具。</p> <p><code class="language-plaintext highlighter-rouge">get_act_patch_direct_path</code> 做的就是这件事：固定 source head，扫描后续层的 Q 头或 K/V 组，只把干净运行中该 source head 写进残差的分量加到目标分支上，其余读者仍然看到污染版本。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformer_lens.patching</span> <span class="kn">import</span> <span class="n">get_act_patch_direct_path</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="nf">get_act_patch_direct_path</span><span class="p">(</span>
+    <span class="n">bridge</span><span class="p">,</span> <span class="n">corrupt_tokens</span><span class="p">,</span> <span class="n">clean_cache</span><span class="p">,</span> <span class="n">corrupt_cache</span><span class="p">,</span>
+    <span class="n">metric_fn</span><span class="p">,</span> <span class="n">src_layer</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">src_head</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="sh">"</span><span class="s">k</span><span class="sh">"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># shape: [n_layers, n_kv_heads]
+</span></code></pre></div></div> <p>在 pre-norm 架构上，这个分数就是精确的边干预效果。在 post-norm（Gemma 2/3、OLMo 2/3）、缩放残差（Granite）或并行 mixer（Falcon-H1）结构上，因为 head 的写入不再是简单的 <code class="language-plaintext highlighter-rouge">hook_z @ W_O</code>，工具会直接拒绝执行——<strong>这种“拒绝”比给一个错误答案要好得多</strong>。</p> <h3 id="5-faithfulness把电路从故事变成假设">5. faithfulness：把“电路”从故事变成假设</h3> <p>做完一轮 patching，你手上会有一份“重要边”的排序。但排序不是结论。</p> <p><code class="language-plaintext highlighter-rouge">faithfulness()</code> 提供了一个可证伪的检验：把候选电路<strong>之外</strong>的所有边全部消融，看这个电路能恢复多少 clean 与 corrupt 之间的差距。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformer_lens.tools.analysis</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EdgeAttributionConfig</span><span class="p">,</span> <span class="n">attribution_patch</span><span class="p">,</span> <span class="n">faithfulness</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">ranked</span> <span class="o">=</span> <span class="nf">attribution_patch</span><span class="p">(</span>
+    <span class="n">bridge</span><span class="p">,</span> <span class="n">clean</span><span class="p">,</span> <span class="n">corrupt</span><span class="p">,</span> <span class="n">metric_fn</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="nc">EdgeAttributionConfig</span><span class="p">(</span><span class="n">granularity</span><span class="o">=</span><span class="sh">"</span><span class="s">edge</span><span class="sh">"</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">report</span> <span class="o">=</span> <span class="nf">faithfulness</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="n">clean</span><span class="p">,</span> <span class="n">corrupt</span><span class="p">,</span> <span class="n">metric_fn</span><span class="p">,</span> <span class="n">ranked</span><span class="p">.</span><span class="nf">top_edges</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">report</span><span class="p">.</span><span class="n">recovered</span><span class="p">,</span> <span class="n">report</span><span class="p">.</span><span class="n">circuit_size</span><span class="p">,</span> <span class="n">report</span><span class="p">.</span><span class="n">total_edges</span><span class="p">)</span>
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">recovered</code> 是分数不是百分比：1.0 表示电路完整复现了干净指标，0.0 表示它复现的是污染指标。超出 <code class="language-plaintext highlighter-rouge">[0, 1]</code> 也可能出现且有含义——电路可以“过冲”。</p> <p>而且，判读这个数字时必须配一个<strong>同规模的随机边集合做基线</strong>。否则你无法区分“这个电路有意义”和“任意 50 条边也能恢复这么多”。</p> <h2 id="五读残差流logit-lens-与-jacobian-lens">五、读残差流：Logit Lens 与 Jacobian Lens</h2> <p>上面那组工具都在问“谁导致了结果”。还有另一类问题更朴素：<strong>模型在第 6 层的时候，“以为”答案是什么？</strong></p> <p>Logit Lens 的做法很直接：把每一层的残差，用模型自己的 <code class="language-plaintext highlighter-rouge">ln_final</code> 和 <code class="language-plaintext highlighter-rouge">W_U</code> 投影回词表，看每一层的“临时预测”。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformer_lens.tools.analysis</span> <span class="kn">import</span> <span class="n">logit_lens</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="nf">logit_lens</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="sh">"</span><span class="s">The capital of France is</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">result</span><span class="p">.</span><span class="nf">rank_trajectory</span><span class="p">(</span><span class="sh">"</span><span class="s"> Paris</span><span class="sh">"</span><span class="p">)</span>   <span class="c1"># 每层 Paris 的排名
+</span></code></pre></div></div> <p>有一个细节很漂亮：最后一层的读数<strong>精确等于</strong>模型自己的 logits（在 raw weights 模式下）。这给了这个工具一个自洽性保证。而在兼容模式下，因为 <code class="language-plaintext highlighter-rouge">center_unembed</code> 会给每个位置的 logit 加一个常数，跨模式比较时应该比 log-prob 或排名，而不是比原始 logit。</p> <p>Jacobian Lens 则是它的进阶版：不再假设“残差直接过 unembedding”，而是拟合一个从某层到输出的传输映射。代价是需要训练或加载一个 lens artifact，并且必须和模型版本严格匹配。</p> <p>这里有一条贯穿全文的纪律，官方文档写得非常克制但很重要：</p> <blockquote> <p>中间层的读数是<strong>观察</strong>，不是<strong>干预</strong>。第 6 层排名第一的 token，只说明“如果模型在这里停下，unembedding 会这么说”，它不证明后面的层没有在工作。</p> </blockquote> <h2 id="六从单个-head-到计算电路">六、从单个 head 到计算电路</h2> <p>机制可解释性真正有意思的成果，几乎都是“电路”级别的：不是“某个 head 重要”，而是“这几个组件这样配合，完成了这个任务”。</p> <p>几个经典研究对象：</p> <ul> <li> <strong>Induction Heads</strong>：<code class="language-plaintext highlighter-rouge">A B ... A</code> 之后预测 <code class="language-plaintext highlighter-rouge">B</code> 的机制，被认为是 in-context learning 的基础组件之一。</li> <li> <strong>Indirect Object Identification（IOI）</strong>：<code class="language-plaintext highlighter-rouge">When Mary and John went to the store, John gave a drink to ___</code> 填 <code class="language-plaintext highlighter-rouge">Mary</code>。这个任务小到可以在 GPT-2 small 上完整拆解，是学习整套方法论的经典教材。</li> <li> <strong>Copying / 复制机制</strong>：低层 head 把信息原样搬运到后续位置。</li> </ul> <p>研究路径通常是：先用 DLA 看哪些组件在给答案加分，用 Attention Patching 找信息瓶颈层，用 Path Patching 锁定具体路径，最后用 <code class="language-plaintext highlighter-rouge">faithfulness()</code> 检验这条电路是否真的能解释行为。</p> <p>这条链路里，每一步都能被证伪。这正是它比“看注意力图讲故事”更可靠的原因。</p> <h2 id="七40-的变化把执行引擎也抽象掉">七、4.0 的变化：把执行引擎也抽象掉</h2> <p>这里必须讲清楚版本问题，因为网上大量教程还停留在旧 API 上。</p> <p><strong>2026 年 9 月 21 日发布的 4.0</strong>，核心变化是 <strong>Driver（执行后端）系统</strong>。</p> <p>3.0 已经用 <code class="language-plaintext highlighter-rouge">TransformerBridge</code> + 架构适配器，解决了“不同模型实现”的问题——把 Hugging Face 的模型映射到统一的组件树和 Hook 接口上。4.0 解决的则是“不同执行引擎”的问题：同名的 Hook、同一份 cache、同一套干预接口，现在可以跑在 vLLM 上，或者跑在 <code class="language-plaintext highlighter-rouge">inspect_ai</code> 的评估流程里。</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        TransformerLens API（统一 hook 名 / cache / 干预）
+                          │
+                          ▼
+                   TransformerBridge
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+  transformers         vLLM            inspect_ai
+  （本地全量 hook）  （高吞吐捕获）    （评估内捕获）
+</code></pre></div></div> <p>三个后端的能力边界并不相同，这张表很关键：</p> <table> <thead> <tr> <th>后端</th> <th>梯度</th> <th>Attention Pattern</th> <th>干预方式</th> <th>安装</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">transformers</code></td> <td>✅</td> <td>✅</td> <td>任意 Hook 函数</td> <td>默认</td> </tr> <tr> <td>vLLM</td> <td>❌</td> <td>❌</td> <td>声明式（suppress/scale/add/set）</td> <td> <code class="language-plaintext highlighter-rouge">[vllm]</code> extra，仅 Linux</td> </tr> <tr> <td>Inspect</td> <td>视 provider 而定</td> <td>部分</td> <td>声明式 / solver</td> <td> <code class="language-plaintext highlighter-rouge">[inspect]</code> extra</td> </tr> </tbody> </table> <p>为什么 vLLM 后端没有 attention pattern？因为它的 kernel 把 $QK^\top \to \text{softmax}$ 融合掉了，中间矩阵根本不落地。这不是实现偷懒，是推理引擎为了速度必然做的取舍。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformer_lens.model_bridge</span> <span class="kn">import</span> <span class="n">RemoteBridge</span>
+
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">RemoteBridge</span><span class="p">.</span><span class="nf">boot_vllm</span><span class="p">(</span><span class="sh">"</span><span class="s">meta-llama/Llama-3.2-1B</span><span class="sh">"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">float16</span><span class="p">)</span>
+<span class="n">logits</span><span class="p">,</span> <span class="n">cache</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span><span class="sh">"</span><span class="s">Hello, world</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="n">logits2</span><span class="p">,</span> <span class="n">cache2</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">Hello, world</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">intervene</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">embed.hook_out</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span><span class="sh">"</span><span class="s">op</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">suppress</span><span class="sh">"</span><span class="p">}},</span>
+<span class="p">)</span>
+</code></pre></div></div> <h3 id="旧-api-已被删除">旧 API 已被删除</h3> <p>4.0 移除了全部 <code class="language-plaintext highlighter-rouge">Hooked*</code> 类：<code class="language-plaintext highlighter-rouge">HookedTransformer</code>、<code class="language-plaintext highlighter-rouge">HookedEncoder</code>、<code class="language-plaintext highlighter-rouge">HookedEncoderDecoder</code>、<code class="language-plaintext highlighter-rouge">HookedAudioEncoder</code>、<code class="language-plaintext highlighter-rouge">BertNextSentencePrediction</code>，以及配套的 <code class="language-plaintext highlighter-rouge">loading_from_pretrained</code>、组件树和权重转换器。</p> <p>迁移本身很小：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 4.0 之前
+</span><span class="kn">from</span> <span class="n">transformer_lens</span> <span class="kn">import</span> <span class="n">HookedTransformer</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">HookedTransformer</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="sh">"</span><span class="s">gpt2</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># 4.0 之后
+</span><span class="kn">from</span> <span class="n">transformer_lens.model_bridge</span> <span class="kn">import</span> <span class="n">TransformerBridge</span>
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">TransformerBridge</span><span class="p">.</span><span class="nf">boot_transformers</span><span class="p">(</span><span class="sh">"</span><span class="s">gpt2</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">bridge</span><span class="p">.</span><span class="nf">enable_compatibility_mode</span><span class="p">()</span>   <span class="c1"># 需要旧版数值行为时
+</span></code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">HookedRootModule</code> 和 <code class="language-plaintext highlighter-rouge">HookPoint</code> 被保留了下来——它们是给任意 <code class="language-plaintext highlighter-rouge">nn.Module</code> 挂 TransformerLens 风格 Hook 的官方途径。</p> <h3 id="兼容模式一个容易混淆的数值开关">兼容模式：一个容易混淆的数值开关</h3> <p>这个点很值得单独说，因为它会让不同实验的结果对不上。</p> <p>默认的 bridge <strong>保留 Hugging Face 的原始权重</strong>，logits 和激活与 HF 完全一致。而旧的 <code class="language-plaintext highlighter-rouge">HookedTransformer</code> 默认会做 LayerNorm folding 和权重居中，两者数值不同。</p> <p><code class="language-plaintext highlighter-rouge">enable_compatibility_mode()</code> 复现的是旧版的数值约定。于是出现了一个有点反直觉的局面：</p> <ul> <li> <strong>DLA 需要兼容模式</strong>，因为它依赖标准的残差分解约定。</li> <li> <strong>Jacobian Lens 需要原始权重</strong>，兼容模式会破坏它的前提。</li> </ul> <p>所以官方建议：做这类对比时，<strong>用分别加载的模型</strong>，并且不要在不同权重处理模式之间混用 cache。这一条如果忽略，debug 会非常痛苦——数字都对得上一点，但就是不一致。</p> <p>另外 4.0 有两处已知能力缩减：Qwen-1 的 <code class="language-plaintext highlighter-rouge">use_logn_attn</code> / Dynamic-NTK 长上下文缩放，以及 GQA 模型上的 <code class="language-plaintext highlighter-rouge">ungroup_grouped_query_attention</code>，在新架构中都没有等价实现。</p> <h2 id="八不只-transformermamba-与-ssm">八、不只 Transformer：Mamba 与 SSM</h2> <p>TransformerLens 的适配器已经覆盖 Mamba-1、Mamba-2，以及 gated-delta-net（Qwen3.5 / Qwen3-Next）、NemotronH、GraniteMoeHybrid 等混合架构。</p> <p>对 Mamba 这类状态空间模型，最自然的对照物是“等效注意力矩阵”。<code class="language-plaintext highlighter-rouge">ActivationCache.compute_ssm_effective_attention(layer=...)</code> 可以把 SSD 推导出的注意力矩阵显式地生成出来，直接和 Transformer 的 attention pattern 比较。</p> <p>README 把这块标为实验性支持。能跑通前向、能挂 Hook、能生成，不等于所有分析工具都已经适配——官方在每类工具下都写了明确的架构限制（比如 DLA 会拒绝 Mamba/SSM/Mixer/LinearAttention 的混合布局）。<strong>工具会报错，是好事。</strong></p> <h2 id="九上手从加载到第一次干预">九、上手：从加载到第一次干预</h2> <p>安装：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>transformer_lens
+</code></pre></div></div> <p>加载受限模型（Llama、Gemma 等）需要 <code class="language-plaintext highlighter-rouge">HF_TOKEN</code>，并先在 Hugging Face 上接受模型协议。</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformer_lens.model_bridge</span> <span class="kn">import</span> <span class="n">TransformerBridge</span>
+
+<span class="n">bridge</span> <span class="o">=</span> <span class="n">TransformerBridge</span><span class="p">.</span><span class="nf">boot_transformers</span><span class="p">(</span><span class="sh">"</span><span class="s">gpt2</span><span class="sh">"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="sh">"</span><span class="s">cpu</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="n">logits</span><span class="p">,</span> <span class="n">cache</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span><span class="sh">"</span><span class="s">The capital of France is</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">pattern</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="sh">"</span><span class="s">blocks.0.attn.hook_pattern</span><span class="sh">"</span><span class="p">]</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">pattern</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span>   <span class="c1"># [batch, n_heads, q_pos, k_pos]
+</span></code></pre></div></div> <p>做一次零消融，看第 5 层第 3 个 head 是不是真的在干活：</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">clean_logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_cache</span><span class="p">(</span><span class="sh">"</span><span class="s">The capital of France is</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">zero_head</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">hook</span><span class="p">):</span>
+    <span class="n">z</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">z</span>
+
+<span class="n">ablated_logits</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">run_with_hooks</span><span class="p">(</span>
+    <span class="sh">"</span><span class="s">The capital of France is</span><span class="sh">"</span><span class="p">,</span>
+    <span class="n">fwd_hooks</span><span class="o">=</span><span class="p">[(</span><span class="sh">"</span><span class="s">blocks.5.attn.hook_z</span><span class="sh">"</span><span class="p">,</span> <span class="n">zero_head</span><span class="p">)],</span>
+<span class="p">)</span>
+
+<span class="n">paris</span> <span class="o">=</span> <span class="n">bridge</span><span class="p">.</span><span class="nf">to_single_token</span><span class="p">(</span><span class="sh">"</span><span class="s"> Paris</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">clean_logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">paris</span><span class="p">].</span><span class="nf">item</span><span class="p">(),</span> <span class="sh">"</span><span class="s">-&gt;</span><span class="sh">"</span><span class="p">,</span> <span class="n">ablated_logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">paris</span><span class="p">].</span><span class="nf">item</span><span class="p">())</span>
+</code></pre></div></div> <p>几个实践中的注意点：</p> <ol> <li> <strong><code class="language-plaintext highlighter-rouge">model.eval()</code> 不等于 <code class="language-plaintext highlighter-rouge">torch.no_grad()</code>。</strong> 前者关掉 dropout 等训练行为，后者关掉梯度记录。梯度类分析（Attribution Patching、Jacobian Lens）如果在 <code class="language-plaintext highlighter-rouge">no_grad()</code> 里跑，会直接失败。</li> <li> <strong>答案 token 必须是一个 token。</strong> ` Paris<code class="language-plaintext highlighter-rouge"> 和 </code>Paris` 的 tokenization 可能不同，前导空格经常是坑。</li> <li> <strong>比较用差值，不要用单点。</strong> 常见做法是 <code class="language-plaintext highlighter-rouge">logit(Paris) - logit(Berlin)</code>，把问题变成“模型更偏向哪个”，比绝对分数稳定得多。</li> </ol> <h2 id="十方法论上的几个坑">十、方法论上的几个坑</h2> <p>这部分不是 API 问题，是研究纪律问题，但比 API 更容易出错。</p> <p><strong>1. 观察不等于因果。</strong> 注意力权重高，不代表这个 head 影响了输出。要证明影响，必须干预。这是整个领域从 2021 年到现在最大的方法论转变。</p> <p><strong>2. DLA 不是消融。</strong> DLA 分数低的组件，删掉后可能影响巨大；DLA 分数高的组件，删掉后可能被其他路径补偿。两者回答的是不同问题。</p> <p><strong>3. 单个 prompt 的结论不算结论。</strong> 一两个例子上得到的“第 9 层关键”，很可能只是这两个句子的巧合。至少用一批 prompt，并且看逐样本结果，不要只看均值。</p> <p><strong>4. 置信区间不负责外推。</strong> bootstrap 区间只描述这批 prompt 的重采样波动。要谈“模型的一般机制”，需要在留出集上再验一次。</p> <p><strong>5. 记录复现信息。</strong> 模型和 tokenizer 的 revision、dtype、是否开启兼容模式、hook 名、位置、metric 定义、随机种子——这些不记，三个月后你自己也复现不出来。</p> <p><strong>6. 兼容模式和原始权重的 cache 不能混用。</strong> 换权重处理方式就要重新采 cache。这条违反起来毫无报错，只会给你一堆“看起来差不多但统计上显著不同”的诡异结果。</p> <h2 id="十一总结">十一、总结</h2> <p>TransformerLens 解决的问题很基础，也很少被认真对待：<strong>让“看模型内部”这件事变得像调用一个函数一样简单。</strong></p> <p>它提供的东西可以归成三层：</p> <ul> <li> <strong>读取层</strong>：统一的 Hook 名 + <code class="language-plaintext highlighter-rouge">ActivationCache</code>，把中间张量变成可寻址对象。</li> <li> <strong>干预层</strong>：<code class="language-plaintext highlighter-rouge">run_with_hooks</code>、patching 工具，把“如果改这里会怎样”变成可执行的实验。</li> <li> <strong>推断层</strong>：DLA、Attribution Patching、faithfulness、Logit Lens，把干预结果转成关于组件的定量陈述。</li> </ul> <p>而 4.0 的 Driver 架构，把它的适用范围从“本地 Hugging Face 模型”扩展到了“任何能跑前向并触发 Hook 的引擎”。它对机制可解释性的意义，类似于 PyTorch 对深度学习的意义：<strong>不是提出新理论，而是让一整类实验变得便宜。</strong></p> <p>当然，工具再好也只是工具。这个领域最难的从来不是“怎么读激活”，而是“怎么设计一个能证伪的实验”。TransformerLens 把前者的成本压到接近零，剩下的部分，还是得靠人。</p> <h2 id="项目与参考资料">项目与参考资料</h2> <ul> <li><a href="https://github.com/TransformerLensOrg/TransformerLens" rel="external nofollow noopener" target="_blank">GitHub 仓库</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/" rel="external nofollow noopener" target="_blank">官方文档</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/content/news/release-4.0.html" rel="external nofollow noopener" target="_blank">TransformerLens 4.0 发布说明</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/content/hook_system.html" rel="external nofollow noopener" target="_blank">Hook 系统文档</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/content/analysis_tools.html" rel="external nofollow noopener" target="_blank">如何选择分析工具</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/content/drivers.html" rel="external nofollow noopener" target="_blank">执行后端（Driver）文档</a></li> <li><a href="https://transformerlensorg.github.io/TransformerLens/content/migrating_to_v4.html" rel="external nofollow noopener" target="_blank">迁移到 4.0</a></li> </ul> <p>项目使用 MIT 许可证。本文的 API 名称、版本行为和架构限制依据上述官方文档与仓库 README 整理；具体版本差异请以仓库当前代码为准，尤其是 4.x 系列仍在快速迭代。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sub2api-ai-api-gateway/">Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/train-llm-from-scratch/">Train LLM From Scratch：从零开始训练自己的大语言模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/deepseek-v4-weight-editing/">DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/idol-image-to-3d-gaussian/">Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/windows-atomic-write/">Windows 上「保存失败」：文件被占用时原子替换为什么会报错</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/css-minify-broke-tailwind/">一次 CSS 压缩把整站布局打散</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/thin-starter-architecture/">把个人站从「魔改模板」改成「薄启动器」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hello-world/">从这里开始</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "浏览我在 GitHub 上的全部公开仓库。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-开源仓库",
+          title: "开源仓库",
+          description: "从 AI 智能体到工程工具，持续构建有趣且实用的软件。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
