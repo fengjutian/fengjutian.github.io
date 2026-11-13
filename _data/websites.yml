@@ -12,6 +12,133 @@
 #
 # 条目顺序就是页面顺序，常看的放前面。
 
+- name: 松果先森 · Nana 提示词图库
+  url: https://opennana.com/awesome-prompt-gallery/
+  preview: /assets/img/sites/opennana-prompt-gallery.jpg
+  description: 松果先森整理的 Nano Banana 提示词图库，方便浏览案例并复用提示词。
+  tags: [AI, 提示词, 图像]
+  icon: "N"
+
+- name: YouMind Nano Banana Pro Prompts
+  url: https://youmind.com/zh-CN/nano-banana-pro-prompts
+  preview: /assets/img/sites/youmind-nano-banana.jpg
+  description: YouMind 收集的 Nano Banana Pro 提示词与生成案例。
+  tags: [AI, 提示词, 图像]
+  icon: "Y"
+
+- name: Local Banana
+  url: https://localbanana.io/
+  preview: /assets/img/sites/local-banana.jpg
+  description: Nano Banana 图像提示词与案例资源库。
+  tags: [AI, 提示词, 图像]
+  icon: "L"
+
+- name: TiHub AI Prompt
+  url: https://tihubb.com/ai-prompt/
+  preview: /assets/img/sites/tihub-ai-prompt.jpg
+  description: 汇集多种 AI 图像提示词和效果案例，便于查找创作灵感。
+  tags: [AI, 提示词, 图像]
+  icon: "T"
+
+- name: ChatGPT Image Art
+  url: https://chatgptimage.art/
+  preview: /assets/img/sites/chatgpt-image-art.jpg
+  description: 面向 ChatGPT 图像生成的提示词、案例和创作资源。
+  tags: [AI, 提示词, 图像]
+  icon: "C"
+
+- name: Nano Banana Showcase
+  url: https://nanobanana-showcase.com/
+  preview: /assets/img/sites/nano-banana-showcase.jpg
+  description: 展示 Nano Banana 生成效果和对应提示词的案例站。
+  tags: [AI, 提示词, 图像]
+  icon: "N"
+
+- name: Nano Banana Prompt
+  url: https://nanobananaprompt.org/
+  preview: /assets/img/sites/nano-banana-prompt.jpg
+  description: 海量风格的社区型 Nano Banana 提示词资源库。
+  tags: [AI, 提示词, 社区]
+  icon: "N"
+
+- name: Nano Banana Art
+  url: https://nanobananaart.net/prompts
+  preview: /assets/img/sites/nano-banana-art.jpg
+  description: 按视觉风格整理的提示词案例，适合用作画风模板。
+  tags: [AI, 提示词, 风格]
+  icon: "N"
+
+- name: Fotor Nano Banana Prompts
+  url: https://www.fotor.com/blog/nano-banana-model-prompts/
+  description: Fotor 整理的 Nano Banana 热门风格提示词合集。
+  tags: [AI, 提示词, 图像]
+  icon: "F"
+
+- name: 宝玉
+  url: https://x.com/dotey
+  description: 宝玉的 X 账号，持续分享 AI 产品、提示词和行业观察。
+  tags: [AI, 提示词, 创作者]
+  icon: "宝"
+
+- name: 归藏
+  url: https://x.com/op7418
+  description: 归藏的 X 账号，分享生成式 AI 工具、玩法和视觉案例。
+  tags: [AI, 提示词, 创作者]
+  icon: "归"
+
+- name: 神佬
+  url: https://x.com/berryxia
+  description: 神佬的 X 账号，关注 AI 图像创作、提示词和实用技巧。
+  tags: [AI, 提示词, 创作者]
+  icon: "神"
+
+- name: ZHO
+  url: https://x.com/ZHO_ZHO_ZHO
+  description: ZHO 的 X 账号，分享 AI 创作实验、提示词和视觉作品。
+  tags: [AI, 提示词, 创作者]
+  icon: "Z"
+
+- name: Curated Design
+  url: https://www.curated.design/
+  preview: /assets/img/sites/curated-design.jpg
+  description: 精选高质量网页设计案例，适合寻找版式、视觉风格和交互灵感。
+  tags: [设计, UI, 灵感]
+  icon: "C"
+
+- name: One Page Love
+  url: https://onepagelove.com/
+  preview: /assets/img/sites/one-page-love.jpg
+  description: 专注单页网站与着陆页案例，覆盖作品集、产品页和营销页面。
+  tags: [设计, 着陆页, 灵感]
+  icon: "O"
+
+- name: Component Gallery
+  url: https://component.gallery/
+  preview: /assets/img/sites/component-gallery.jpg
+  description: 汇集真实设计系统中的 UI 组件，方便横向比较组件结构与规范。
+  tags: [设计, UI, 设计系统]
+  icon: "C"
+
+- name: App Motion
+  url: https://appmotion.design/
+  description: 收集移动应用动效案例，适合研究转场、反馈和微交互设计。
+  tags: [设计, 动效, 应用]
+  icon: "A"
+
+- name: Mobbin
+  url: https://mobbin.com/
+  preview: /assets/img/sites/mobbin.jpg
+  description: 汇集真实移动应用和网页产品界面，可按流程与组件寻找设计参考。
+  tags: [设计, UI, 应用]
+  icon: "M"
+
+- name: Rebrand Gallery
+  url: https://www.rebrand.gallery/
+  preview: /assets/img/sites/rebrand-gallery.jpg
+  description: 精选品牌重塑案例，展示标志、字体、色彩和完整视觉识别系统。
+  tags: [设计, 品牌, 灵感]
+  icon: "R"
+
 - name: Finviz
   url: https://finviz.com/
   description: 热力图、筛选器、技术形态和板块强弱一站查看，适合开盘快速扫盘。
