@@ -22,6 +22,7 @@ vendor
 # Scratch space for ad-hoc verification runs
 .shots/
 .tmp/
+.tmp-*/
 
 # Python bytecode from bin/ helper scripts
 __pycache__/
