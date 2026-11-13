@@ -1,0 +1,539 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/ohmygame-agent-game-studio/"> <meta property="og:description" content="从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/ohmygame-agent-game-studio.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来"> <meta name="twitter:description" content="从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/ohmygame-agent-game-studio.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/ohmygame-agent-game-studio/",
+        "@type": "BlogPosting",
+        "description": "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        "headline": "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/ohmygame-agent-game-studio/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来</h1> <p class="post-meta"> Created on November 13, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>一个 agent 把游戏代码写完，然后呢？</p> <p>它没有眼睛。它能读到 <code class="language-plaintext highlighter-rouge">controls.js</code> 里写着 <code class="language-plaintext highlighter-rouge">keydown</code>，但读不出按下方向键之后角色有没有动。绝大多数 AI 编程工具到此为止：代码生成完毕，任务标记完成。</p> <p>OhMyGame 这个开源项目在这一步上做了一个具体的选择：<strong>给 agent 开一个隐藏的浏览器窗口，让它自己玩一遍。</strong></p> <ul> <li>GitHub：<a href="https://github.com/WhiteTowerAI/ohmygame" rel="external nofollow noopener" target="_blank">WhiteTowerAI/ohmygame</a>（Apache-2.0，Beta）</li> <li>官网与文档：<a href="https://ohmygame.ai/" rel="external nofollow noopener" target="_blank">ohmygame.ai</a> / <a href="https://ohmygame.ai/docs/" rel="external nofollow noopener" target="_blank">ohmygame.ai/docs</a> </li> <li>技术参考：<a href="https://github.com/WhiteTowerAI/ohmygame/blob/main/docs/runtime.md" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/runtime.md</code></a> </li> </ul> <p>本文只讲一件事：<strong>它把「验证」变成了一个有预算的工具调用，并为此付出了什么代价。</strong>不是功能盘点——功能列表在 README 上，比这好读。</p> <h2 id="一三个数字">一、三个数字</h2> <p>先看三个数字，它们都来自 <code class="language-plaintext highlighter-rouge">docs/runtime.md</code>，而且都不是产品卖点，是工程约束：</p> <ul> <li> <strong>30 秒</strong>：每次 <code class="language-plaintext highlighter-rouge">game_use</code> 调用的超时；到点就 abort，跟着当前 turn 一起结束。</li> <li> <strong>4 个</strong>：同时最多允许存在的隐藏会话数。agent 忘了关，也不会无限开窗口。</li> <li> <strong>6,000 字符</strong>：界面上每条工具输出只保留开头和结尾各 6,000 字符，中间丢掉。</li> </ul> <p>前两个是给 agent 的预算，第三个是给界面的预算——它省的是内存，不是上下文。但它们背后是同一种习惯：<strong>这个应用里每一处「看到的东西」都被限了大小</strong>，因为看得太多本身就是成本。</p> <h2 id="二它是什么">二、它是什么</h2> <p>一句话：一个本地优先的 AI 游戏工作室。你描述游戏，agent 写设计文档、生成素材、写代码、开预览、试玩、修问题，最后发一个链接出去。</p> <p>它自带模型与否的答案是「不」：首次启动要接一个 provider，或者直接接你已经在用的 Claude Code / Codex / OpenCode。40 多家 provider，自带 key，按 provider 计费，没有「运行次数」这种额度。</p> <p>三种项目类型：Web 游戏（Phaser / Three.js / React Three Fiber）、互动故事（视觉小说、互动电影）、以及通用项目（接任意引擎）。</p> <p>许可证 Apache-2.0，但<strong>名称和 Logo 不在许可范围内</strong>——这个细节在做二次分发时会被忽略。</p> <h2 id="三三个进程各跑什么">三、三个进程，各跑什么</h2> <p>架构上它把自己切成三块，而且切得很干脆：</p> <table> <thead> <tr> <th>进程</th> <th>端口</th> <th>负责什么</th> </tr> </thead> <tbody> <tr> <td>Renderer（React）</td> <td><code class="language-plaintext highlighter-rouge">127.0.0.1:43120</code></td> <td>对话、画布、预览、代码、素材——全部界面</td> </tr> <tr> <td>Local Daemon（Fastify）</td> <td><code class="language-plaintext highlighter-rouge">127.0.0.1:43110</code></td> <td>Pi agent、工具运行时、插件宿主、预览服务、项目与快照</td> </tr> <tr> <td>Electron 主进程</td> <td>—</td> <td>只负责桌面生命周期：起 daemon、等 <code class="language-plaintext highlighter-rouge">/health</code>、管窗口</td> </tr> </tbody> </table> <p>两个值得注意的地方。</p> <p><strong>第一，渲染层没有 Node 权限。</strong>它拿到的只是 daemon 地址和一个一次性 token，而且这个 token 是通过隔离的 preload 桥单独发过来的，主进程只回答主窗口的主框架——嵌进去的 iframe 拿不到。</p> <p><strong>第二，Electron 主进程不碰业务。</strong>项目、对话、预览、事件都住在 daemon 里；关掉最后一个窗口时，主进程会先给 daemon 时间收掉 Pi 和预览子进程，再退出。这个分工让「浏览器里跑一份」和「桌面里跑一份」共用同一套 daemon。</p> <h2 id="四把验证做成工具">四、把验证做成工具</h2> <p><img src="/assets/img/blog/ohmygame-agent-game-studio/fig-02-game-use-loop.png" alt="game_use 的调用面"></p> <p><em>五个动作，一个隐藏窗口；返回的是有上限的观察数据，不是全量页面。</em></p> <p><code class="language-plaintext highlighter-rouge">game_use</code> 是 OhMyGame 的核心工具，不属于任何插件。它只有五个动作：</p> <p><code class="language-plaintext highlighter-rouge">open</code> 开会话（只接受预览源上的路径、查询串或锚点）→ <code class="language-plaintext highlighter-rouge">inspect</code> 读 DOM、canvas 状态、console、失败请求 → <code class="language-plaintext highlighter-rouge">act</code> 点击、输入、按键、触摸、等待 → <code class="language-plaintext highlighter-rouge">capture</code> 截图 → <code class="language-plaintext highlighter-rouge">close</code> 销毁。</p> <p>链路是：daemon 通过<strong>私有 IPC</strong> 把请求转给 Electron 主进程（这条通道不属于渲染层 API），主进程持有按 playtest 隔离的 <code class="language-plaintext highlighter-rouge">BrowserWindow</code>，用内置 Chromium 跑游戏。</p> <p>返回的数据全是「有界」的：DOM 和 console 被截断；截图从设备像素缩到页面的 CSS 像素，保持宽高比，好让图像坐标和输入坐标对得上，然后转成 JPEG 回给模型。文档里还写了一句很实在的话：<strong>每次后续请求都会重发这些图，所以它们必须小。</strong></p> <p>这就是第一节那些上限的由来。工具接口不是按「人能看多少」设计的，是按「模型能承受多少次往返」设计的。</p> <p>顺带一个细节：Play 按钮给你自己玩的那个窗口，和 agent 玩的隐藏窗口共享同一个开发服务器和同一份源码。你改一行代码，两边会一起热更新——所以人和 agent 看到的是同一个游戏，不是两份副本。</p> <h2 id="五信任边界agent-全权但三条边守得很死">五、信任边界：agent 全权，但三条边守得很死</h2> <p><img src="/assets/img/blog/ohmygame-agent-game-studio/fig-01-trust-boundaries.png" alt="三条边界"></p> <p><em>它能做的事很多，但每一层能读到的东西都被单独限定了。</em></p> <p>这是我认为最值得读的一段，因为文档写得很不讨好自己：</p> <blockquote> <p>Pi runs in trusted-local mode. The workspace is Pi’s working directory, but <code class="language-plaintext highlighter-rouge">cwd</code> is not an operating-system security boundary, and enabled Pi tools run without an OhMyGame approval prompt.</p> </blockquote> <p>翻译过来：<strong>agent 在这个应用里是「完全信任」的。</strong>工作目录不是安全边界，工具执行不带审批提示。任何声称「我们用沙箱保护你」的说法在这里都不成立，他们自己先把话说了。</p> <p>于是安全设计只好落在别的地方，而且确实落了三处：</p> <p><strong>凭证。</strong>用户密钥只存在 daemon 里，写进 daemon 的 stdin——不是环境变量（同用户的其他进程能读环境变量），也不上命令行（进程列表能看到）。做到这一步之后还有一条：daemon 启动的任何子进程都不继承这个 token，包括预览服务器、依赖安装、发布构建、agent 的 shell、stdio MCP 服务器和 Git。</p> <p><strong>试玩窗口。</strong>独立 partition、开沙箱、开上下文隔离、关掉 Node 集成；主框架导航只能停在原预览源上，弹窗和下载被拦，权限除了指针锁和键盘锁一律拒绝。agent 能点、能看，但出不去。</p> <p><strong>发布。</strong>只上传静态构建产物；工作区、对话、凭证都不进上传包。每次发布是一个不可变的 Deployment，播放链接不变。</p> <p>这个组合的取舍很清楚：<strong>既然没法在操作系统层面关住一个需要改文件、跑命令的 agent，那就把它能泄露的东西（凭证）和它能碰到的外部世界（窗口、云端）分别关住。</strong>这不是「安全」，是「把损失的上限压到可接受」。</p> <h2 id="六给了全权就得能撤回">六、给了全权，就得能撤回</h2> <p>如果 agent 真的能改你工作区里的一切，那么比「拦住它」更实际的是「能退回去」。</p> <p>OhMyGame 的做法是<strong>不需要 Git 的快照</strong>：每次消费一条用户消息之前、以及一轮运行结束时，给工作区拍一份私有快照；跑完在对话里列出这一轮的净文件改动；<strong>Undo</strong> 撤回一轮的文件但保留对话，<strong>Reapply</strong> 把内容原样放回。快照存在工作区旁边，不碰你的 <code class="language-plaintext highlighter-rouge">.git</code>、分支和索引，并且会跳过 <code class="language-plaintext highlighter-rouge">.gitignore</code> 忽略的东西。</p> <p>它是第五节的直接后果：<strong>当你决定不做执行审批时，可回滚就成了必需品而不是加分项。</strong></p> <h2 id="七画布文件是唯一真源">七、画布：文件是唯一真源</h2> <p>一个容易被当成 UI 细节、其实是架构决定的东西：画布和面板读写的是<strong>磁盘上的同一批文件</strong>。</p> <p>设计文档是 Markdown，画布是 JSON 节点，互动故事的每个画面是磁盘上的一个网页。Design 面板和 Canvas 面板展示的是同一份文档——文档原话是「在任一处编辑，另一处会显示，并且只保存一次」。</p> <p>好处不是「好看」，是不用维护两套状态。可视化编辑器和 agent 操作的不是两个世界，而是同一个文件夹；agent 改完文件，你在面板里看到的就是改完的。插件还能往画布里加节点（<code class="language-plaintext highlighter-rouge">contributes.canvasNodes</code>，有类型的输入输出），所以这张画布是开放的数据结构，不是固定功能的界面。</p> <h2 id="八扩展面是真的但还没验收">八、扩展面是真的，但还没验收</h2> <p><img src="/assets/img/blog/ohmygame-agent-game-studio/fig-03-plugin-surface.png" alt="插件的扩展面"></p> <p><em>一个插件能加六种东西；这也是它敢把引擎交给插件、而不写进核心的原因。</em></p> <p>插件是一个带 <code class="language-plaintext highlighter-rouge">.ohmygame-plugin/plugin.json</code> 的包，能加：Skills（教 agent 怎么做这类活）、工具、MCP 服务器、面板、项目类型、画布节点。原生代码跑在<strong>每个项目一个的扩展宿主子进程</strong>里，不在 daemon 里——但它不是沙箱，文档明说「代码以你自己的权限运行」。三分钟内崩三次的插件会被隔离，另外还有 <code class="language-plaintext highlighter-rouge">--safe-mode</code>。</p> <p>引擎这边，README 列了 Godot、Unity、Unreal、Blender、Aseprite、Tiled 和微信/抖音小游戏；<code class="language-plaintext highlighter-rouge">docs/plugins.md</code> 里还有 Cocos Creator 和 TapTap Maker。但真实状态是：<strong>十个引擎/平台插件里，只有 Blender 默认开启，而且它只加 Skills（不接引擎进程）</strong>；其余九个默认关闭，并且全部标着 Beta。文档自己也承认「真实引擎、账号、设备那一圈人工验收还挂着」，目前只有自动化的包与开关测试。</p> <p>也就是说：<strong>扩展面是设计出来的，可用性是待验收的。</strong>这两件事不该混着说。</p> <p>多人这块反而超出预期：浏览器多人走 Colyseus 房间，有四种权威模型——服务端跑规则、指定一个玩家的浏览器跑（host）、每个客户端跑并用帧回滚对齐（lockstep）、以及人人本地跑（owner）。owner 模式还能开 WebRTC 直连，文档里给了一次实测：两台 5G 手机之间 P2P 往返中位数 70 ms，走服务端约 400 ms。它还老实写了哪类 NAT 连不上，以及 lockstep 目前不做状态比对——所以一个漂移的客户端要等下一局或重连才会被发现。</p> <h2 id="九局限">九、局限</h2> <ol> <li> <strong>Beta，且平台窄。</strong>只有 macOS（Apple Silicon）和 Windows x64；Intel Mac 和 Linux 还在路线图上；Windows 包还没做代码签名，首次安装会被 SmartScreen 拦。</li> <li> <strong>隐私不等于离线。</strong>项目文件和密钥留在本地，但提示词与生成请求会发给你选的 provider；另外<strong>发行版会发使用数据和崩溃报告</strong>（可在设置里关），源码构建不发——所以「本地优先」这句话成立的是项目文件与密钥，不是全部行为。</li> <li> <strong>agent 无审批执行。</strong>这是设计选择，不是漏洞，但意味着你要按「它会改我的工作区」来准备备份和权限。</li> <li> <strong>试玩的覆盖面有限。</strong>它靠 DOM、canvas、console 和截图判断，能测出「按钮没反应」「报错」，测不出「手感不对」「平衡性差」。</li> <li> <strong>引擎插件未验收。</strong>十个引擎/平台插件里九个默认关闭，具体到每个引擎的导出、真机、发布流程都还需要人守着跑。</li> <li> <strong>素材质量取决于外部 provider。</strong>3D、绑定、动画这些环节不是它自己做的。</li> </ol> <h2 id="十我的判断">十、我的判断</h2> <p>这个项目真正值得学的不是画布，也不是接了 40 家 provider，而是它把「验证」这件事<strong>降级成了一个普通工具</strong>。</p> <p>一旦验证是工具，它就能被 agent 反复调用，也就能被预算约束——于是你看到 30 秒、4 个会话、6,000 字符这些数字。这些数字不是性能指标，是<strong>为了让「多跑几次验证」在 token 上负担得起</strong>而做的设计。我觉得这是「agent 产品」和「带 AI 的软件」的分界线：前者必须回答「一次工具调用的输出值多少 token」。</p> <p>第二个值得学的是它对信任的处理顺序：先承认 agent 拿全权，再分别限制凭证、外部窗口和上传内容，最后用快照兜住「改坏了」这个风险。这个顺序和「先假装沙箱、再让用户点确认」相比，诚实得多，也更难做错。</p> <p>要往下走，有三个能测的点：</p> <ul> <li> <strong>验证回合的收益曲线。</strong>同一类游戏，让 agent 试玩 1 次、3 次、10 次，看最终可玩率和 token 成本各是多少。现在没人报这个数。</li> <li> <strong>有界返回的阈值。</strong>30 秒和 4 个会话是怎么定的？把这两个数调大调小，量「多跑几轮」带来的修复成功率提升。6,000 字符那条同理，只是它影响的是界面内存而不是上下文。这是长上下文系统里最缺的经验值。</li> <li> <strong>检查点的粒度。</strong>一轮一个快照在「改十个文件」的场景下够用，在「改两百个文件」时是否应该换成按文件回滚，值得实测。</li> </ul> <p>回到那句「AI 生成游戏不难」：难的从来不是生成，是<strong>判断生成出来的东西能不能用</strong>。OhMyGame 的答案不是让模型更聪明，而是给它一个窗口、一套有预算的观察接口，再加一条能退回去的路。这三样东西，换成视频剪辑、3D 建模、UI 设计，逻辑是一样的。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li> <a href="https://github.com/WhiteTowerAI/ohmygame" rel="external nofollow noopener" target="_blank">GitHub 仓库</a>（Apache-2.0，Beta）</li> <li> <a href="https://ohmygame.ai/" rel="external nofollow noopener" target="_blank">官网</a> · <a href="https://ohmygame.ai/docs/" rel="external nofollow noopener" target="_blank">文档</a> · <a href="https://ohmygame.ai/community/" rel="external nofollow noopener" target="_blank">社区作品</a> </li> <li> <a href="https://github.com/WhiteTowerAI/ohmygame/blob/main/docs/runtime.md" rel="external nofollow noopener" target="_blank">运行时文档</a>（<code class="language-plaintext highlighter-rouge">game_use</code>、信任边界、检查点、发布，本文主要来源）</li> <li> <a href="https://github.com/WhiteTowerAI/ohmygame/blob/main/docs/plugins.md" rel="external nofollow noopener" target="_blank">插件文档</a>（扩展面、原生代码、隔离与安全模式、引擎插件状态）</li> <li> <a href="https://github.com/WhiteTowerAI/ohmygame/blob/main/docs/multiplayer.md" rel="external nofollow noopener" target="_blank">多人与房间</a>（四种权威模型、P2P 实测）</li> <li> <a href="https://github.com/WhiteTowerAI/ohmygame/blob/main/docs/external-agents.md" rel="external nofollow noopener" target="_blank">外部 Agent 接入</a>（MCP）</li> </ul> <p>事实来源：三个数字、五个动作、信任边界与凭证流向、检查点、发布上限取自 <code class="language-plaintext highlighter-rouge">docs/runtime.md</code>；插件贡献类型、扩展宿主、隔离与安全模式、十个引擎/平台插件的默认状态取自 <code class="language-plaintext highlighter-rouge">docs/plugins.md</code>；四种多人权威模型与 70 ms / 400 ms 的对比取自 <code class="language-plaintext highlighter-rouge">docs/multiplayer.md</code>；平台、Bun/Node 版本、许可证与遥测说明取自 README。文中「这个数字是为了让验证负担得起」以及第十节三个待测点是推断，已标注。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/gpt2-forward-pass-intervention/">GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/saelens-sparse-autoencoder-instrument/">SAELens：重建得越准，特征越不一定是真的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/tokeneconomizer-experience-driven-cost-control/">TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformer-explainer/">Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/boubou-local-voice-runtime/">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hy-mt2-family-centric-post-training/">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/nnsight-deferred-intervention/">NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/safetensors-weight-format/">Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pyvene-intervention-framework/">pyvene：深入模型内部，理解并干预神经网络行为的开源工具</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/arc-adaptive-routing-controller/">ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 13, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
