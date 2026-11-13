@@ -1,0 +1,48 @@
+# 网站收藏（/sites/ 页面的数据源）
+#
+# 每个条目在页面上渲染成一张卡片。以后加网站只需要往下追加，模板不用动：
+#
+# - name: 站点名          # 必填，卡片标题
+#   url: https://...      # 必填，整张卡片可点击
+#   description: 一句话    # 可选，说明这个站点为什么值得收藏
+#   tags: [AI, 工具]      # 可选，卡片底部的小标签，同时用作页面顶部的筛选
+#   icon: "◆"             # 可选，卡片左上角图标（emoji 或单字）；留空则取站名首字
+#   logo: /assets/img/x.svg # 可选，优先于 icon；放一张方形图片当 logo
+#
+# 条目顺序就是页面顺序，常看的放前面。
+
+- name: Anthropic
+  url: https://www.anthropic.com/
+  description: Claude 的官方发布与研究入口，模型能力和 agent 设计的一手资料。
+  tags: [AI, 模型]
+  icon: "A"
+
+- name: Simon Willison's Weblog
+  url: https://simonwillison.net/
+  description: LLM 工具链最勤快的一手实践记录，新模型和新用法几乎当天就有评测。
+  tags: [AI, 工具]
+  icon: "S"
+
+- name: Lil'Log
+  url: https://lilianweng.github.io/
+  description: 把 agent、强化学习和 LLM 的系统性综述写清楚，适合当索引反复回看。
+  tags: [AI, 论文]
+  icon: "L"
+
+- name: Hacker News
+  url: https://news.ycombinator.com/
+  description: 技术圈信息密度最高的讨论区之一，工程细节常出现在评论区。
+  tags: [社区]
+  icon: "Y"
+
+- name: GitHub Trending
+  url: https://github.com/trending
+  description: 每天的开源热度榜，找参考实现、工具链和新项目的第一站。
+  tags: [开源, 工具]
+  icon: "G"
+
+- name: arXiv cs.CL
+  url: https://arxiv.org/list/cs.CL/recent
+  description: 计算语言学方向的最新预印本，按提交时间排，适合扫标题。
+  tags: [论文, AI]
+  icon: "X"
