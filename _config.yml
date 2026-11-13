@@ -327,7 +327,7 @@ defaults:
            目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
         #toc-sidebar {
           max-height: calc(100vh - 7rem);
-          padding-left: 1.15rem;
+          padding-left: 1.5rem;
           border-left: 1px solid var(--global-divider-color);
           scrollbar-width: thin;
           scrollbar-color: color-mix(in srgb, var(--global-divider-color) 85%, transparent) transparent;
@@ -353,11 +353,13 @@ defaults:
         #toc-sidebar .toc-link {
           font-size: 0.8rem;
           line-height: 1.5;
-          padding: 0.2rem 0.2rem 0.2rem 0.45rem;
+          padding: 0.22rem 0.3rem 0.22rem 0.5rem;
           color: var(--global-text-color-light);
+          border-radius: 4px;
         }
         #toc-sidebar .toc-link:hover {
           color: var(--global-theme-color);
+          background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
         }
         #toc-sidebar .toc-link::before {
           width: 2px;
@@ -367,6 +369,7 @@ defaults:
         #toc-sidebar .toc-link.is-active-link {
           color: var(--global-theme-color);
           font-weight: 600;
+          background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
         }
         #toc-sidebar .toc-link.is-active-link::before {
           opacity: 1;
