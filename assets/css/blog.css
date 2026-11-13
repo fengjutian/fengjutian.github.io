@@ -209,3 +209,55 @@
     font-size: 0.85rem;
   }
 }
+
+/* ---------- 分页 ---------- */
+
+/* 主题的 pagination.liquid 输出 .af-pagination / .af-page-item / .af-page-link，
+   但 Tailwind 构建里没有这三组样式（Bootstrap 兼容层关闭），默认会渲染成一列圆点。
+   这里按博客列表的样式补齐：横向胶囊按钮、当前页用主题色。 */
+.post .af-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.post .af-page-item {
+  list-style: none;
+}
+.post .af-page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.65rem;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--global-text-color);
+  text-decoration: none;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 0.4rem;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+.post .af-page-link:hover {
+  color: var(--global-theme-color);
+  text-decoration: none;
+  border-color: var(--global-theme-color);
+}
+.post .af-page-item.active .af-page-link {
+  color: var(--global-hover-text-color);
+  background: var(--global-theme-color);
+  border-color: var(--global-theme-color);
+}
+.post .af-page-item.disabled .af-page-link {
+  color: var(--global-text-color-light);
+  pointer-events: none;
+  opacity: 0.5;
+}
