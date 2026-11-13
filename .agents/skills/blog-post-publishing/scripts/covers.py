@@ -332,6 +332,51 @@ def motif_game(d, box, accent, tag):
     d.text((x + 24, y + h - 26), tag, font=font(16), fill=mix(DIM, accent, 0.5))
 
 
+def motif_sheet(d, box, accent, tag):
+    """A review sheet: six views, colour on top, clay below, one check."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=tint(accent, 0.08),
+                        outline=mix(BG_TOP, accent, 0.38), width=2)
+    d.text((x + 20, y + 14), "review sheet · 6 views", font=font(15), fill=FAINT)
+
+    tw, th, gap = 118, 108, 14
+    x0 = x + (w - (tw * 3 + gap * 2)) / 2
+    # the object, seen front / side / top: fills for colour, outlines for clay
+    for row in range(2):
+        for col in range(3):
+            tx = x0 + col * (tw + gap)
+            ty = y + 52 + row * (th + gap)
+            d.rounded_rectangle((tx, ty, tx + tw, ty + th), radius=8,
+                                fill=(13, 18, 29) if row == 1 else tint(accent, 0.14),
+                                outline=mix(BG_TOP, accent, 0.30))
+            cx, cy = tx + tw / 2, ty + th / 2 + 2
+            if row == 0:
+                fill, line = accent, mix(BG_TOP, accent, 0.9)
+            else:
+                fill, line = mix((18, 24, 38), (170, 180, 195), 0.55), (196, 204, 216)
+            if col == 0:      # front: a box with a lid
+                d.rectangle((cx - 30, cy - 24, cx + 30, cy + 26), fill=fill)
+                d.rectangle((cx - 36, cy - 34, cx + 36, cy - 18), fill=line)
+            elif col == 1:    # side: narrower
+                d.rectangle((cx - 16, cy - 24, cx + 16, cy + 26), fill=fill)
+                d.rectangle((cx - 22, cy - 34, cx + 22, cy - 18), fill=line)
+            else:             # top: flatter, from above
+                d.rectangle((cx - 34, cy - 12, cx + 34, cy + 20), fill=fill)
+                d.rectangle((cx - 34, cy - 26, cx + 34, cy - 14), fill=line)
+
+    # close-up marker on one tile
+    d.ellipse((x0 + 2 * (tw + gap) + tw - 34, y + 52 + th - 34,
+               x0 + 2 * (tw + gap) + tw - 12, y + 52 + th - 12),
+              outline=accent, width=3)
+
+    # verdict badge
+    cx, cy, r = x + w - 44, y + h - 46, 26
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(14, 19, 30), outline=accent, width=3)
+    d.line((cx - 9, cy, cx - 2, cy + 8), fill=accent, width=5)
+    d.line((cx - 2, cy + 8, cx + 11, cy - 9), fill=accent, width=5)
+    d.text((x + 20, y + h - 34), tag, font=font(16), fill=mix(DIM, accent, 0.5))
+
+
 def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
     x, y, w, h = box
     d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=(11, 16, 26),
@@ -432,6 +477,12 @@ def build(slug, out_dir):
                     ("    logits = model.lm_head(x)", "code")],
                    (664, 356, 464, 152), "405B", "一次 forward，介入在执行时注入")
 
+    elif slug == "blender-kiln":
+        head(d, accent, "Claude Code / Blender MCP / MIT",
+             "Blender\nKiln", "干活的不是 3D 引擎，是一套能被量出来的流程",
+             (M, 128), 88, (M, 364), 500)
+        motif_sheet(d, (686, 104, 442, 408), accent, "每轮换一个人来读")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -455,6 +506,8 @@ CARDS = {
                      glow=(870, 300), glow_r=420, strength=0.24),
     "nnsight": dict(file="nnsight-deferred-intervention.jpg", color=(232, 112, 104),
                     glow=(860, 300), glow_r=420, strength=0.26),
+    "blender-kiln": dict(file="blender-kiln-3d-asset-pipeline.jpg", color=(204, 74, 72),
+                         glow=(900, 300), glow_r=430, strength=0.26),
 }
 
 if __name__ == "__main__":
