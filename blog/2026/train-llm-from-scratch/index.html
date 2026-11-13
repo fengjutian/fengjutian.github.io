@@ -27,6 +27,12 @@
   height: auto;
 }
 
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   这里只把它从目录里隐藏，正文里的区块保持原样。 */
+.toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+
   </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Train LLM From Scratch：从零开始训练自己的大语言模型</h1> <p class="post-meta"> Created on November 12, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p><img src="/assets/img/blog/train-llm-from-scratch/fig-01.jpg" alt="从零训练大语言模型"></p> <p>当我们使用 DeepSeek、ChatGPT 或 Qwen 时，通常只需要调用一个 API，就能获得强大的语言模型能力。</p> <p>但一个更值得研究的问题是：</p> <p><strong>如果不使用现成的大模型框架，能不能从零开始实现 Transformer，并亲自完成一个大语言模型的训练？</strong></p> <p>GitHub 上的开源项目 <a href="https://github.com/FareedKhan-dev/train-llm-from-scratch" rel="external nofollow noopener" target="_blank">Train LLM From Scratch</a>，提供了一条完整的实践路径。</p> <p>它使用原生 PyTorch，从数据处理、Tokenizer、Transformer 架构，到模型预训练、监督微调、奖励模型和强化学习，逐步展示大语言模型的构建过程。</p> <p>项目作者没有把核心实现隐藏在 Transformers、TRL 或 PEFT 等高级框架后面，而是尽可能自己实现关键算法，让开发者能够直接阅读模型训练的底层代码。</p> <h2 id="一这个项目究竟做什么">一、这个项目究竟做什么？</h2> <p>简单来说，它是一套从零开始构建和训练大语言模型的教学型工程项目。</p> <p>传统的模型使用方式通常是：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>下载预训练模型
        ↓
 加载模型权重
