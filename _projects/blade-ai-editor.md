@@ -26,3 +26,7 @@ Blade AI Editor 面向 AI 辅助开发场景，探索人与智能体共同编码
 
 - [weber-code-agent](/projects/weber-code-agent/) —— 与之配套的代码智能体
 - [全部开源仓库](/repositories/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

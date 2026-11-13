@@ -5,7 +5,7 @@ date: 2026-10-15 10:00:00 +0800
 description: 记录 AI、开发者工具、知识管理与产品实践。
 tags: [AI, 开发者工具, 开源]
 categories: [技术随笔]
-featured: true
+featured: false
 ---
 
 欢迎来到我的个人博客。

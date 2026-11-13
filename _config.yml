@@ -352,7 +352,7 @@ jekyll-archives:
   books:
     enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
 
-display_tags: [AI, 开发者工具, 开源]
+display_tags: [AI, 开源, 开发者工具, 论文解读]
 display_categories: [技术随笔, 工程实践]
 
 # -----------------------------------------------------------------------------

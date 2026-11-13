@@ -1,8 +1,8 @@
 ---
 layout: page
 permalink: /repositories/
-title: 开源仓库
-description: 从 AI 智能体到工程工具，持续构建有趣且实用的软件。
+title: 全部仓库
+description: GitHub 上的全部公开仓库，按语言分组、按最近推送排序。
 nav: true
 nav_order: 4
 _styles: |
@@ -212,6 +212,13 @@ _styles: |
     white-space: nowrap;
     color: var(--rp-muted);
   }
+  .rp-item-date {
+    margin-left: auto;
+    padding-left: 0.6rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    color: var(--rp-muted);
+  }
   .rp-cta {
     display: inline-flex;
     align-items: center;
@@ -238,11 +245,9 @@ _styles: |
   }
 ---
 
-{% assign repos = site.data.repositories.repos %}
-{% assign owner = site.data.repositories.github_users | first %}
-{% assign featured = repos | where: "featured", true %}
 {% assign github_data = site.data.github_repositories %}
-{% assign cats = site.data.repositories.categories %}
+{% assign languages = site.data.repositories.languages %}
+{% assign groups = github_data.repositories | group_by: "language" %}
 
 <div class="rp">
 
@@ -252,10 +257,6 @@ _styles: |
       <span class="rp-stat-label">公开仓库</span>
     </div>
     <div class="rp-stat">
-      <span class="rp-stat-num">{{ featured | size }}</span>
-      <span class="rp-stat-label">重点项目</span>
-    </div>
-    <div class="rp-stat">
       <span class="rp-stat-num">{{ github_data.original_count }}</span>
       <span class="rp-stat-label">原创仓库</span>
     </div>
@@ -263,38 +264,42 @@ _styles: |
       <span class="rp-stat-num">{{ github_data.fork_count }}</span>
       <span class="rp-stat-label">Fork 仓库</span>
     </div>
+    <div class="rp-stat">
+      <span class="rp-stat-num">{{ groups | size }}</span>
+      <span class="rp-stat-label">语言</span>
+    </div>
   </div>
 
-  <h2>重点项目</h2>
+  <p class="rp-hint">
+    快照同步于 {{ github_data.generated_at | date: "%Y-%m-%d" }}，组内按最近推送排序。精选项目与详情见
+    <a href="{{ '/projects/' | relative_url }}">项目</a>。
+  </p>
 
-  <div class="rp-grid">
-    {% for cat in cats %}
-      {% assign cat_featured = repos | where: "category", cat.id | where: "featured", true %}
-      {% for r in cat_featured %}
-        {% assign color = site.data.repositories.languages[r.lang] | default: "#8b949e" %}
-        <a class="rp-card" href="https://github.com/{{ owner }}/{{ r.name }}">
-          <span class="rp-card-head">
-            <span class="rp-dot" style="background: {{ color }}"></span>
-            <span class="rp-card-name">{{ r.title | default: r.name }}</span>
-            <i class="fa-solid fa-arrow-up-right-from-square rp-card-arrow"></i>
-          </span>
-          <p class="rp-card-desc">{{ r.desc }}</p>
-          <span class="rp-tags">
-            <span class="rp-tag">{{ r.lang }}</span>
-          </span>
-        </a>
-      {% endfor %}
-    {% endfor %}
-  </div>
-
-  <h2>全部仓库</h2>
-
-  <p class="rp-hint">完整项目页展示 {{ github_data.total }} 个公开仓库，并标注语言、更新时间、原创或 Fork 状态。</p>
-
-  <div class="text-center">
-    <a class="rp-cta" href="{{ '/projects/' | relative_url }}">
-      浏览全部 {{ github_data.total }} 个仓库 <i class="fa-solid fa-arrow-right fa-sm"></i>
-    </a>
-  </div>
+  {% for group in groups %}
+    {% assign color = languages[group.name] | default: "#8b949e" %}
+    <details class="rp-group"{% if forloop.index <= 2 %} open{% endif %}>
+      <summary class="rp-summary">
+        <span class="rp-dot" style="background: {{ color }}"></span>
+        <span>{{ group.name }}</span>
+        <span class="rp-count">{{ group.items | size }} 个</span>
+        <i class="fa-solid fa-chevron-down rp-chevron" aria-hidden="true"></i>
+      </summary>
+      <div class="rp-items">
+        {% for repo in group.items %}
+          <a class="rp-item" href="{{ repo.url }}">
+            <span class="rp-item-body">
+              <span class="rp-item-title">
+                <span class="rp-item-name">{{ repo.name }}</span>
+                {% if repo.fork %}<span class="rp-item-lang">Fork</span>{% endif %}
+                {% if repo.archived %}<span class="rp-item-lang">已归档</span>{% endif %}
+              </span>
+              <span class="rp-item-desc">{{ repo.description }}</span>
+            </span>
+            <span class="rp-item-date">{{ repo.pushed_at | date: "%Y-%m" }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </details>
+  {% endfor %}
 
 </div>

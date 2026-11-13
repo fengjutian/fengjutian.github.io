@@ -27,3 +27,7 @@ weber-code-agent 是一个代码智能体：理解代码、执行任务，协助
 - [Blade AI Editor](/projects/blade-ai-editor/) —— 人机共同编码的编辑器入口
 - [Code-Knowledge-Compiler](https://github.com/fengjutian/Code-Knowledge-Compiler) —— 把代码仓库编译为知识中间表示
 - [全部开源仓库](/repositories/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

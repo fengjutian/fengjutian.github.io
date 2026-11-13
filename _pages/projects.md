@@ -116,9 +116,13 @@ _styles: |
 ---
 
 {% assign github_data = site.data.github_repositories %}
-{% assign repositories = github_data.repositories %}
+{% assign projects = site.projects | sort: "importance" %}
 
 <div class="all-projects-summary">
+  <div class="all-projects-stat">
+    <strong>{{ projects | size }}</strong>
+    <span>精选项目</span>
+  </div>
   <div class="all-projects-stat">
     <strong>{{ github_data.total }}</strong>
     <span>公开仓库</span>
@@ -127,29 +131,23 @@ _styles: |
     <strong>{{ github_data.original_count }}</strong>
     <span>原创仓库</span>
   </div>
-  <div class="all-projects-stat">
-    <strong>{{ github_data.fork_count }}</strong>
-    <span>Fork 仓库</span>
-  </div>
 </div>
 
 <p class="all-projects-meta">
-  以下仓库按最近推送时间排列，共 {{ repositories | size }} 个。数据同步于 {{ github_data.generated_at | date: "%Y-%m-%d %H:%M UTC" }}。
+  这里只放持续维护、能跑起来的项目，按重要度排序；完整仓库清单（含实验与 Fork）见
+  <a href="{{ '/repositories/' | relative_url }}">全部仓库</a>。
 </p>
 
 <div class="all-projects-grid">
-  {% for repository in repositories %}
-    <a class="all-project-card" href="{{ repository.url }}">
+  {% for project in projects %}
+    <a class="all-project-card" href="{{ project.url | relative_url }}">
       <span class="all-project-head">
-        <span class="all-project-name">{{ repository.name }}</span>
+        <span class="all-project-name">{{ project.title }}</span>
         <i class="fa-solid fa-arrow-up-right-from-square all-project-arrow"></i>
       </span>
-      <span class="all-project-desc">{{ repository.description }}</span>
+      <span class="all-project-desc">{{ project.description }}</span>
       <span class="all-project-tags">
-        <span class="all-project-tag">{{ repository.language }}</span>
-        {% if repository.fork %}<span class="all-project-tag">Fork</span>{% endif %}
-        {% if repository.archived %}<span class="all-project-tag">已归档</span>{% endif %}
-        <span class="all-project-date">更新于 {{ repository.pushed_at | date: "%Y-%m-%d" }}</span>
+        <span class="all-project-tag">{{ project.category }}</span>
       </span>
     </a>
   {% endfor %}

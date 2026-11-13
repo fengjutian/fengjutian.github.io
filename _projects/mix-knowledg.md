@@ -27,3 +27,7 @@ mix-knowledg 探索多个智能体共同组织、处理和连接知识的协作�
 - [NeuralNotes](/projects/neuralnotes/) —— 以知识星图连接笔记
 - [mix-agent](https://github.com/fengjutian/mix-agent) —— 多智能体代理
 - [全部开源仓库](/repositories/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

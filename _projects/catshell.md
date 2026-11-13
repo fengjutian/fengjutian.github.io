@@ -26,3 +26,7 @@ catshell 是一个使用 Rust 构建的文件查看工具，关注高效、轻�
 
 - [全部开源仓库](/repositories/)
 - [项目总览](/projects/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

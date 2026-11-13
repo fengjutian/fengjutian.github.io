@@ -26,3 +26,7 @@ github: https://github.com/fengjutian/jiufenglanting-business
 
 - [全部开源仓库](/repositories/)
 - [项目总览](/projects/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

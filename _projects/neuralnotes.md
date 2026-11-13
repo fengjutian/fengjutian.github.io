@@ -27,3 +27,7 @@ NeuralNotes 是一个使用 Python 开发的知识星图项目：把笔记放进
 - [mix-knowledg](/projects/mix-knowledg/) —— 多智能体协作组织知识
 - [AI-Second-Brain](https://github.com/fengjutian/AI-Second-Brain) —— AI 驱动的第二大脑
 - [全部开源仓库](/repositories/)
+
+---
+
+**源码**：[GitHub 仓库]({{ page.github }})

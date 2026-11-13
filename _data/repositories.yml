@@ -15,8 +15,25 @@ categories:
 
 languages:
   C: "#555555"
-  TypeScript: "#3178c6"
+  C#: "#178600"
+  C++: "#f34b7d"
+  CSS: "#563d7c"
+  Dart: "#00b4ab"
+  Go: "#00add8"
+  HTML: "#e34c26"
+  Java: "#b07219"
+  JavaScript: "#f1e05a"
+  Kotlin: "#a97bff"
+  Makefile: "#427819"
+  MDX: "#fcb32c"
+  PowerShell: "#012456"
   Python: "#3572a5"
+  Rust: "#dea584"
+  Shell: "#89e051"
+  Swift: "#f05138"
+  TypeScript: "#3178c6"
+  Vue: "#41b883"
+  未标注: "#8b949e"
 
 repos:
   - name: Folixa
