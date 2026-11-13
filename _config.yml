@@ -301,6 +301,17 @@ defaults:
       path: "assets"
     values:
       sitemap: false
+  # 文章正文里的图片默认按内容宽度缩放。主题的 Tailwind 构建不含 preflight，
+  # 大尺寸截图（如 2920px 的桌面截图）会按原始尺寸横向溢出正文栏。
+  - scope:
+      path: ""
+      type: posts
+    values:
+      _styles: |
+        #markdown-content img {
+          max-width: 100%;
+          height: auto;
+        }
 
 sass:
   style: compressed

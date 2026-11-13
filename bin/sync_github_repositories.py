@@ -72,6 +72,11 @@ def main() -> int:
         repositories = [normalize(repository) for repository in fetch_all()]
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
         print(f"Failed to fetch GitHub repositories: {error}", file=sys.stderr)
+        # 快照只是锦上添花：API 限流或网络抖动时保留上一次的数据继续部署，
+        # 避免项目页的陈旧快照把整站发布拖垮。
+        if OUTPUT.exists():
+            print("Keeping the existing repository snapshot.", file=sys.stderr)
+            return 0
         return 1
 
     repositories.sort(key=lambda repository: repository["pushed_at"], reverse=True)

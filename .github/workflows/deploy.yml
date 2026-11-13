@@ -92,6 +92,10 @@ jobs:
           propertyPath: "giscus.repo"
           value: ${{ github.repository }}
       - name: Install and Build 🔧
+        env:
+          # 未认证调用 GitHub API 只有 60 次/小时，且 runner 是共享 IP，
+          # 很容易 403 rate limit 把整个部署打断。用 token 提到 5000 次/小时。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo apt-get update && sudo apt-get install -y imagemagick
           pip3 install --upgrade nbconvert
