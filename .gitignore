@@ -16,6 +16,9 @@ output/playwright/
 test-results/
 vendor
 
+# Local design previews and screenshots (not part of the published site)
+.mockups/
+
 # Python bytecode from bin/ helper scripts
 __pycache__/
 *.pyc
