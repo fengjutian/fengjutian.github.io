@@ -6,7 +6,6 @@ thumbnail: assets/img/blog/transformer-explainer.jpg
 description: 从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
-featured: true
 toc:
   sidebar: right
   collapse: auto

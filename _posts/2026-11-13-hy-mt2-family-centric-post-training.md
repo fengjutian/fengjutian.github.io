@@ -6,7 +6,6 @@ thumbnail: assets/img/blog/hy-mt2-family-centric-post-training.jpg
 description: 从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。
 tags: [AI, 开源, 机器学习]
 categories: [技术随笔, 工程实践]
-featured: true
 toc:
   sidebar: right
   collapse: auto

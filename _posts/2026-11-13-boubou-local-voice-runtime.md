@@ -6,7 +6,6 @@ thumbnail: assets/img/blog/boubou-local-voice-runtime.jpg
 description: 从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
-featured: true
 toc:
   sidebar: right
   collapse: auto

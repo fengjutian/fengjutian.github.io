@@ -46,51 +46,19 @@ pagination:
 
   <hr class="blog-rule" />
 
-{% assign featured_posts = site.posts | where_exp: "p", "p.featured == true or p.featured == 'true'" %}
-{% assign is_first_page = false %}
-{% if paginator.page == 1 or paginator.page == nil %}
-    {% assign is_first_page = true %}
-{% endif %}
-
-{% if featured_posts.size > 0 and is_first_page %}
-    <div class="pinned-posts">
-      {% for post in featured_posts %}
-        {% comment %}
-          阅读时长按正文字符估算：`number_of_words` 按空格分词，中文几乎没有空格，
-          会把十几分钟的长文标成几分钟，代码块多时又反向虚高。这里以 `</pre>` 为界
-          取每段代码之后的正文，去掉空白后按 700 字符/分钟折算。
-        {% endcomment %}
-        {% assign prose_chunks = post.content | split: '<pre' %}
-        {% assign prose_chars = 0 %}
-        {% for chunk in prose_chunks %}
-          {% assign tail = chunk | split: '</pre>' | last %}
-          {% assign plain = tail | strip_html | strip_newlines | replace: ' ', '' %}
-          {% assign prose_chars = prose_chars | plus: plain.size %}
-        {% endfor %}
-        {% assign read_time = prose_chars | divided_by: 700 | plus: 1 | round %}
-        <a class="pinned-post" href="{{ post.url | relative_url }}">
-          <div class="pinned-label"><i class="fa-solid fa-thumbtack fa-xs" aria-hidden="true"></i> 置顶</div>
-          <h2 class="pinned-title">{{ post.title }}</h2>
-          <p class="pinned-desc">{{ post.description }}</p>
-          <p class="post-item-meta">
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y-%m-%d' }}</time>
-            <span class="post-item-dot">·</span>
-            {{ read_time }} 分钟阅读
-          </p>
-        </a>
-      {% endfor %}
-    </div>
-{% endif %}
-
   <ul class="post-list">
     {% if page.pagination.enabled %}
-      {% assign postlist = paginator.posts | where_exp: "p", "p.featured != true and p.featured != 'true'" %}
+      {% assign postlist = paginator.posts %}
     {% else %}
-      {% assign postlist = site.posts | where_exp: "p", "p.featured != true and p.featured != 'true'" %}
+      {% assign postlist = site.posts %}
     {% endif %}
 
     {% for post in postlist %}
-      {% comment %} 阅读时长算法与置顶块保持一致，改动时两处同步。 {% endcomment %}
+      {% comment %}
+        阅读时长按正文字符估算：`number_of_words` 按空格分词，中文几乎没有空格，
+        会把十几分钟的长文标成几分钟，代码块多时又反向虚高。这里以 `</pre>` 为界
+        取每段代码之后的正文，去掉空白后按 700 字符/分钟折算。
+      {% endcomment %}
       {% assign body = post.content %}
       {% if post.external_source != blank %}{% assign body = post.feed_content %}{% endif %}
       {% assign prose_chunks = body | split: '<pre' %}
@@ -137,7 +105,7 @@ pagination:
   </ul>
 
 {% if postlist.size == 0 %}
-    <p class="text-center" style="color: var(--global-text-color-light); padding: 2rem 0;">暂无其它文章。</p>
+    <p class="text-center" style="color: var(--global-text-color-light); padding: 2rem 0;">暂无文章。</p>
 {% endif %}
 
 {% if page.pagination.enabled %}
