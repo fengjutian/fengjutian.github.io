@@ -2,6 +2,7 @@
 layout: post
 title: Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模
 date: 2026-11-12 12:00:00 +0800
+thumbnail: assets/img/blog/idol-image-to-3d-gaussian.jpg
 description: Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。
 tags: [AI, 开源]
 categories: [技术随笔]

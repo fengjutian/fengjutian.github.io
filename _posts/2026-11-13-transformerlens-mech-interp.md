@@ -2,6 +2,7 @@
 layout: post
 title: TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部
 date: 2026-11-13 08:45:00 +0800
+thumbnail: assets/img/blog/transformerlens-mech-interp.jpg
 description: 从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]

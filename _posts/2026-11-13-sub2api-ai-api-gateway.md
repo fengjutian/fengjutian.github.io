@@ -2,6 +2,7 @@
 layout: post
 title: Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界
 date: 2026-11-13 08:20:00 +0800
+thumbnail: assets/img/blog/sub2api-ai-api-gateway.jpg
 description: 从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]

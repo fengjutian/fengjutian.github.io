@@ -2,6 +2,7 @@
 layout: post
 title: DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为
 date: 2026-11-12 17:50:00 +0800
+thumbnail: assets/img/blog/deepseek-v4-weight-editing.jpg
 description: 从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。
 tags: [AI, 开源]
 categories: [技术随笔, 工程实践]

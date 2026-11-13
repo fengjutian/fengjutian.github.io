@@ -2,6 +2,7 @@
 layout: post
 title: FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计
 date: 2026-11-13 09:15:00 +0800
+thumbnail: assets/img/blog/freetoken-edge-moe-serving.jpg
 description: 从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。
 tags: [AI, 开源, 工程实践]
 categories: [技术随笔, 工程实践]

@@ -2,6 +2,7 @@
 layout: post
 title: Train LLM From Scratch：从零开始训练自己的大语言模型
 date: 2026-11-12 18:00:00 +0800
+thumbnail: assets/img/blog/train-llm-from-scratch.jpg
 description: 使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。
 tags: [AI, 开源, 开发者工具]
 categories: [技术随笔, 工程实践]
