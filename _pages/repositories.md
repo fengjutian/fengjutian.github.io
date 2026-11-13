@@ -4,7 +4,7 @@ permalink: /repositories/
 title: 全部仓库
 description: GitHub 上的全部公开仓库，按语言分组、按最近推送排序。
 nav: true
-nav_order: 4
+nav_order: 5
 _styles: |
   /* 该页专属样式：仓库卡片、方向分组、概览条。
      主题 v1 未提供 Bootstrap 兼容层（compat.bootstrap.enabled=false），

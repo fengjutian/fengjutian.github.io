@@ -4,7 +4,7 @@ permalink: /sites/
 title: 网站
 description: 平时收集的网站与工具，卡片一览，持续添加。
 nav: true
-nav_order: 5
+nav_order: 3
 _styles: |
   /* 该页专属样式：网站卡片网格 + 标签筛选。
      只用主题自身的 CSS 变量，浅色/暗色模式自动跟随；
