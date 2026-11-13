@@ -313,6 +313,12 @@ defaults:
           height: auto;
         }
 
+        /* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+           这里只把它从目录里隐藏，正文里的区块保持原样。 */
+        .toc-sidebar a[href='#enjoy-reading-this-article'] {
+          display: none;
+        }
+
 sass:
   style: compressed
 
