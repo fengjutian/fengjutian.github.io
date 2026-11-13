@@ -1,4 +1,4 @@
-﻿---
+---
 layout: post
 title: TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部
 date: 2026-11-13 08:45:00 +0800
@@ -114,7 +114,7 @@ logits, cache = bridge.run_with_cache(
 )
 ```
 
-`pos_slice` 对长 prompt 尤其重要——注意力模式是 `[head, seq, seq]`，序列长度翻倍，这个张量就是四倍。
+`pos_slice` 对长 prompt 尤其重要——注意力模式是 `[batch, head, seq, seq]`，序列长度翻倍，这个张量就是四倍。
 
 **第二种：`run_with_hooks`，只在这一个前向里动手。**
 
@@ -394,20 +394,19 @@ print(pattern.shape)   # [batch, n_heads, q_pos, k_pos]
 做一次零消融，看第 5 层第 3 个 head 是不是真的在干活：
 
 ```python
-import torch
+clean_logits, _ = bridge.run_with_cache("The capital of France is")
 
 def zero_head(z, hook):
     z[:, :, 3, :] = 0
     return z
 
-clean = bridge("The capital of France is")
-ablated = bridge.run_with_hooks(
+ablated_logits = bridge.run_with_hooks(
     "The capital of France is",
     fwd_hooks=[("blocks.5.attn.hook_z", zero_head)],
 )
 
 paris = bridge.to_single_token(" Paris")
-print(clean[0, -1, paris].item(), "->", ablated[0, -1, paris].item())
+print(clean_logits[0, -1, paris].item(), "->", ablated_logits[0, -1, paris].item())
 ```
 
 几个实践中的注意点：
