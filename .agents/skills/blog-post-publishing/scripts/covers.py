@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Per-post cover cards for fengjutian.github.io.
 
 One shared typographic frame (meta / title / thesis / domain), but each card
@@ -417,6 +417,42 @@ def motif_audio(d, box, accent, tag):
     d.text((x, y + h + 8), tag, font=font(16), fill=FAINT)
 
 
+def motif_matrix(d, box, accent, tag):
+    """A tensor grid with one row lit, read into three verdicts."""
+    x, y, w, h = box
+    cols, rows, gap = 9, 9, 5
+    cell = min((w * 0.52 - gap * (cols - 1)) / cols, (h - gap * (rows - 1)) / rows)
+    gx, gy = x, y + (h - (cell * rows + gap * (rows - 1))) / 2
+    lit_row, lit_cell = 4, (2, 7)
+    for r in range(rows):
+        for c in range(cols):
+            cx = gx + c * (cell + gap)
+            cy = gy + r * (cell + gap)
+            on = r == lit_row or (r, c) == lit_cell
+            d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=3,
+                                fill=accent if on else tint(accent, 0.14),
+                                outline=None if on else mix(BG_TOP, accent, 0.22))
+
+    ax0 = gx + cols * (cell + gap) + 6
+    ay = gy + (cell * rows + gap * (rows - 1)) / 2
+    d.line((ax0, ay, ax0 + 30, ay), fill=mix(BG_TOP, accent, 0.7), width=3)
+    d.polygon([(ax0 + 38, ay), (ax0 + 22, ay - 8), (ax0 + 22, ay + 8)], fill=mix(BG_TOP, accent, 0.7))
+
+    cx0 = ax0 + 56
+    chw = x + w - cx0
+    ch = 72
+    cy = ay - (3 * ch + 2 * 16) / 2 + ch / 2
+    for name, hot in [("up", True), ("down", False), ("same", False)]:
+        top = cy - ch / 2
+        d.rounded_rectangle((cx0, top, cx0 + chw, top + ch), radius=12,
+                            fill=tint(accent, 0.22) if hot else (16, 22, 34),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.3), width=2)
+        d.text((cx0 + 20, cy), name, font=font(23, hot), fill=WHITE if hot else DIM, anchor="lm")
+        cy += ch + 16
+
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
 def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
     x, y, w, h = box
     d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=(11, 16, 26),
@@ -530,6 +566,13 @@ def build(slug, out_dir):
         motif_audio(d, (620, 112, 512, 372), accent, "两路音频 · 一个权限口 · 一份纪要")
         d.text((M, 434), "0.5 RTF · 15 tok/s · 0o600", font=font(21), fill=mix(DIM, accent, 0.7))
 
+    elif slug == "wsr":
+        head(d, accent, "Poindexter Labs / alphaXiv / Apache-2.0",
+             "WSR", "权重确实多给了 15 个点，也让它更敢说「变了」",
+             (M, 138), 124, (M, 330), 450)
+        motif_matrix(d, (600, 104, 540, 396), accent, "只读张量 · 0 次前向 · 猜 up / down / same")
+        d.text((M, 470), "0.730 vs 0.578 · 53–88% 误报", font=font(21), fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -557,6 +600,8 @@ CARDS = {
                          glow=(900, 300), glow_r=430, strength=0.26),
     "yogurt": dict(file="yogurt-local-meeting-notes.jpg", color=(212, 170, 92),
                    glow=(886, 300), glow_r=440, strength=0.26),
+    "wsr": dict(file="wsr-weight-space-reading.jpg", color=(216, 138, 168),
+                glow=(880, 300), glow_r=440, strength=0.26),
 }
 
 if __name__ == "__main__":
@@ -564,4 +609,5 @@ if __name__ == "__main__":
     os.makedirs(out, exist_ok=True)
     for s in CARDS:
         print("wrote", build(s, out))
+
 
