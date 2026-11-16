@@ -453,6 +453,43 @@ def motif_matrix(d, box, accent, tag):
     d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
 
 
+def motif_boundary(d, box, accent, tag):
+    """A pipe from the user side to root, with three gates on it."""
+    x, y, w, h = box
+    cy = y + h * 0.52
+    # left: the unprivileged side, with a wifi ripple above it
+    lx, lw, lh = x + 20, 140, 108
+    d.rounded_rectangle((lx, cy - lh / 2, lx + lw, cy + lh / 2), radius=12,
+                        fill=tint(accent, 0.16), outline=mix(BG_TOP, accent, 0.55), width=2)
+    d.text((lx + lw / 2, cy - 8), "GUI", font=font(26, True), fill=WHITE, anchor="mm")
+    d.text((lx + lw / 2, cy + 24), "uid 1000", font=font(16), fill=DIM, anchor="mm")
+    for i in range(3):
+        r = 16 + i * 13
+        d.arc((lx + lw / 2 - r - 30, cy - lh / 2 - r - 18, lx + lw / 2 + r - 30, cy - lh / 2 + r - 18),
+              200, 340, fill=mix(BG_TOP, accent, 0.55), width=3)
+
+    # right: root
+    rx, rw, rh = lx + lw + 250, 140, 108
+    d.rounded_rectangle((rx, cy - rh / 2, rx + rw, cy + rh / 2), radius=12,
+                        fill=accent, outline=accent, width=2)
+    d.text((rx + rw / 2, cy - 8), "agent", font=font(25, True), fill=(18, 22, 30), anchor="mm")
+    d.text((rx + rw / 2, cy + 24), "root", font=font(16), fill=mix((18, 22, 30), accent, 0.55), anchor="mm")
+
+    # the pipe and its gates
+    x0, x1 = lx + lw + 8, rx - 8
+    d.line((x0, cy, x1, cy), fill=mix(BG_TOP, accent, 0.55), width=5)
+    for i in range(3):
+        gx = x0 + (x1 - x0) * (0.24 + i * 0.26)
+        d.line((gx, cy - 15, gx, cy + 15), fill=WHITE, width=4)
+        r = 13
+        d.ellipse((gx - r, cy - 34 - r, gx + r, cy - 34 + r), fill=accent)
+        d.text((gx, cy - 34), str(i + 1), font=font(16, True), fill=(16, 20, 28), anchor="mm")
+
+    d.text((x + 20, cy + 90), "① 0600   ② peer uid   ③ 只 accept 一次",
+           font=font(15), fill=mix(BODY, accent, 0.35))
+    d.text((x + 20, y + h - 6), tag, font=font(16), fill=FAINT)
+
+
 def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
     x, y, w, h = box
     d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=(11, 16, 26),
@@ -573,6 +610,13 @@ def build(slug, out_dir):
         motif_matrix(d, (600, 104, 540, 396), accent, "只读张量 · 0 次前向 · 猜 up / down / same")
         d.text((M, 470), "0.730 vs 0.578 · 53–88% 误报", font=font(21), fill=mix(DIM, accent, 0.7))
 
+    elif slug == "airgorah":
+        head(d, accent, "Rust / GTK4 / Polkit / Linux",
+             "Airgorah", "把 root 赶出 GUI 之后，每个参数都得重新验一遍",
+             (M, 138), 108, (M, 316), 470)
+        motif_boundary(d, (600, 122, 540, 340), accent, "16 个请求 · 1 个客户端 · 0600")
+        d.text((M, 452), "id 1000 → socket → root", font=font(21), fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -602,6 +646,8 @@ CARDS = {
                    glow=(886, 300), glow_r=440, strength=0.26),
     "wsr": dict(file="wsr-weight-space-reading.jpg", color=(216, 138, 168),
                 glow=(880, 300), glow_r=440, strength=0.26),
+    "airgorah": dict(file="airgorah-privilege-boundary.jpg", color=(64, 152, 172),
+                     glow=(880, 300), glow_r=440, strength=0.26),
 }
 
 if __name__ == "__main__":
@@ -609,5 +655,7 @@ if __name__ == "__main__":
     os.makedirs(out, exist_ok=True)
     for s in CARDS:
         print("wrote", build(s, out))
+
+
 
 
