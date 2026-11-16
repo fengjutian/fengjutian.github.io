@@ -1,0 +1,593 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> WSR：权重确实多给了 15 个点，也让它更敢说「变了」 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | WSR：权重确实多给了 15 个点，也让它更敢说「变了」"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/wsr-weight-space-reading/"> <meta property="og:description" content="从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/wsr-weight-space-reading.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="WSR：权重确实多给了 15 个点，也让它更敢说「变了」"> <meta name="twitter:description" content="从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/wsr-weight-space-reading.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/wsr-weight-space-reading/",
+        "@type": "BlogPosting",
+        "description": "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        "headline": "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/wsr-weight-space-reading/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</h1> <p class="post-meta"> Created on November 16, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0"> <i class="fa-solid fa-hashtag fa-sm"></i> 机器学习</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>「大模型能不能读懂另一个网络的权重」这个问题，很容易写成一串漂亮的演示：给它一个张量，它就开始解释哪一层在管什么。</p> <p>WSR 的作者选了更难的一条路：<strong>不给它跑模型的机会，然后看它还能猜对多少。</strong></p> <ul> <li>GitHub：<a href="https://github.com/suayptalha/wsr" rel="external nofollow noopener" target="_blank">suayptalha/wsr</a>（Apache-2.0，2026-11-11 建仓）</li> <li>论文：<a href="https://www.alphaxiv.org/abs/2611.weight-space-reading-language-models" rel="external nofollow noopener" target="_blank">Weight-Space Reading</a>（alphaXiv 独家，arXiv 仍在审核）</li> <li>口径：README、论文摘要与 alphaXiv 页面；仓库里的代码是论文的评测 harness，但<strong>不含论文的实验结果</strong> </li> </ul> <p>本文只讲一件事：<strong>它测出来的不是「能不能」，而是「多给了多少，以及这份信息有多不可靠」。</strong></p> <h2 id="一三个数字">一、三个数字</h2> <table> <thead> <tr> <th>数字</th> <th>含义</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">0.730</code></td> <td>27B 读自己权重时的 balanced accuracy</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">0.578</code></td> <td>同一批编辑，只给它文字描述时的分数</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">53–88%</code></td> <td>Muse-30B 上 40 个编辑实测零变化，读者仍预测「变了」的比例</td> </tr> </tbody> </table> <p>第一行是这项能力的上限，第二行是它的对照组，第三行是它的失效方式。<strong>三个数字放在一起，才构成一个诚实的结果。</strong></p> <h2 id="二读写program">二、读、写、program</h2> <p>WSR 不是单个程序，而是三条命令，对应三种不同的主张：</p> <table> <thead> <tr> <th>命令</th> <th>给什么</th> <th>要什么</th> <th>允许跑目标模型吗</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">wsr read</code></td> <td>权重 + 一个已有编辑</td> <td>预测行为往哪个方向变</td> <td>不行，一次都不行</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">wsr write</code></td> <td>权重 + 一个目标</td> <td>自己写出一个编辑</td> <td>有限次，按 <code class="language-plaintext highlighter-rouge">passes</code> 计</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">wsr program</code></td> <td>基础模型 + 数据集 + agent</td> <td>多轮尝试后交付一个 checkpoint</td> <td>同上，练习样本上计次</td> </tr> </tbody> </table> <p>这张表里最容易被忽略的是第四列。<strong>读是盲读，写是有预算的试错。</strong>很多介绍会把两者混成一句「AI 自己改权重」，但它们在方法上是两种实验：一个在测「权重里有没有可用信息」，另一个在测「给定反馈能不能搜出有效编辑」。</p> <p><code class="language-plaintext highlighter-rouge">wsr read</code> 的盲是物理意义上的：reader 跑在容器里，没有 GPU，目标模型加载不进来，权重目录只读，内置 harness 下连网络都没有。它能用的只有 <code class="language-plaintext highlighter-rouge">W.names(regex)</code>、<code class="language-plaintext highlighter-rouge">W.get(name)</code>、<code class="language-plaintext highlighter-rouge">W.info(name)</code> 三个只读工具和一段 Python。</p> <h2 id="三管线真值在-gpu-上预测在没有-gpu-的盒子里">三、管线：真值在 GPU 上，预测在没有 GPU 的盒子里</h2> <p><img src="/assets/img/blog/wsr-weight-space-reading/fig-01-pipeline.png" alt="阅读实验的管线"></p> <p><em>七个步骤里只有 measure 需要 GPU；read 那一步的产物是预测，它要和真值标签对齐后才能算分。</em></p> <p>管线本身是标准的对照实验设计，值得学的是它把每个环节的判据都写死了（整篇论文分三个预注册轮次，主结果来自「细微编辑」那一轮）：</p> <ul> <li> <strong>pool</strong>：七个编辑家族（块缩放/消融、词表行缩放、方向移除、范数匹配噪声、norm gain、no-op 对照、以及它们的剂量版本）。行缩放这类操作可以直接打在 <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code>、选项字母、结束符这些 token 行上。</li> <li> <strong>measure</strong>：原模型跑 5 个种子，每个编辑后的模型也跑，编辑是「就地打补丁」到已加载的模型上，所以模型只加载一次。</li> <li> <strong>label</strong>：一个行为算「变了」，必须同时满足 Welch 检验 <code class="language-plaintext highlighter-rouge">p &lt; 0.01</code> <strong>和</strong>最小效应——思考长度要变 10% 以上，比率类要变 0.05 以上。生成被打断的编辑会被单独标成 destructive。</li> <li> <strong>select</strong>：改了的和没改的均衡取样，轮流覆盖编辑家族，并且一定带 no-op 对照。<strong>没有这一步，准确率就是「猜变了」的准确率。</strong> </li> <li> <strong>read</strong>：每个 reader × target × condition × batch 开一个新沙箱，会话有硬截止——剩 15 分钟时提醒它交答案，到点就停。</li> <li> <strong>score</strong>：balanced accuracy + 配对 bootstrap 区间。</li> </ul> <h2 id="四主结果152-个点代价是更爱说变了">四、主结果：+15.2 个点，代价是更爱说「变了」</h2> <p><img src="/assets/img/blog/wsr-weight-space-reading/fig-02-balanced-accuracy.png" alt="权重 vs 文字"></p> <p><em>四组 reader → target 配对；空心是只有文字描述，实心是权重加工具。虚线是「永远答 same」的 0.5。</em></p> <p>四组配对里三组涨、一组跌：</p> <ul> <li>27B 读自己：0.578 → <strong>0.730</strong>（+0.152，95% CI [+0.056, +0.256]）</li> <li>9B 读 27B：0.451 → 0.541</li> <li>9B 读自己：0.492 → 0.554</li> <li>27B 读 9B：0.648 → <strong>0.628</strong>（唯一一组变差）</li> </ul> <p>涨的那三组说明权重确实提供了文字描述之外的信息。但拆开看，涨的来源并不体面：27B 读自己时，<strong>变化召回从 0.278 升到 0.667，特异度从 0.878 掉到 0.793</strong>。</p> <p>也就是说，它并没有变得「更懂」，而是变得<strong>更敢</strong>。原来它倾向于说「没变」，现在它把三分之二的真实变化抓了出来，代价是对着没变的东西也说了更多「变了」。</p> <p>这里还有一个必须写进结论的分母：主结果建立在 <strong>10 个非破坏性且确实改变行为的编辑、共 18 个变化标签</strong>上。作者自己把这句话放在正文里——这是一个可测量的效应，不是可靠的通用的预测能力。</p> <h2 id="五三个限定每个都在打自己的脸">五、三个限定，每个都在打自己的脸</h2> <h3 id="1-自读优势没有证据">1. 自读优势：没有证据</h3> <p>直觉上，模型读自己的权重应该更强。交叉实验（27B 和 9B 互相读）显示，<strong>自读对照的区间在每一轮都包含 0</strong>。更难看的是：27B 读 Muse-30B 的权重（0.615）显著好于 Muse-30B 读自己（0.468，CI [+0.027, +0.258]）。</p> <p><strong>决定分数的是 reader 的能力，不是「这是谁的权重」。</strong></p> <h3 id="2-destructive-编辑测的是看出坏了">2. destructive 编辑：测的是「看出坏了」</h3> <p>在全剂量那一轮，多数编辑是破坏性的——模型陷入 8192 token 的重复，或者数学能力大幅下降。在这类编辑上，Muse-30B 读 27B 得 0.594，27B 读自己得 0.593，几乎一样。</p> <p>这说明一件事：<strong>如果在破坏性编辑上建 benchmark，量到的是「损伤检测」，而不是「权重阅读」。</strong>看出模型坏了很容易，预测一次细微编辑的方向很难。</p> <h3 id="3-muse-30b预测了不存在的变化">3. Muse-30B：预测了不存在的变化</h3> <p><img src="/assets/img/blog/wsr-weight-space-reading/fig-03-muse-false-positives.png" alt="Muse 上的集体误报"></p> <p><em>Muse-30B 的 34 个标准编辑加 6 个 no-op 对照，实测行为变化 0 个；读它的模型仍然大面积报告「变了」。</em></p> <p>这是整篇论文最贵的一格。Muse-30B 的子层后 RMSNorm 会抵消某些投影输出的均匀正缩放——但这只解释了一部分，作者明确说它不能解释为什么其它标准编辑也全部无效。</p> <p>而三个读者给出的「变了」比例是 85%、88%、53%。<strong>它们不是在读权重，是在读「一个编辑看起来应该会发生什么」。</strong></p> <h2 id="六编辑打在哪结构比张量名重要">六、编辑打在哪：结构比张量名重要</h2> <p><code class="language-plaintext highlighter-rouge">wsr</code> 的解剖（anatomy）不是靠正则匹配张量名，而是从张量本身推断落点：哪些矩阵把每个 block 写进残差流、unembedding 在哪、norm gain 在哪（包括 <code class="language-plaintext highlighter-rouge">1 + w</code> 这种形式）。</p> <table> <thead> <tr> <th>结构</th> <th>处理方式</th> </tr> </thead> <tbody> <tr> <td>MoE（每专家一个矩阵或融合成 3-D）</td> <td>MLP 是所有专家 + 共享专家；router 单独成一个编辑家族（R）</td> </tr> <tr> <td>混合注意力（Gated DeltaNet + full）</td> <td>每层自己的 mixer 输出</td> </tr> <tr> <td>每个子层后都有 norm（Gemma 3、OLMo、Muse）</td> <td>缩放它前面的矩阵没用，改成编辑 norm gain（这就是 Muse 那条发现）</td> </tr> <tr> <td>多模态包装（<code class="language-plaintext highlighter-rouge">model.language_model.*</code>）</td> <td>只认语言模型那一段栈</td> </tr> <tr> <td>栈后的 MTP 块</td> <td>忽略并冻结</td> </tr> <tr> <td>量化 checkpoint（MXFP4、FP8、GPTQ）</td> <td>直接拒绝，提示换 bf16 版本</td> </tr> </tbody> </table> <p><strong>「改前面的矩阵没用，得改 norm gain」这一条，是这类工具真正的门槛。</strong>一个只会按名字找 <code class="language-plaintext highlighter-rouge">down_proj</code> 再乘个系数的脚本，在 post-norm 架构上会得到一堆「编辑成功、行为不变」的结果——而 WSR 选择把这类编辑提前挪到能生效的位置。</p> <h2 id="七写和-program有预算的试错">七、写和 program：有预算的试错</h2> <p><code class="language-plaintext highlighter-rouge">wsr write</code> 里 agent 有两个工具：<code class="language-plaintext highlighter-rouge">check_edit</code> 免费验证（名字、形状、有限值、被冻结的张量、每个张量移动了多少），<code class="language-plaintext highlighter-rouge">run_model</code> 花掉一次前向预算。</p> <p>配置里那句 <code class="language-plaintext highlighter-rouge">passes: 10</code> 是关键：<strong>10 次前向，只能用在练习样本上，而且练习样本和留出样本不重叠。</strong><code class="language-plaintext highlighter-rouge">passes: 0</code> 就是完全盲改。这个设计让「编程」可以被放在一条连续的难度线上比较——盲改、少量试错、多轮迭代。</p> <p><code class="language-plaintext highlighter-rouge">wsr program</code> 把它包成类似微调的接口：给基础模型、数据集定义的目标、guard suite，然后多轮多尝试。一次尝试要被接受，必须同时满足三条：</p> <ol> <li>留出集上的目标分数提升，且配对 bootstrap 区间不含 0；</li> <li>没有任何 guard 行为发生变化（对当前模型做 Welch 检验）；</li> <li>编辑不破坏生成。</li> </ol> <p>产出的 <code class="language-plaintext highlighter-rouge">model/</code> 是一个正常 checkpoint，未改动的 shard 用硬链接，所以不额外占盘。<strong>这一点比很多「AI 改模型」的演示更实用：交付物能被 Transformers 和 vLLM 直接加载，也能用 <code class="language-plaintext highlighter-rouge">wsr export</code> 把编辑重新打到原模型上。</strong></p> <h2 id="八代价与局限">八、代价与局限</h2> <ol> <li> <strong>论文结果不在仓库里。</strong>README 明确写了这一点，仓库交付的是 harness 与四组预置；复现要自己准备模型和数据。</li> <li> <strong>自编辑实验的 8 个编辑没有公开。</strong>所以按原样跑 Full-Dose 那一轮，会少一个编辑家族。</li> <li> <strong>证据基数小。</strong>主结果是 10 个编辑、18 个变化标签；这不是「LLM 能预测权重编辑」的通用结论。</li> <li> <strong>只能读、不能证明读懂了。</strong>Muse 那一组里 85% 的预测「变了」全部落空，说明即使给了权重，模型也会用先验去补它读不出来的部分。</li> <li> <strong>只支持 decoder-only + safetensors</strong>，量化权重直接拒绝。</li> <li> <strong>建仓只有几天</strong>（2026-11-11），33 star，<code class="language-plaintext highlighter-rouge">0.1</code> 的 <code class="language-plaintext highlighter-rouge">config.json</code> 还在兼容期——接口会变。</li> </ol> <h2 id="九我的判断">九、我的判断</h2> <p>WSR 最值得学的地方，是它把一个容易被演示骗过去的问题，变成了三个必须先回答的对照问题：</p> <ul> <li> <strong>权重比文字多给了什么？</strong> 答：在细微编辑上 +15.2 个点。</li> <li> <strong>这份优势是「自读」带来的吗？</strong> 答：不是，交叉实验每轮都包含 0。</li> <li> <strong>它会不会凭空报变化？</strong> 答：会，53–88%。</li> </ul> <p>第三个问题是我读这篇时最受触动的地方，因为它和我一直在看的那条线是同一个教训：<strong>可解释性工具最大的风险不是解释得不够，而是解释得太顺。</strong>NNsight / pyvene 那套干预之所以可信，是因为每次干预都有对应的行为测量作为对照；WSR 把同样的纪律搬到了「读权重」这件事上——先做对照组，再谈能力。</p> <p>如果要继续往下做，我会加两件事：</p> <ol> <li> <strong>把「没变」这一侧的样本做厚。</strong>现在的 balanced accuracy 已经让「永远答 same」得 0.5，但 Muse 那组说明模型在「看起来该变」的编辑上有系统性偏差。按编辑类型分层报告特异度，比一个总分更有信息。</li> <li> <strong>把 <code class="language-plaintext highlighter-rouge">passes</code> 变成一条曲线而不是一个常数。</strong>0、1、10、100 次前向的分数曲线，才能回答「多少反馈能让盲读变成搜索」——这比单点成绩更能说明这套方法的边界。</li> </ol> <h2 id="项目与资料">项目与资料</h2> <ul> <li>仓库：<a href="https://github.com/suayptalha/wsr" rel="external nofollow noopener" target="_blank">github.com/suayptalha/wsr</a>（Apache-2.0）</li> <li>论文：<a href="https://www.alphaxiv.org/abs/2611.weight-space-reading-language-models" rel="external nofollow noopener" target="_blank">alphaXiv / Weight-Space Reading</a>（2026-11-13 提交，arXiv 待审核）</li> <li>安装与快速开始：<a href="https://github.com/suayptalha/wsr#quickstart" rel="external nofollow noopener" target="_blank">README</a>（Python 3.10+，<code class="language-plaintext highlighter-rouge">pip install -e ".[hf,report]"</code>，约 25 个编辑的 0.5B quickstart）</li> <li>编辑与 suite 文档：<a href="https://github.com/suayptalha/wsr/blob/main/docs/suites.md" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/suites.md</code></a>、<a href="https://github.com/suayptalha/wsr/blob/main/docs/programming.md" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/programming.md</code></a> </li> <li>结构识别：<a href="https://github.com/suayptalha/wsr/blob/main/wsr/anatomy.py" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">wsr/anatomy.py</code></a>、<a href="https://github.com/suayptalha/wsr/blob/main/wsr/families.py" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">wsr/families.py</code></a> </li> <li>沙箱：<a href="https://github.com/suayptalha/wsr/blob/main/wsr/sandbox.py" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">wsr/sandbox.py</code></a>、<a href="https://github.com/suayptalha/wsr/blob/main/sandbox/Dockerfile" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">sandbox/Dockerfile</code></a> </li> </ul> <p>数据来源与口径：0.730 / 0.578 / +0.152 [0.056, 0.256] / 召回 0.278→0.667 / 特异度 0.878→0.793 / Muse 的 40 个编辑与 53–88% / 破坏性编辑的 0.594 与 0.593 均来自论文摘要与 alphaXiv 页面正文；<code class="language-plaintext highlighter-rouge">p &lt; 0.01</code>、最小效应 10% 与 0.05、5 个种子、15 分钟提醒、七个编辑家族、<code class="language-plaintext highlighter-rouge">passes</code> 语义、接受三条件来自 README。图里的条形按这些比例绘制，标注的「条数」是把百分比换算回原始计数（34/40、35/40、16/30），论文摘要写的是比例。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cinecode-film-as-pure-function/">CineCode：每一帧都是时间的纯函数，所以电影可以被检查</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/ohmygame-agent-game-studio/">OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/gpt2-forward-pass-intervention/">GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/saelens-sparse-autoencoder-instrument/">SAELens：重建得越准，特征越不一定是真的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/tokeneconomizer-experience-driven-cost-control/">TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/transformer-explainer/">Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/boubou-local-voice-runtime/">Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hy-mt2-family-centric-post-training/">Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 16, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
