@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """Per-post cover cards for fengjutian.github.io.
 
 One shared typographic frame (meta / title / thesis / domain), but each card
@@ -377,6 +377,46 @@ def motif_sheet(d, box, accent, tag):
     d.text((x + 20, y + h - 34), tag, font=font(16), fill=mix(DIM, accent, 0.5))
 
 
+def motif_audio(d, box, accent, tag):
+    """Two tracks in, one narrow permission gate out."""
+    x, y, w, h = box
+    gate = x + w * 0.60
+    rows = [("麦克风", y + h * 0.26, [0.30, 0.62, 0.44, 0.86, 0.52, 0.74, 0.34, 0.58, 0.40, 0.28]),
+            ("系统音频", y + h * 0.62, [0.22, 0.48, 0.72, 0.38, 0.66, 0.30, 0.54, 0.80, 0.36, 0.24])]
+    bw, gap = 13, 10
+    for name, cy, hs in rows:
+        d.text((x, cy - 54), name, font=font(17), fill=DIM)
+        for i, v in enumerate(hs):
+            bx = x + i * (bw + gap)
+            bh = v * 46
+            d.rounded_rectangle((bx, cy - bh, bx + bw, cy + bh), radius=4,
+                                fill=accent if v > 0.5 else tint(accent, 0.5))
+        # converge into the gate
+        pts = []
+        for t in range(0, 31):
+            t = t / 30
+            px = (1 - t) ** 2 * (x + len(hs) * (bw + gap)) + 2 * (1 - t) * t * (gate - 60) + t * t * (gate - 10)
+            py = (1 - t) ** 2 * cy + 2 * (1 - t) * t * cy + t * t * (y + h * 0.44)
+            pts.append((px, py))
+        d.line(pts, fill=mix(DIM, accent, 0.55), width=3, joint="curve")
+
+    top, bot = y + h * 0.10, y + h * 0.78
+    d.rounded_rectangle((gate - 9, top, gate + 9, bot), radius=9, fill=accent)
+    d.text((gate, top - 26), "0o600", font=font(19), fill=mix(DIM, accent, 0.75), anchor="ma")
+
+    # one line out, small and read-only
+    oy = y + h * 0.44
+    d.line((gate + 12, oy, x + w - 96, oy), fill=mix(BG_TOP, accent, 0.65), width=4)
+    for i in range(2):
+        bx = gate + 40 + i * 56
+        d.rounded_rectangle((bx, oy - 12, bx + 34, oy + 12), radius=5, fill=tint(accent, 0.35),
+                            outline=mix(BG_TOP, accent, 0.5))
+    d.rounded_rectangle((x + w - 92, oy - 24, x + w, oy + 24), radius=12, fill=tint(accent, 0.3),
+                        outline=accent, width=2)
+    d.text((x + w - 46, oy), "只读", font=font(19), fill=WHITE, anchor="mm")
+    d.text((x, y + h + 8), tag, font=font(16), fill=FAINT)
+
+
 def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
     x, y, w, h = box
     d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=(11, 16, 26),
@@ -483,6 +523,13 @@ def build(slug, out_dir):
              (M, 128), 88, (M, 364), 500)
         motif_sheet(d, (686, 104, 442, 408), accent, "每轮换一个人来读")
 
+    elif slug == "yogurt":
+        head(d, accent, "Frigade / MIT / Electron 44 / whisper.cpp",
+             "Yogurt", "本地优先不是一句承诺，是一组能被算出来的预算",
+             (M, 138), 112, (M, 316), 470)
+        motif_audio(d, (620, 112, 512, 372), accent, "两路音频 · 一个权限口 · 一份纪要")
+        d.text((M, 434), "0.5 RTF · 15 tok/s · 0o600", font=font(21), fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -508,6 +555,8 @@ CARDS = {
                     glow=(860, 300), glow_r=420, strength=0.26),
     "blender-kiln": dict(file="blender-kiln-3d-asset-pipeline.jpg", color=(204, 74, 72),
                          glow=(900, 300), glow_r=430, strength=0.26),
+    "yogurt": dict(file="yogurt-local-meeting-notes.jpg", color=(212, 170, 92),
+                   glow=(886, 300), glow_r=440, strength=0.26),
 }
 
 if __name__ == "__main__":
@@ -515,3 +564,4 @@ if __name__ == "__main__":
     os.makedirs(out, exist_ok=True)
     for s in CARDS:
         print("wrote", build(s, out))
+
