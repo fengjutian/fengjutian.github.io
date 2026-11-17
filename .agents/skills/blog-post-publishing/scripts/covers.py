@@ -653,6 +653,48 @@ def motif_wall(d, box, accent, tag):
     d.text((x, bar_y + 40), tag, font=font(16), fill=FAINT)
 
 
+def motif_nibbles(d, box, accent, tag):
+    """Two 6x4 bit grids: the default (one amber bit in every row) against the
+    unlocked one (the override bit set). The lock was a value, not a missing unit."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.06),
+                        outline=mix(BG_TOP, accent, 0.30), width=2)
+
+    rows, cw, ch, gx, gy = 6, 34, 34, 6, 12
+    gw = 4 * cw + 3 * gx
+    gh = rows * ch + (rows - 1) * gy
+    gap = 44
+    total = gw * 2 + gap
+    lx = x + (w - total) // 2
+    rx = lx + gw + gap
+    top = y + 78
+    amber = (188, 138, 62)
+
+    d.text((lx, y + 26), "默认 0x00000001", font=font(17), fill=mix(DIM, amber, 0.75))
+    d.text((rx, y + 26), "解锁 0x88888888", font=font(17), fill=mix(DIM, accent, 0.85))
+
+    for r in range(rows):
+        ry = top + r * (ch + gy)
+        for c in range(4):
+            cx = lx + c * (cw + gx)
+            on = c == 3
+            d.rounded_rectangle((cx, ry, cx + cw, ry + ch), radius=5,
+                                fill=(70, 54, 32) if on else (22, 29, 42),
+                                outline=mix(BG_TOP, amber if on else accent, 0.55 if on else 0.16),
+                                width=2 if on else 1)
+            cx2 = rx + c * (cw + gx)
+            on2 = c == 0
+            d.rounded_rectangle((cx2, ry, cx2 + cw, ry + ch), radius=5,
+                                fill=mix(BG_TOP, accent, 0.62) if on2 else (22, 29, 42),
+                                outline=mix(BG_TOP, accent, 0.9) if on2 else mix(BG_TOP, accent, 0.16),
+                                width=2 if on2 else 1)
+
+    mid_y = top + gh // 2
+    arrow(d, (lx + gw + 8, mid_y), (rx - 8, mid_y), mix(DIM, accent, 0.7), 3, 12)
+
+    d.multiline_text((x + 26, y + h - 70), tag, font=font(16), fill=FAINT, spacing=6)
+
+
 # ------------------------------------------------------------------ cards
 def motif_grades(d, box, accent, tag):
     """A support matrix where a third of the cells are holes, not fills."""
@@ -865,6 +907,31 @@ def band_shares(d, x0, x1, y, accent):
         cx += bw + gap
 
 
+def motif_registry(d, box, accent, tag=None):
+    """73 records, every one of them still unchecked."""
+    x, y, w, h = box
+    cols, rows, total = 11, 7, 73
+    gap = 8
+    cell = min((w - gap * (cols - 1)) / cols, (h - 76 - gap * (rows - 1)) / rows)
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + 34
+    d.text((x, y), "backend/config/model_licenses.json", font=font(18), fill=mix(DIM, accent, 0.45))
+    n = 0
+    for r in range(rows):
+        for c in range(cols):
+            if n >= total:
+                break
+            cx = x0 + c * (cell + gap)
+            cy = y0 + r * (cell + gap)
+            d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=3,
+                                outline=mix(BG_TOP, accent, 0.30), width=2)
+            n += 1
+    ty = y0 + gh + 26
+    d.text((x0, ty - 4), "0", font=font(38, True), fill=accent)
+    d.text((x0 + 30, ty + 6), "条标了 commercial_use: true", font=font(19), fill=BODY)
+    d.text((x0 + 30, ty + 34), "默认引擎那一条写的是 CC-BY-NC", font=font(18), fill=mix(DIM, accent, 0.55))
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1029,6 +1096,14 @@ def build(slug, out_dir):
         d.text((M, 462), "195,108 次下载 · 92 MB APK", font=font(21),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "voicestudio":
+        head(d, accent, "AGPL-3.0 / Electron + FastAPI / 0.5.8",
+             "VoiceStudio", "把语音搬回本地，账单换成了许可证",
+             (M, 146), 80, (M, 316), 470)
+        motif_registry(d, (636, 158, 516, 340), accent,
+                       "73 条模型记录 · 0 条可商用")
+        d.text((M, 424), "646 种语言 · 581,489 小时 · 20 个引擎", font=font(21), fill=DIM)
+        d.text((M, 462), "0.5.8 / 2026-11-17", font=font(20), fill=mix(DIM, accent, 0.6))
     elif slug == "everything":
         head(d, accent, "HeyPuter / 50 apps / 0 frameworks",
              "Everything", "50 款软件压成 50 个目录，账号是唯一的公共设施",
@@ -1037,6 +1112,15 @@ def build(slug, out_dir):
         d.text((M, 424), "1,327 MB · 37,424 个文件", font=font(21), fill=DIM)
         d.text((M, 462), "Excel 到 AutoCAD：每个应用自己写内核", font=font(21),
                fill=mix(DIM, accent, 0.65))
+
+    elif slug == "gpu-unlock":
+        head(d, accent, "Linux module / GPL-2.0 / RTX 20 · 30 · 40",
+             "gpu-unlock", "算力不是被驱动锁住的，是八个 4 位字段写死的",
+             (M, 168), 88, (M, 302), 500, thesis_size=28)
+        motif_nibbles(d, (636, 104, 500, 426), accent,
+                      "写它们需要 SEC2 的 heavy-secure 上下文，\n只存在于引导的那一瞬间")
+        d.text((M, 410), "SS0 0x00000001 → 0x88888888", font=font(21), fill=mix(DIM, accent, 0.85))
+        d.text((M, 446), "输出逐位相同，只有速度变了", font=font(21), fill=DIM)
 
     domain(d)
     path = os.path.join(out_dir, A["file"])
@@ -1085,8 +1169,11 @@ CARDS = {
                    glow=(880, 300), glow_r=440, strength=0.28),
     "droiddeck": dict(file="droiddeck-android-handheld-host.jpg", color=(238, 132, 58),
                       glow=(770, 300), glow_r=450, strength=0.28),
-    "everything": dict(file="everything-monorepo-fifty-apps.jpg", color=(206, 86, 178),
+    "voicestudio": dict(file="voicestudio-local-voice-workstation.jpg", color=(168, 78, 116),
+                        glow=(860, 300), glow_r=430, strength=0.28),    "everything": dict(file="everything-monorepo-fifty-apps.jpg", color=(206, 86, 178),
                        glow=(860, 260), glow_r=440, strength=0.30),
+    "gpu-unlock": dict(file="gpu-unlock-geforce-tensor-half-rate.jpg", color=(108, 178, 84),
+                       glow=(880, 280), glow_r=450, strength=0.28),
 }
 
 if __name__ == "__main__":
