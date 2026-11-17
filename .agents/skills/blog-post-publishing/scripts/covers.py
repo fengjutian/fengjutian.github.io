@@ -46,6 +46,16 @@ def tint(accent, t=0.13):
     return mix(MID, accent, t)
 
 
+def arrow(d, p1, p2, color, width=3, head=13):
+    x1, y1 = p1
+    x2, y2 = p2
+    ang = math.atan2(y2 - y1, x2 - x1)
+    d.line((x1, y1, x2, y2), fill=color, width=width)
+    d.polygon([(x2, y2),
+               (x2 - head * math.cos(ang - 0.42), y2 - head * math.sin(ang - 0.42)),
+               (x2 - head * math.cos(ang + 0.42), y2 - head * math.sin(ang + 0.42))], fill=color)
+
+
 def canvas(glow_at, accent, glow_r=430, strength=0.34):
     img = Image.new("RGB", (W, H))
     d = ImageDraw.Draw(img)
@@ -557,6 +567,46 @@ def motif_duplex(d, box, accent, tag):
     d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
 
 
+def motif_inverse(d, box, accent, tag):
+    """A state, its changed self, and the arrow that brings it back."""
+    x, y, w, h = box
+    cy = y + h * 0.52
+    bw, bh = 152, 118
+    lx, rx = x + w * 0.03, x + w * 0.97 - bw
+
+    d.rounded_rectangle((lx, cy - bh / 2, lx + bw, cy + bh / 2), radius=14,
+                        fill=(14, 19, 30), outline=mix(BG_TOP, accent, 0.5), width=2)
+    d.text((lx + bw / 2, cy - 8), "doc", font=font(26, True), fill=DIM, anchor="mm")
+    d.text((lx + bw / 2, cy + 24), "旧", font=font(17), fill=FAINT, anchor="mm")
+
+    d.rounded_rectangle((rx, cy - bh / 2, rx + bw, cy + bh / 2), radius=14,
+                        fill=tint(accent, 0.28), outline=accent, width=3)
+    d.text((rx + bw / 2, cy - 8), "doc'", font=font(26, True), fill=WHITE, anchor="mm")
+    d.text((rx + bw / 2, cy + 24), "新", font=font(17), fill=mix(DIM, accent, 0.7), anchor="mm")
+
+    x0, x1 = lx + bw + 16, rx - 16
+    mid = (x0 + x1) / 2
+    # forward
+    d.line((x0, cy - 34, mid - 14, cy - 34), fill=accent, width=4)
+    d.line((mid + 14, cy - 34, x1, cy - 34), fill=accent, width=4)
+    arrow(d, (mid - 14, cy - 34), (mid + 14, cy - 34), color=accent, width=4, head=15)
+    d.text((mid, cy - 56), "apply", font=font(16), fill=mix(DIM, accent, 0.6), anchor="mm")
+    # and back
+    d.line((x1, cy + 34, mid + 14, cy + 34), fill=mix(BG_TOP, accent, 0.45), width=4)
+    d.line((mid - 14, cy + 34, x0, cy + 34), fill=mix(BG_TOP, accent, 0.45), width=4)
+    arrow(d, (mid + 14, cy + 34), (mid - 14, cy + 34), color=mix(BG_TOP, accent, 0.45), width=4, head=15)
+    d.text((mid, cy + 58), "返回的逆", font=font(15), fill=FAINT, anchor="mm")
+
+    # the stack underneath
+    sy = cy + bh / 2 + 34
+    for i in range(3):
+        wid = 210 - i * 26
+        d.rounded_rectangle((x + w * 0.5 - wid / 2, sy + i * 13, x + w * 0.5 + wid / 2, sy + i * 13 + 8),
+                            radius=4, fill=tint(accent, 0.55 - i * 0.14))
+    d.text((x + w * 0.5, sy + 56), "undo 栈", font=font(15), fill=FAINT, anchor="ma")
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 def build(slug, out_dir):
     A = CARDS[slug]
@@ -665,6 +715,12 @@ def build(slug, out_dir):
              (M, 146), 106, (M, 322), 480)
         motif_duplex(d, (600, 112, 540, 356), accent, "13M 小时分离对话 · 7.5 Hz · 65 ms")
 
+    elif slug == "desigma":
+        head(d, accent, "Rust / MIT OR Apache-2.0 / 1,600+ tests",
+             "Desigma", "撤销不是功能，是编辑原语自己算出来的",
+             (M, 146), 106, (M, 322), 480)
+        motif_inverse(d, (600, 112, 540, 356), accent, "Command::apply → 逆命令 · 同一个 undo 栈")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -698,6 +754,8 @@ CARDS = {
                      glow=(880, 300), glow_r=440, strength=0.26),
     "haru": dict(file="haru-4b-full-duplex.jpg", color=(94, 122, 236),
                  glow=(900, 300), glow_r=440, strength=0.28),
+    "desigma": dict(file="desigma-command-inverse.jpg", color=(200, 106, 62),
+                    glow=(900, 300), glow_r=440, strength=0.28),
 }
 
 if __name__ == "__main__":
