@@ -199,6 +199,9 @@ collections:
     output: true
   projects:
     output: true
+  prompts:
+    output: true
+    permalink: /prompts/:name/
   teachings:
     output: true
 

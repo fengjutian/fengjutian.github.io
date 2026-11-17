@@ -4,7 +4,7 @@ permalink: /sites/
 title: 网站
 description: 值得反复访问的技术信源、开发工具与研究入口。
 nav: true
-nav_order: 4
+nav_order: 5
 _styles: |
   .ws {
     --ws-muted: #666b73;
