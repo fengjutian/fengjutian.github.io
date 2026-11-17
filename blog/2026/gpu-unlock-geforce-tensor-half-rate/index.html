@@ -1,0 +1,757 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/gpu-unlock-geforce-tensor-half-rate/"> <meta property="og:description" content="NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/gpu-unlock-geforce-tensor-half-rate.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里"> <meta name="twitter:description" content="NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/gpu-unlock-geforce-tensor-half-rate.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/gpu-unlock-geforce-tensor-half-rate/",
+        "@type": "BlogPosting",
+        "description": "NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。",
+        "headline": "gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/gpu-unlock-geforce-tensor-half-rate/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/knowledge/">知识地图 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/gpu"> <i class="fa-solid fa-hashtag fa-sm"></i> GPU</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>同一张 RTX 3090，同一段 BF16 稠密矩阵乘，同一个输入：解锁前 75 TFLOPS，解锁后 125 TFLOPS。</p> <p>而两遍跑出来的输出，<strong>逐位相同</strong>。</p> <p>它没有改精度，没有改计算路径，也没有超频。它改的是每周期能射出几条矩阵指令——而这个「几条」，是 NVIDIA 在出厂默认值里就写好的。</p> <p>项目叫 gpu-unlock：</p> <ul> <li>源码：<a href="https://github.com/Zagitta/gpu-unlock" rel="external nofollow noopener" target="_blank">Zagitta/gpu-unlock</a>（模块与本地打包 GPL-2.0-only，版本 2.0.0）</li> <li>平台：只支持 Linux。Windows 作者明确说不维护，第三方移植自己承担风险</li> <li>形态：一个放进 initramfs、在 <code class="language-plaintext highlighter-rouge">nvidia</code> 绑定显卡之前加载的内核模块</li> </ul> <p>大部分介绍会说「它解除了 GeForce 的 Tensor Core 限速」。这句话没错，但它把这件事讲得太容易了——好像有个开关本来是关的，拨一下就行。</p> <p>这篇想拆的是另一件事：<strong>那两个寄存器，从驱动侧写进去是无效的。</strong> 它们是普通的 MMIO 地址，问题是写权限被一条特权掩码挡在外面，而掩码只能在一个只存在于引导期间、跑在安全处理器里的上下文里才能改。</p> <p>所以 gpu-unlock 真正解决的从来不是「改哪个值」，而是「怎么抢到那几百毫秒」。它的安装说明里有一大半篇幅在讲时序，理由就在这里。</p> <h2 id="一先看三个数字">一、先看三个数字</h2> <p><strong>0。</strong> 解锁前后输出的差异位数。README 的说法是 outputs are bit-identical，只有速度变了。</p> <p><strong>8。</strong> <code class="language-plaintext highlighter-rouge">SS0</code> 这一个寄存器里被一起改掉的 4 位字段数。八个字段，一个不少。</p> <p><strong>100+。</strong> README 里 Ampere 一栏写的用户报告条数，状态是 Stable；Ada 和 Turing 都还是 Experimental。</p> <p>第三个数字说明这个项目在 RTX 30 系列上已经被踩得比较实了，但也仅限 RTX 30。</p> <h2 id="二锁不在驱动里在两个寄存器的八个-4-位字段里">二、锁不在驱动里，在两个寄存器的八个 4 位字段里</h2> <p>仓库里有一份 <code class="language-plaintext highlighter-rouge">docs/How Ampere was unlocked.md</code>，是整件事最好的入口。它给出的不是「某处有个开关」，而是地址、默认值、位域语义：</p> <table> <thead> <tr> <th>名称</th> <th>地址</th> <th>GA102 默认值</th> <th>管什么</th> </tr> </thead> <tbody> <tr> <td> <code class="language-plaintext highlighter-rouge">FEAT_OVR_SM_SPD</code>（SS0）</td> <td><code class="language-plaintext highlighter-rouge">0x0082381c</code></td> <td><code class="language-plaintext highlighter-rouge">0x00000001</code></td> <td>八个 4 位字段，覆盖 DP、FFMA、FMLA16、FMLA32、IMLA0–3</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">FEAT_OVR_SM_SPD_1</code>（SS1）</td> <td><code class="language-plaintext highlighter-rouge">0x00823820</code></td> <td><code class="language-plaintext highlighter-rouge">0x00000001</code></td> <td> <code class="language-plaintext highlighter-rouge">[3:0]</code> 一个字段，对应 IMLA4</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">FEAT_OVR_PLM</code></td> <td><code class="language-plaintext highlighter-rouge">0x00823804</code></td> <td><code class="language-plaintext highlighter-rouge">0xffffff8f</code></td> <td>前两个寄存器的读写权限</td> </tr> </tbody> </table> <p>每个 4 位字段的编码是统一的：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">bit 3</code>：override 使能位</li> <li> <code class="language-plaintext highlighter-rouge">bits 2:0</code>：速率选择子，<code class="language-plaintext highlighter-rouge">00</code> 全速、<code class="language-plaintext highlighter-rouge">01</code> 半速、<code class="language-plaintext highlighter-rouge">10</code> 四分之一、<code class="language-plaintext highlighter-rouge">11</code> 八分之一（后两档文档标注为未确认）</li> </ul> <p>目标值就是 <code class="language-plaintext highlighter-rouge">SS0 = 0x88888888</code>、<code class="language-plaintext highlighter-rouge">SS1 = 0x8</code>。</p> <p><img src="/assets/img/blog/gpu-unlock/fig-01-nibble-encoding.png" alt="一个 4 位字段的结构，以及 SS0 从 0x00000001 到 0x88888888 逐字段的变化"></p> <p><em>默认值是 1，不是 0。被锁住的那一档本来就写在寄存器里，只是 override 位关着。</em></p> <p>这里有个值得停一秒的细节：<strong>默认值 <code class="language-plaintext highlighter-rouge">0x00000001</code> 的低四位是 <code class="language-plaintext highlighter-rouge">0001</code></strong> ——override 关着，而它请求的速率是「半速」。也就是说，即便有人把 override 位打开而把选择子留在 <code class="language-plaintext highlighter-rouge">001</code>，拿到的还是半速。从结果看，这种区分完全可以不写进驱动逻辑：把默认值里的一个数字换个写法就够了（这是我的推断，文档没有描述 NVIDIA 的实现方式）。</p> <p>七个字段写 <code class="language-plaintext highlighter-rouge">0000</code>、一个写 <code class="language-plaintext highlighter-rouge">0001</code>，解锁时八个全写 <code class="language-plaintext highlighter-rouge">1000</code>。这不是给寄存器打补丁，是把一个本来就有语义的配置项填成另一组合法值。</p> <h2 id="三那为什么-nvidia-自己写不进去">三、那为什么 nvidia 自己写不进去</h2> <p>因为这八个字段所在的地址，被 <code class="language-plaintext highlighter-rouge">FEAT_OVR_PLM</code> 圈在一个特权区里。</p> <p>按 <a href="https://github.com/Consensus-Protocol/cmp170hx/blob/main/docs/unlock/privilege-level-masks.md" rel="external nofollow noopener" target="_blank">Consensus-Protocol/cmp170hx</a> 从观测行为反推出的位域模型：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">[3:0]</code> 读保护，一位对应一个特权级（L0/L1/L2/L3），置位表示该级可读</li> <li> <code class="language-plaintext highlighter-rouge">[7:4]</code> 写保护，同样一位一级，置位表示可写</li> <li> <code class="language-plaintext highlighter-rouge">[23:8]</code> 源使能，控制哪些片上来源可以发起访问</li> </ul> <p>默认值 <code class="language-plaintext highlighter-rouge">0xffffff8f</code> 的低字节是 <code class="language-plaintext highlighter-rouge">0x8f</code>，二进制 <code class="language-plaintext highlighter-rouge">1000 1111</code>：</p> <ul> <li> <code class="language-plaintext highlighter-rouge">[3:0] = 1111</code>：四级全部可读</li> <li> <code class="language-plaintext highlighter-rouge">[7:4] = 1000</code>：只有 L3 可写，L0/L1/L2 的写全部被挡</li> </ul> <p>L3 对应的就是 heavy-secure 上下文——安全处理器里的代码执行时所在的那一级。从宿主侧、也就是从驱动侧，你连 L1 都算不上。</p> <p><img src="/assets/img/blog/gpu-unlock/fig-02-plm-privilege-mask.png" alt="PLM 的低字节 0x8f 解码：读权限四级全开，写权限只给 L3"></p> <p><em>所以「写不进去」不是地址找错了，是这次写没有权限。而这个判断发生在硬件里。</em></p> <p>有意思的是，PLM 本身也是一条记录。把 <code class="language-plaintext highlighter-rouge">0xFFFFFFFF</code> 写进去，写权限那四位就一起打开了，<code class="language-plaintext highlighter-rouge">SS0</code> 和 <code class="language-plaintext highlighter-rouge">SS1</code> 立刻变得可以从宿主侧写。</p> <p>于是问题从「怎么改一个不可写的寄存器」变成了「怎么在 L3 里写一次」。前者在软件层无解，后者是一个引导链问题。</p> <h2 id="四一次任意写和一段被泄漏的调试固件">四、一次任意写，和一段被泄漏的调试固件</h2> <p>Ampere 的引导链上有一段代码拿到了 L3 的执行权限：<strong>SEC2 的 Booter</strong>。它由驱动通过 DMA 送进去，负责接收加密的 GSP 固件、验签、解密、再交给 GSP 执行。</p> <p>这份 booter 里有一个经典的栈缓冲区溢出。栈被写了，返回地址就可控，就能用 ROP 把现有指令串起来。</p> <p>麻烦在于固件是加密的，没法反汇编。但文档里记了一笔：NVIDIA 曾经同时发布调试版和生产版 booter，而调试版用了已知的公开测试密钥方案（key index 37）加密。于是有人把它解出来了，然后就是常规的 gadget 挖掘。</p> <p>挖出来的成果就是 v67 载荷。它能把一个 32 位值写到一个 32 位地址——<strong>一次任意写</strong>。就这一次。</p> <p>这一次写，就是整个方案的预算上限。载荷已经接近尺寸极限，写不了第二次，反复启动 booter 又有它自己的问题。所以它没有去写 <code class="language-plaintext highlighter-rouge">SS0</code> 或 <code class="language-plaintext highlighter-rouge">SS1</code>，而是写了 <code class="language-plaintext highlighter-rouge">PLM</code>：花掉唯一那一次写，把门打开，然后 <code class="language-plaintext highlighter-rouge">SS0</code>、<code class="language-plaintext highlighter-rouge">SS1</code> 用普通的宿主侧 MMIO 写补完。</p> <p>从「一次写」到「三个寄存器都改好」，中间隔着的就是那条特权掩码。这也是为什么这个项目的技术核心不是「找到某个魔数」，而是「借一次执行权限，换一次间接」。</p> <h2 id="五窗口为什么必须是一个-initramfs-里的内核模块">五、窗口：为什么必须是一个 initramfs 里的内核模块</h2> <p>正常的开机流程里，SEC2 Booter 是<strong>驱动</strong>送进去并触发的。也就是说，那段 L3 代码的寿命令人遗憾地短：只在引导期间存在，引导完就没了。</p> <p>等 <code class="language-plaintext highlighter-rouge">nvidia</code> 把卡绑好、<code class="language-plaintext highlighter-rouge">GSP-RM</code> 起来、宿主和固件之间的 RPC 通信建立，再从驱动侧往 <code class="language-plaintext highlighter-rouge">0x0082381c</code> 写东西，什么也不会发生。这条路是关着的，不是参数没调对。</p> <p>gpu-unlock 的做法是：不跟驱动抢，而是替它先跑一遍。</p> <p><img src="/assets/img/blog/gpu-unlock/fig-03-two-pass-boot.png" alt="两遍引导：gpu_unlock 先跑一遍固件拿到写权限，FLR 之后 nvidia 驱动从头再跑一遍"></p> <p><em>第一遍是自己发起的，第二遍是驱动发起的。中间隔一次 FLR。</em></p> <p>第一遍：模块自己把 FWSEC、FRTS、WPR2、SEC2 Booter 跑一遍，在 Booter 里执行 ROP 把 <code class="language-plaintext highlighter-rouge">PLM</code> 写成 <code class="language-plaintext highlighter-rouge">0xFFFFFFFF</code>，回来由宿主侧写 <code class="language-plaintext highlighter-rouge">SS0 = 0x88888888</code>、<code class="language-plaintext highlighter-rouge">SS1 = 0x8</code>。</p> <p>然后对这张卡做一次 PCIe Function Level Reset。</p> <p>这是整个设计里我觉得最讲究的一步。第一遍跑完之后，卡的状态已经不是驱动期待的那个状态了——驱动要自己发一遍引导。FLR 把功能复位，让驱动从一个干净的设备开始 probe，而<strong>它要的东西已经留在寄存器里了</strong>。</p> <p>FLR 复位的是功能，不是电源，所以 <code class="language-plaintext highlighter-rouge">SS0</code>/<code class="language-plaintext highlighter-rouge">SS1</code> 活了下来。这个判断不是文档写的，是从结果反推的：如果 FLR 会清掉它们，这套设计根本不可能工作。而完全断电会清掉——这正是后面 resume 要重放的原因（第七节）。</p> <p>也正因为如此，<strong>在你已经跑起来的系统上手动 <code class="language-plaintext highlighter-rouge">modprobe</code> 这个模块，对一张被 <code class="language-plaintext highlighter-rouge">nvidia</code> 绑定过的卡没有任何作用</strong>。窗口已经过去了。</p> <h2 id="六装的时候步骤为什么长这样">六、装的时候步骤为什么长这样</h2> <p>理解了「必须赶在 <code class="language-plaintext highlighter-rouge">nvidia</code> 绑定之前」，安装说明里那些看起来啰嗦的设计就都有了解释。</p> <p><strong>它给三种 initramfs 生成器各写一份 drop-in</strong>：mkinitcpio 走 <code class="language-plaintext highlighter-rouge">/etc/mkinitcpio.conf.d/zz-gpu-unlock.conf</code>，initramfs-tools 走 <code class="language-plaintext highlighter-rouge">/usr/share/initramfs-tools/modules.d/gpu-unlock.conf</code>，dracut 走 <code class="language-plaintext highlighter-rouge">/usr/lib/dracut/dracut.conf.d/gpu-unlock.conf</code>。在 mkinitcpio 里它被插在 <code class="language-plaintext highlighter-rouge">MODULES</code> 数组中 <code class="language-plaintext highlighter-rouge">nvidia</code> 的前一位，这样显示卡变黑的时间最短。</p> <p><strong>它故意不用 <code class="language-plaintext highlighter-rouge">softdep nvidia pre: gpu_unlock</code>。</strong> 这是个很容易踩的坑：kmod 只认它读到的第一条 <code class="language-plaintext highlighter-rouge">softdep nvidia</code> 行，别的包（<code class="language-plaintext highlighter-rouge">nvidia-utils</code>、<code class="language-plaintext highlighter-rouge">gddr6_hwmon</code>）只要也写一条，要么把这条盖掉，要么被这条盖掉。两种失败都是静默的。</p> <p><strong>它默认什么都不做。</strong> 只有内核命令行里出现 <code class="language-plaintext highlighter-rouge">gpu_unlock.targets=</code> 才干活：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gpu_unlock.targets=all                          # 所有受支持、尚未绑定的卡
+gpu_unlock.targets=0000:21:00.0                 # 只处理这些
+gpu_unlock.targets=0000:21:00.0,0000:22:00.0    # 逗号分隔
+</code></pre></div></div> <p>地址就是 <code class="language-plaintext highlighter-rouge">lspci -D</code> 打印的完整 PCI 名字，大小写十六进制都行，和 GPU 编号、以及哪张卡在带显示都无关。写了 <code class="language-plaintext highlighter-rouge">all</code> 又混进地址、或者写了不支持的卡，会被记一条日志然后忽略。多张卡并发处理，文档说总共大约一秒，和几张卡无关。</p> <p>顺便记一个对排查很实用的细节：<strong>仓库叫 <code class="language-plaintext highlighter-rouge">gpu-unlock</code>，内核模块叫 <code class="language-plaintext highlighter-rouge">gpu_unlock</code></strong>。<code class="language-plaintext highlighter-rouge">journalctl -k -b | grep gpu_unlock</code> 和 <code class="language-plaintext highlighter-rouge">modprobe gpu_unlock</code> 都用下划线，用连字符什么都搜不到。</p> <p>细节里还有几条能看出作者踩过坑：</p> <ul> <li>板卡固件留下的 bus mastering（点名了 Supermicro X11）会先被清掉；</li> <li>已经被别的驱动初始化过的卡，直接拒绝；</li> <li>带显示的卡也能解，它的固件 framebuffer（启动 console 和 Plymouth）在复位前才撤掉，屏幕会黑到 <code class="language-plaintext highlighter-rouge">nvidia-drm</code> 接手；</li> <li>如果某张卡的固件永远停不下来，模块会记日志，并且把固件可能还在用的 DMA buffer 保留到下次断电——<strong>断电之前不要重试</strong>。</li> </ul> <p>还有一个容易被误读的东西：仓库里钉着 <code class="language-plaintext highlighter-rouge">610.43.03</code> 的驱动版本。FAQ 里作者专门解释了，<strong>驱动只是被拉下来提取它依赖的固件</strong>，不是在依赖某个驱动版本。<code class="language-plaintext highlighter-rouge">make dist</code>、Debian 源码包和 <code class="language-plaintext highlighter-rouge">.nosrc.rpm</code> 都不含 NVIDIA 的压缩包或生成的固件——这是许可上的刻意隔离。</p> <h2 id="七唯一会丢状态的事">七、唯一会丢状态的事</h2> <p>suspend to RAM 会给显卡断电。断电，字段回到默认值。</p> <p>所以模块注册了一个挂起通知，位置在 <code class="language-plaintext highlighter-rouge">nvidia</code> 恢复显卡的那个通知<strong>之前</strong>（<code class="language-plaintext highlighter-rouge">NVreg_UseKernelSuspendNotifiers=1</code>，当前驱动的默认值；<code class="language-plaintext highlighter-rouge">nvidia-resume.service</code> 还要更晚）。恢复时它先把在开机阶段解锁过的卡再解锁一遍，然后驱动才恢复。</p> <p><img src="/assets/img/blog/gpu-unlock/fig-04-resume-replay.png" alt="开机解锁、suspend 断电清空、resume 重放三个阶段"></p> <p><em>代价是每次 resume 多大约一秒。休眠不在覆盖范围内。</em></p> <p>三条边界值得记：</p> <ol> <li> <strong>+1 秒</strong>：每次 resume 的固定开销，因为要重跑一遍。</li> <li> <strong>只读不写</strong>：suspend to idle 那种没断电的卡，字段还是对的，模块只读一遍确认。</li> <li> <strong>不覆盖休眠</strong>：hibernate 不在支持范围内。恢复之后请自己去看 <code class="language-plaintext highlighter-rouge">journalctl -k -b | grep gpu_unlock</code>。</li> </ol> <p>不想要这个行为，内核命令行加 <code class="language-plaintext highlighter-rouge">gpu_unlock.resume=0</code>，或者往 <code class="language-plaintext highlighter-rouge">/sys/module/gpu_unlock/parameters/resume</code> 写 <code class="language-plaintext highlighter-rouge">0</code>。</p> <p>笔记本是另一个问题：很多机器空闲时会把独显彻底断电，解锁就静默失效了。README 里给的缓解办法是在 <code class="language-plaintext highlighter-rouge">/etc/modprobe.d/</code> 里写 <code class="language-plaintext highlighter-rouge">options nvidia NVreg_DynamicPowerManagement=0x00</code>，并且明说<strong>只有部分机型有效，预期是混合结果</strong>。</p> <h2 id="八翻倍的峰值打折的收益">八、翻倍的峰值，打折的收益</h2> <p>先看寄存器能保证的东西——BF16、FP32 累加、默认功耗墙下的稠密矩阵乘：</p> <table> <thead> <tr> <th>显卡</th> <th>解锁前</th> <th>解锁后</th> <th>提升</th> </tr> </thead> <tbody> <tr> <td>RTX 3060 12 GB</td> <td>27 TFLOPS</td> <td>51 TFLOPS</td> <td>+87%</td> </tr> <tr> <td>RTX 3060 Ti</td> <td>37 TFLOPS</td> <td>68 TFLOPS</td> <td>+82%</td> </tr> <tr> <td>RTX 3070</td> <td>40 TFLOPS</td> <td>72 TFLOPS</td> <td>+81%</td> </tr> <tr> <td>RTX 3080 10 GB</td> <td>65 TFLOPS</td> <td>113 TFLOPS</td> <td>+73%</td> </tr> <tr> <td>RTX 3090</td> <td>75 TFLOPS</td> <td>125 TFLOPS</td> <td>+65%</td> </tr> <tr> <td>RTX 3090 Ti（450 W）</td> <td>88 TFLOPS</td> <td>157 TFLOPS</td> <td>+80%</td> </tr> <tr> <td>RTX 4070 Ti</td> <td>81 TFLOPS</td> <td>150 TFLOPS</td> <td>+84%</td> </tr> <tr> <td>RTX 4080</td> <td>104 TFLOPS</td> <td>193 TFLOPS</td> <td>+87%</td> </tr> <tr> <td>RTX 4090</td> <td>165 TFLOPS</td> <td>329 TFLOPS</td> <td>+100%（峰值发射速率）</td> </tr> </tbody> </table> <p>注意 RTX 4090 那一行：它<strong>先把功耗用完了，Tensor Core 还有余量</strong>。所以 4090 那个 +100% 是峰值发射速率，默认功耗墙下的大 GEMM 远拿不到这个数。</p> <p>再看真实负载，这里才是「值不值得装」的答案：</p> <p><img src="/assets/img/blog/gpu-unlock/fig-05-workload-gains.png" alt="指令发射速率与真实工作负载的提升区间对比"></p> <p><em>上面是寄存器能保证的，下面是跑起来能量到的。中间那段差距就是这个项目的实际边界。</em></p> <table> <thead> <tr> <th>工作负载</th> <th>典型提升</th> </tr> </thead> <tbody> <tr> <td>LLM Prefill / prompt 处理（FP16/BF16、AWQ/GPTQ；vLLM、PyTorch、Transformers）</td> <td>+25–55%</td> </tr> <tr> <td>首 token 延迟</td> <td>降低 25–30%</td> </tr> <tr> <td>LoRA 与 BF16 全量微调</td> <td>+25–50%</td> </tr> <tr> <td>图像生成（SDXL、SD 1.5、ComfyUI 里的 DiT 模型）</td> <td>+30–55%</td> </tr> <tr> <td>视频生成（Wan 2.2，BF16 计算）</td> <td>+15–20%</td> </tr> <tr> <td>FlashAttention / SDPA kernel</td> <td>+50–60%</td> </tr> <tr> <td>llama.cpp / Ollama 量化 GGUF</td> <td>0–15%，主要出现在长上下文</td> </tr> <tr> <td>LLM Decode / 逐 token 生成</td> <td>没有变化</td> </tr> <tr> <td>INT8、FP8、INT4 模型</td> <td>没有变化</td> </tr> <tr> <td>游戏与 FP32 CUDA</td> <td>没有变化</td> </tr> </tbody> </table> <p>为什么差这么多，其实一张表就能读出来：<strong>受不受矩阵发射速率限制，取决于这个 kernel 是在算矩阵还是在等显存。</strong></p> <p>Prefill 一次处理一大段 token，是稠密矩阵乘，吃得下吞吐；Decode 一次只生成一个 token，瓶颈在显存带宽，Tensor Core 再快也没有东西喂给它。INT8/FP8/INT4 走的是另一条路径，不在这八个字段的管辖范围里——这一点最好记住，量化推理的人基本拿不到收益。</p> <h2 id="九它做不到什么">九、它做不到什么</h2> <p>按重要性排：</p> <ol> <li> <strong>Blackwell（RTX 50）不支持，而且作者认为不太可能支持。</strong> 别因为 40 系列能用就假设 50 系列也能。</li> <li> <strong>笔记本的解锁会静默失效。</strong> 独显一断电就回到默认值，缓解手段只对部分机型有效。</li> <li> <strong>峰值不是收益。</strong> 4090 先撞功耗墙；小 batch、内存受限的工作负载收益接近于零。</li> <li> <strong>功耗和温度会上去。</strong> 固件层的 throttling 和功耗管理还在，会正常降频，但卡确实在干更多活——电源、散热、多卡机箱风道都得重新算。</li> <li> <strong>它借的是一条很深的路径。</strong> 在 L3 里改寄存器、做 FLR、抢 initramfs 时序，任何一步出错的表现大概率是「黑屏」或「驱动不加载」，不是一条友好的错误信息。留旧内核、留恢复启动项、留卸载方案。</li> <li> <strong>许可要分开读。</strong> 模块和本地打包是 GPL-2.0-only；生成的 buffer 派生自钉住的 CMP 参考实现；<strong>NVIDIA 固件仍按它自己的条款</strong>（见 <code class="language-plaintext highlighter-rouge">firmware/NOTICE.md</code> 与 <code class="language-plaintext highlighter-rouge">licenses/</code>）。别把整个仓库当成 GPL。</li> <li> <strong>固件 README 自己说了</strong>：所有新的硬件上下文仍是实验性的。</li> <li> <strong>它不会让 3090 变成 A6000。</strong> 显存容量、带宽、CUDA Core 数、Tensor Core 数、额定功耗上限，一个都没变。</li> </ol> <h2 id="十我的判断">十、我的判断</h2> <p>我不觉得这个项目最有价值的地方是「白拿 65%」。</p> <p>它真正有意思的是<strong>把性能优化的边界往下推了一整层</strong>。平时说加速，谈的是 kernel 融合、量化、FlashAttention 换实现——都在 CUDA 和 PyTorch 这一层。gpu-unlock 把问题挪到了「谁有权在引导阶段写一个寄存器」，然后发现这里的约束根本不是你写得对不对，而是<strong>你在不在那个上下文里</strong>。</p> <p>一旦这么看，它的所有设计选择都是同一句话的推论：必须在 <code class="language-plaintext highlighter-rouge">nvidia</code> 之前（所以进 initramfs）、必须自己跑一遍固件（所以从驱动包里提固件）、必须把设备还干净（所以 FLR）、必须每次 resume 重来（所以挂起通知要抢在前面）、必须能关掉（所以 opt-in）。没有一个是「功能」，全是在迁就时序。</p> <p>但这也正是它的脆弱之处，而且是可以验证的那种脆弱：<strong>这条路的起点，是一个签名引导程序里的栈溢出，外加一段用公开测试密钥加密、曾经被发布出来的调试固件。</strong></p> <p>补掉那个溢出，CMP 170Hx 的扩容和 GeForce 的半速解除很可能一起失效——它们踩的是同一级台阶。这不是猜测，是两份文档摆在一起就能读出来的事：v67 是在 SEC2 Booter 里拿到的执行权，而 GeForce 的解锁复用的就是这套载荷。</p> <p>所以如果要我压缩成一句：<strong>这次解锁不是 NVIDIA 忘了关一个开关，是有人从固件引导链的缝里，把默认值改成了另一个合法值。</strong> 缝有多宽，取决于下一版 booter 怎么写。</p> <p>如果你想自己验一遍，我建议别从 TFLOPS 开始，而是从这三个问题开始：</p> <ol> <li>你的负载是 prefill 型还是 decode 型？（拿 vLLM 的日志看 time to first token 和 inter-token latency 的比例）</li> <li>同一段代码在解锁前后的输出是不是逐位相同？（不一致就说明有别的东西在变，先停下来查）</li> <li>把功耗和温度一起记下来——如果卡本来就贴着功耗墙跑，寄存器改了也不会更快，只是更早降频。</li> </ol> <h2 id="项目与资料">项目与资料</h2> <ul> <li>仓库：<a href="https://github.com/Zagitta/gpu-unlock" rel="external nofollow noopener" target="_blank">Zagitta/gpu-unlock</a>（v2.0.0）</li> <li>原理长文：<a href="https://github.com/Zagitta/gpu-unlock/blob/main/docs/How%20Ampere%20was%20unlocked.md" rel="external nofollow noopener" target="_blank">docs/How Ampere was unlocked.md</a>（本文第二节到第四节的寄存器与引导链细节都出自这里）</li> <li>固件来源与许可：<a href="https://github.com/Zagitta/gpu-unlock/blob/main/firmware/README.md" rel="external nofollow noopener" target="_blank">firmware/README.md</a>、<code class="language-plaintext highlighter-rouge">firmware/NOTICE.md</code> </li> <li>设备 ID 与每张卡的配方：<a href="https://github.com/Zagitta/gpu-unlock/blob/main/kernel/gpu_unlock/recipes.c" rel="external nofollow noopener" target="_blank">kernel/gpu_unlock/recipes.c</a> </li> <li>PLM 位域模型的出处：<a href="https://github.com/Consensus-Protocol/cmp170hx/blob/main/docs/unlock/privilege-level-masks.md" rel="external nofollow noopener" target="_blank">Consensus-Protocol/cmp170hx · privilege-level-masks.md</a> </li> <li>前驱项目：<a href="https://github.com/amoghmunikote/cmpunlocker" rel="external nofollow noopener" target="_blank">amoghmunikote/cmpunlocker</a> </li> <li>兼容性报告与 benchmark 细节：<a href="https://github.com/Zagitta/gpu-unlock/issues" rel="external nofollow noopener" target="_blank">Issues</a> </li> </ul> <p><strong>许可证：</strong> 内核模块与本地打包代码 GPL-2.0-only。NVIDIA 固件仍受其自身条款约束，详见仓库 <code class="language-plaintext highlighter-rouge">licenses/</code>。</p> <p><strong>图片说明：</strong> 本文五张示意图都是我根据仓库 README、<code class="language-plaintext highlighter-rouge">docs/How Ampere was unlocked.md</code> 和 <code class="language-plaintext highlighter-rouge">firmware/README.md</code> 绘制的，不是项目官方配图。文中的寄存器地址、默认值、位域语义来自上述文档；性能数据来自仓库 README 的实测表，属于项目公布的测试结果，不是我在自己机器上复测的，也不保证在任何硬件、功耗、软件版本下复现。百分比区间是 README 给出的典型范围，不是精确值。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/voicestudio-local-voice-workstation/">VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/droiddeck-android-handheld-host/">DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/magpie-quota-cache-gateway/">magpie：它调度的不是模型，是会过期的额度</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/aerial-tv-launcher-foreground-takeover/">Aerial：换桌面不是画界面，是在别人的固件里抢前台</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/everything-monorepo-fifty-apps/">Everything Project：50 个应用、0 个前端框架，它在重写「一个软件该有多大」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-gpu-unlock-geforce-的半速矩阵算力-写死在八个-4-位字段里",
+        
+          title: "gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里",
+        
+        description: "NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpu-unlock-geforce-tensor-half-rate/";
+          
+        },
+      },{id: "post-voicestudio-把-elevenlabs-搬回本地之后-账单换成了许可证",
+        
+          title: "VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证",
+        
+        description: "11 万星的本地语音工作站：45 个 router、18 个引擎适配器、646 种语言背后只占 3.4% 的语料长尾，以及那份 73 条记录里 0 条标了可商用的模型许可证清单。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/voicestudio-local-voice-workstation/";
+          
+        },
+      },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-everything-project-50-个应用-0-个前端框架-它在重写-一个软件该有多大",
+        
+          title: "Everything Project：50 个应用、0 个前端框架，它在重写「一个软件该有多大」",
+        
+        description: "51 个目录、50 个应用、0 个 UI 框架、15 个 AGPL：拆开 HeyPuter 的 monorepo，看它怎么把 Excel、Photoshop、AutoCAD 各压成能单独 npm run dev 的目录，以及这份压缩的代价落在哪里。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/everything-monorepo-fifty-apps/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
