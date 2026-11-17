@@ -1,0 +1,946 @@
+# -*- coding: utf-8 -*-
+"""Per-post cover cards for fengjutian.github.io.
+
+One shared typographic frame (meta / title / thesis / domain), but each card
+gets its own accent colour, its own motif, and one of three compositions, so
+the blog sidebar stops looking like the same card with a different string.
+
+To add a post: add an entry to CARDS (accent + glow position) and a branch in
+build() that picks a motif helper (motif_grid / motif_area / motif_browser /
+motif_rings / motif_tree / motif_layers / motif_game / motif_code) with its
+coordinates. Render, then *look* at the JPEG before shipping it.
+
+    python covers.py <out_dir>
+"""
+import math
+import os
+import sys
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+W, H = 1200, 630
+M = 72
+
+# MNN cover motif: 8 columns x 6 rows graded S / A / B / hole (C)
+GRADES = [
+    [1.0, 0.6, 1.0, 0.0, 0.6, 1.0, 1.0, 0.6],
+    [0.6, 1.0, 0.6, 1.0, 0.0, 0.6, 1.0, 0.3],
+    [1.0, 1.0, 1.0, 1.0, 0.6, 0.0, 0.3, 1.0],
+    [1.0, 0.6, 0.0, 0.6, 1.0, 0.3, 0.0, 0.6],
+    [0.6, 0.0, 0.3, 0.3, 0.0, 1.0, 0.6, 0.3],
+    [0.3, 0.6, 0.3, 0.0, 0.6, 0.6, 0.3, 1.0],
+]
+
+WHITE = (238, 243, 250)
+BODY = (186, 201, 220)
+DIM = (118, 138, 164)
+FAINT = (86, 104, 128)
+BG_TOP = (17, 25, 40)
+BG_BOT = (8, 11, 19)
+MID = (34, 44, 60)
+
+REG = r"C:\Windows\Fonts\msyh.ttc"
+BOLD = r"C:\Windows\Fonts\msyhbd.ttc"
+
+
+def font(size, bold=False):
+    return ImageFont.truetype(BOLD if bold else REG, size)
+
+
+def mix(c1, c2, t):
+    return tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
+
+
+def tint(accent, t=0.13):
+    return mix(MID, accent, t)
+
+
+def arrow(d, p1, p2, color, width=3, head=13):
+    x1, y1 = p1
+    x2, y2 = p2
+    ang = math.atan2(y2 - y1, x2 - x1)
+    d.line((x1, y1, x2, y2), fill=color, width=width)
+    d.polygon([(x2, y2),
+               (x2 - head * math.cos(ang - 0.42), y2 - head * math.sin(ang - 0.42)),
+               (x2 - head * math.cos(ang + 0.42), y2 - head * math.sin(ang + 0.42))], fill=color)
+
+
+def canvas(glow_at, accent, glow_r=430, strength=0.34):
+    img = Image.new("RGB", (W, H))
+    d = ImageDraw.Draw(img)
+    for y in range(H):
+        t = y / (H - 1)
+        d.line((0, y, W, y), fill=mix(BG_TOP, BG_BOT, t))
+
+    gx, gy = glow_at
+    n = 256
+    yy, xx = np.mgrid[0:n, 0:n]
+    rad = np.hypot(xx - n / 2, yy - n / 2) / (n / 2)
+    field = np.clip(1 - rad, 0, 1) ** 2.1
+    layer = Image.new("RGB", (glow_r * 2, glow_r * 2), accent)
+    mask = Image.fromarray((field * 255 * strength).astype("uint8"), "L")
+    mask = mask.resize((glow_r * 2, glow_r * 2), Image.BICUBIC)
+    img.paste(layer, (int(gx - glow_r), int(gy - glow_r)), mask)
+    return img, ImageDraw.Draw(img)
+
+
+def tracked(d, xy, text, size, color, tracking=2.6):
+    f = font(size)
+    x, y = xy
+    for ch in text:
+        d.text((x, y), ch, font=f, fill=color)
+        x += d.textlength(ch, font=f) + tracking
+
+
+def wrap(d, text, f, maxw):
+    lines, cur = [], ""
+    for ch in text:
+        trial = cur + ch
+        if d.textlength(trial, font=f) > maxw and cur:
+            lines.append(cur)
+            cur = "" if ch == " " else ch
+        else:
+            cur = trial
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def para(d, xy, text, size, color, maxw, leading=1.45):
+    f = font(size)
+    x, y = xy
+    for line in wrap(d, text, f, maxw):
+        d.text((x, y), line, font=f, fill=color)
+        y += int(size * leading)
+
+
+def head(d, accent, meta, title, thesis, title_xy, title_size,
+         thesis_xy, thesis_w, align="left", thesis_size=29):
+    if align == "left":
+        d.rounded_rectangle((M, 88, M + 34, 94), radius=3, fill=accent)
+        tracked(d, (M, 112), meta.upper(), 21, mix(DIM, accent, 0.45), 2.4)
+        tx, ty = title_xy
+        f = font(title_size, True)
+        parts = title.split("\n")
+        for i, p in enumerate(parts):
+            d.text((tx, ty + i * int(title_size * 1.06)), p, font=f, fill=WHITE)
+        bottom = ty + len(parts) * int(title_size * 1.06)
+        d.rounded_rectangle((tx, bottom + 18, tx + 96, bottom + 24), radius=3, fill=accent)
+        para(d, thesis_xy, thesis, thesis_size, BODY, thesis_w)
+    else:
+        rx = W - M
+        d.rounded_rectangle((rx - 34, 88, rx, 94), radius=3, fill=accent)
+        f = font(21)
+        x = rx
+        for ch in reversed(meta.upper()):
+            w = d.textlength(ch, font=f)
+            d.text((x - w, 112), ch, font=f, fill=mix(DIM, accent, 0.45))
+            x -= w + 2.4
+        tx, ty = title_xy
+        f = font(title_size, True)
+        parts = title.split("\n")
+        for i, p in enumerate(parts):
+            d.text((tx, ty + i * int(title_size * 1.06)), p, font=f, fill=WHITE, anchor="ra")
+        bottom = ty + len(parts) * int(title_size * 1.06)
+        d.rounded_rectangle((tx - 96, bottom + 18, tx, bottom + 24), radius=3, fill=accent)
+        f2 = font(thesis_size)
+        y = thesis_xy[1]
+        for line in wrap(d, thesis, f2, thesis_w):
+            d.text((tx, y), line, font=f2, fill=BODY, anchor="ra")
+            y += int(thesis_size * 1.45)
+
+
+def domain(d, text="fengjutian.github.io"):
+    d.text((M, 574), text, font=font(19), fill=(74, 92, 116))
+
+
+# ------------------------------------------------------------------ motifs
+def motif_grid(d, box, accent, cols=13, rows=9, lit=(), ring=None, tag=None):
+    x, y, w, h = box
+    gap = 9
+    cell = min((w - gap * (cols - 1)) / cols, (h - gap * (rows - 1)) / rows)
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + (h - gh) / 2
+    for r in range(rows):
+        for c in range(cols):
+            cx = x0 + c * (cell + gap)
+            cy = y0 + r * (cell + gap)
+            on = (r * cols + c) in lit
+            d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=3,
+                                fill=tint(accent, 0.85) if on else tint(accent, 0.12),
+                                outline=None if on else mix(BG_TOP, accent, 0.2))
+    if ring is not None:
+        r, c = ring
+        cx = x0 + c * (cell + gap) + cell / 2
+        cy = y0 + r * (cell + gap) + cell / 2
+        rad = cell * 0.95
+        d.ellipse((cx - rad, cy - rad, cx + rad, cy + rad), outline=accent, width=3)
+        if tag:
+            d.text((cx + rad + 14, cy), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
+def motif_area(d, box, accent, values, bracket, ylabel, xlabel):
+    x, y, w, h = box
+    base = y + h
+    step = w / (len(values) - 1)
+    pts = [(x + i * step, base - v * h) for i, v in enumerate(values)]
+    d.polygon(pts + [(x + w, base), (x, base)], fill=tint(accent, 0.18))
+    for a, b in zip(pts[:-1], pts[1:]):
+        d.line((a[0], a[1], b[0], b[1]), fill=accent, width=5)
+    for p in pts:
+        d.ellipse((p[0] - 4, p[1] - 4, p[0] + 4, p[1] + 4), fill=accent)
+    d.line((x, base, x + w, base), fill=mix(BG_TOP, accent, 0.3), width=2)
+    d.text((x, y - 36), ylabel, font=font(19), fill=DIM)
+    d.text((x + w, base + 12), xlabel, font=font(19), fill=DIM, anchor="ra")
+    by = base + 40
+    d.line((x, by, x + w, by), fill=mix(DIM, accent, 0.4), width=3)
+    for bx in (x, x + w):
+        d.line((bx, by - 9, bx, by + 9), fill=mix(DIM, accent, 0.4), width=3)
+    d.text(((2 * x + w) / 2, by + 12), bracket, font=font(20), fill=mix(DIM, accent, 0.6), anchor="ma")
+
+
+def motif_browser(d, box, accent, chips, arcs, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.09),
+                        outline=mix(BG_TOP, accent, 0.38), width=2)
+    d.line((x, y + 46, x + w, y + 46), fill=mix(BG_TOP, accent, 0.3), width=2)
+    for i, c in enumerate([(226, 96, 92), (226, 178, 88), (110, 190, 120)]):
+        d.ellipse((x + 20 + i * 22, y + 17, x + 32 + i * 22, y + 29), fill=mix(c, (18, 22, 30), 0.3))
+    d.rounded_rectangle((x + 96, y + 12, x + w - 20, y + 34), radius=11, fill=tint(accent, 0.22))
+    d.text((x + 110, y + 15), "explainer.local / gpt2 / onnx", font=font(15), fill=DIM)
+
+    tx = x + 24
+    ty = y + 78
+    f = font(20)
+    boxes = []
+    for chip in chips:
+        cw = d.textlength(chip, font=f) + 22
+        d.rounded_rectangle((tx, ty, tx + cw, ty + 38), radius=8,
+                            fill=tint(accent, 0.26), outline=mix(BG_TOP, accent, 0.55))
+        d.text((tx + 11, ty + 6), chip, font=f, fill=WHITE)
+        boxes.append((tx + cw / 2, ty + 38))
+        tx += cw + 8
+
+    # attention: the last token looks back at the ones before it
+    ty2 = ty + 38
+    for idx, alpha, deep in arcs:
+        bx = boxes[idx][0]
+        src_x = boxes[5][0]
+        pts = []
+        for t in range(0, 41):
+            t = t / 40
+            ax = (1 - t) ** 2 * bx + 2 * (1 - t) * t * ((bx + src_x) / 2) + t * t * src_x
+            ay = (1 - t) ** 2 * ty2 + 2 * (1 - t) * t * (ty2 + deep) + t * t * ty2
+            pts.append((ax, ay))
+        d.line(pts, fill=mix(BG_TOP, accent, alpha), width=4, joint="curve")
+
+    by = y + h - 40
+    for i, v in enumerate([0.9, 0.52, 0.32, 0.2, 0.12]):
+        bx = x + 26 + i * ((w - 52) / 5.8)
+        bh = 14 + v * 62
+        d.rounded_rectangle((bx, by - bh, bx + 44, by), radius=6,
+                            fill=accent if i == 0 else tint(accent, 0.32))
+    d.text((x + 26, by + 8), tag, font=font(16), fill=DIM)
+
+
+def motif_rings(d, cx, cy, accent, label, sub):
+    d.ellipse((cx - 236, cy - 236, cx + 236, cy + 236), outline=mix(BG_TOP, accent, 0.12), width=2)
+    d.ellipse((cx - 170, cy - 170, cx + 170, cy + 170), outline=mix(BG_TOP, accent, 0.2), width=2)
+    d.ellipse((cx - 104, cy - 104, cx + 104, cy + 104), fill=tint(accent, 0.16),
+              outline=mix(BG_TOP, accent, 0.5), width=3)
+    heights = [10, 18, 30, 46, 26, 54, 34, 20, 40, 24, 14, 8]
+    bw = 7
+    total = len(heights) * (bw + 5) - 5
+    sx = cx - total / 2
+    for i, hgt in enumerate(heights):
+        px = sx + i * (bw + 5)
+        d.rounded_rectangle((px, cy - hgt / 2, px + bw, cy + hgt / 2), radius=3,
+                            fill=accent if hgt > 30 else mix(BG_TOP, accent, 0.55))
+    for ang in (-140, -40, 40, 140):
+        a = math.radians(ang)
+        px, py = cx + 202 * math.cos(a), cy + 202 * math.sin(a)
+        d.line((cx + 104 * math.cos(a), cy + 104 * math.sin(a), px, py),
+               fill=mix(BG_TOP, accent, 0.4), width=2)
+        d.ellipse((px - 9, py - 9, px + 9, py + 9), fill=tint(accent, 0.55), outline=accent, width=2)
+    d.text((cx, cy + 254), label, font=font(21), fill=mix(DIM, accent, 0.6), anchor="ma")
+    d.text((cx, cy + 286), sub, font=font(17), fill=FAINT, anchor="ma")
+
+
+def motif_tree(d, box, accent, tag, caption=None):
+    x, y, w, h = box
+    cy = y + h / 2
+    trunk_end = x + w * 0.24
+    node_x = x + w * 0.62
+    d.rounded_rectangle((x, cy - 14, x + 10, cy + 14), radius=6, fill=tint(accent, 0.6))
+    d.line((x, cy, trunk_end, cy), fill=mix(BG_TOP, accent, 0.6), width=5)
+    ys = [cy - h * 0.34, cy, cy + h * 0.34]
+    for ty in ys:
+        pts = []
+        for t in range(0, 41):
+            t = t / 40
+            px = (1 - t) ** 2 * trunk_end + 2 * (1 - t) * t * (trunk_end + 64) + t * t * node_x
+            py = (1 - t) ** 2 * cy + 2 * (1 - t) * t * ty + t * t * ty
+            pts.append((px, py))
+        d.line(pts, fill=mix(BG_TOP, accent, 0.5), width=3, joint="curve")
+        d.ellipse((node_x - 8, ty - 8, node_x + 8, ty + 8), fill=accent)
+    d.line((node_x + 6, cy - h * 0.34, node_x + 6, cy + h * 0.34),
+           fill=mix(BG_TOP, accent, 0.5), width=3)
+    d.line((node_x + 6, cy, node_x + 44, cy), fill=accent, width=5)
+    d.rounded_rectangle((node_x + 44, cy - 30, x + w, cy + 30), radius=10,
+                        fill=tint(accent, 0.26), outline=accent, width=2)
+    size = 18
+    while d.textlength(tag, font=font(size)) > (x + w - node_x - 44) - 26 and size > 12:
+        size -= 1
+    d.text(((node_x + 44 + x + w) / 2, cy), tag, font=font(size), fill=WHITE, anchor="mm")
+    if caption:
+        d.text((x + 10, y + h + 18), caption, font=font(18), fill=FAINT)
+
+
+def motif_layers(d, box, accent, n, out_box, hook=7):
+    x, y, w, h = box
+    gap = 9
+    sh = (h - gap * (n - 1)) / n
+    for i in range(n):
+        yy = y + i * (sh + gap)
+        hot = i == hook
+        d.rounded_rectangle((x, yy, x + w, yy + sh), radius=5,
+                            fill=accent if hot else tint(accent, 0.13),
+                            outline=None if hot else mix(BG_TOP, accent, 0.2))
+    hy = y + hook * (sh + gap) + sh / 2
+    ox, oy, ow, oh = out_box
+    # hook taps the residual stream, then the head produces logits
+    d.line((x + w, hy, ox - 18, hy), fill=mix(BG_TOP, accent, 0.7), width=3)
+    d.polygon([(ox - 8, hy), (ox - 24, hy - 9), (ox - 24, hy + 9)], fill=mix(BG_TOP, accent, 0.7))
+    d.text((x + w + 12, hy + 12), "hook", font=font(16), fill=mix(DIM, accent, 0.6))
+    for i, v in enumerate([0.95, 0.6, 0.42, 0.28, 0.18]):
+        bh = v * oh
+        bx = ox + i * (ow / 5.4)
+        d.rounded_rectangle((bx, oy + oh - bh, bx + 34, oy + oh), radius=5,
+                            fill=accent if i == 0 else tint(accent, 0.32))
+    d.text((ox, oy - 30), "logits / 50257", font=font(17), fill=DIM)
+    d.text((ox, oy + oh + 14), "12 层后仍是同一条残差流", font=font(17), fill=FAINT)
+
+
+def motif_game(d, box, accent, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=tint(accent, 0.09),
+                        outline=mix(BG_TOP, accent, 0.4), width=2)
+    d.line((x, y + 40, x + w, y + 40), fill=mix(BG_TOP, accent, 0.3), width=2)
+    for i in range(3):
+        d.ellipse((x + 16 + i * 18, y + 15, x + 26 + i * 18, y + 25), fill=mix((190, 200, 210), MID, 0.45))
+
+    runs = [("run 01", "白屏", False), ("run 02", "控制台报错", False), ("run 03", "可玩 · 过关", True)]
+    ry = y + 62
+    for name, note, ok in runs:
+        col = accent if ok else (196, 96, 92)
+        d.rounded_rectangle((x + 24, ry, x + w - 24, ry + 68), radius=9,
+                            fill=tint(col, 0.16), outline=mix(BG_TOP, col, 0.5))
+        d.text((x + 44, ry + 11), name, font=font(19), fill=DIM)
+        d.text((x + 44, ry + 36), note, font=font(21), fill=WHITE if ok else mix(BODY, col, 0.35))
+        # verdict mark
+        cx, cy = x + w - 58, ry + 34
+        if ok:
+            d.line((cx - 11, cy, cx - 3, cy + 9), fill=accent, width=5)
+            d.line((cx - 3, cy + 9, cx + 12, cy - 11), fill=accent, width=5)
+        else:
+            d.line((cx - 9, cy - 9, cx + 9, cy + 9), fill=col, width=4)
+            d.line((cx - 9, cy + 9, cx + 9, cy - 9), fill=col, width=4)
+        ry += 86
+    d.text((x + 24, y + h - 26), tag, font=font(16), fill=mix(DIM, accent, 0.5))
+
+
+def motif_sheet(d, box, accent, tag):
+    """A review sheet: six views, colour on top, clay below, one check."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=tint(accent, 0.08),
+                        outline=mix(BG_TOP, accent, 0.38), width=2)
+    d.text((x + 20, y + 14), "review sheet · 6 views", font=font(15), fill=FAINT)
+
+    tw, th, gap = 118, 108, 14
+    x0 = x + (w - (tw * 3 + gap * 2)) / 2
+    # the object, seen front / side / top: fills for colour, outlines for clay
+    for row in range(2):
+        for col in range(3):
+            tx = x0 + col * (tw + gap)
+            ty = y + 52 + row * (th + gap)
+            d.rounded_rectangle((tx, ty, tx + tw, ty + th), radius=8,
+                                fill=(13, 18, 29) if row == 1 else tint(accent, 0.14),
+                                outline=mix(BG_TOP, accent, 0.30))
+            cx, cy = tx + tw / 2, ty + th / 2 + 2
+            if row == 0:
+                fill, line = accent, mix(BG_TOP, accent, 0.9)
+            else:
+                fill, line = mix((18, 24, 38), (170, 180, 195), 0.55), (196, 204, 216)
+            if col == 0:      # front: a box with a lid
+                d.rectangle((cx - 30, cy - 24, cx + 30, cy + 26), fill=fill)
+                d.rectangle((cx - 36, cy - 34, cx + 36, cy - 18), fill=line)
+            elif col == 1:    # side: narrower
+                d.rectangle((cx - 16, cy - 24, cx + 16, cy + 26), fill=fill)
+                d.rectangle((cx - 22, cy - 34, cx + 22, cy - 18), fill=line)
+            else:             # top: flatter, from above
+                d.rectangle((cx - 34, cy - 12, cx + 34, cy + 20), fill=fill)
+                d.rectangle((cx - 34, cy - 26, cx + 34, cy - 14), fill=line)
+
+    # close-up marker on one tile
+    d.ellipse((x0 + 2 * (tw + gap) + tw - 34, y + 52 + th - 34,
+               x0 + 2 * (tw + gap) + tw - 12, y + 52 + th - 12),
+              outline=accent, width=3)
+
+    # verdict badge
+    cx, cy, r = x + w - 44, y + h - 46, 26
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(14, 19, 30), outline=accent, width=3)
+    d.line((cx - 9, cy, cx - 2, cy + 8), fill=accent, width=5)
+    d.line((cx - 2, cy + 8, cx + 11, cy - 9), fill=accent, width=5)
+    d.text((x + 20, y + h - 34), tag, font=font(16), fill=mix(DIM, accent, 0.5))
+
+
+def motif_audio(d, box, accent, tag):
+    """Two tracks in, one narrow permission gate out."""
+    x, y, w, h = box
+    gate = x + w * 0.60
+    rows = [("麦克风", y + h * 0.26, [0.30, 0.62, 0.44, 0.86, 0.52, 0.74, 0.34, 0.58, 0.40, 0.28]),
+            ("系统音频", y + h * 0.62, [0.22, 0.48, 0.72, 0.38, 0.66, 0.30, 0.54, 0.80, 0.36, 0.24])]
+    bw, gap = 13, 10
+    for name, cy, hs in rows:
+        d.text((x, cy - 54), name, font=font(17), fill=DIM)
+        for i, v in enumerate(hs):
+            bx = x + i * (bw + gap)
+            bh = v * 46
+            d.rounded_rectangle((bx, cy - bh, bx + bw, cy + bh), radius=4,
+                                fill=accent if v > 0.5 else tint(accent, 0.5))
+        # converge into the gate
+        pts = []
+        for t in range(0, 31):
+            t = t / 30
+            px = (1 - t) ** 2 * (x + len(hs) * (bw + gap)) + 2 * (1 - t) * t * (gate - 60) + t * t * (gate - 10)
+            py = (1 - t) ** 2 * cy + 2 * (1 - t) * t * cy + t * t * (y + h * 0.44)
+            pts.append((px, py))
+        d.line(pts, fill=mix(DIM, accent, 0.55), width=3, joint="curve")
+
+    top, bot = y + h * 0.10, y + h * 0.78
+    d.rounded_rectangle((gate - 9, top, gate + 9, bot), radius=9, fill=accent)
+    d.text((gate, top - 26), "0o600", font=font(19), fill=mix(DIM, accent, 0.75), anchor="ma")
+
+    # one line out, small and read-only
+    oy = y + h * 0.44
+    d.line((gate + 12, oy, x + w - 96, oy), fill=mix(BG_TOP, accent, 0.65), width=4)
+    for i in range(2):
+        bx = gate + 40 + i * 56
+        d.rounded_rectangle((bx, oy - 12, bx + 34, oy + 12), radius=5, fill=tint(accent, 0.35),
+                            outline=mix(BG_TOP, accent, 0.5))
+    d.rounded_rectangle((x + w - 92, oy - 24, x + w, oy + 24), radius=12, fill=tint(accent, 0.3),
+                        outline=accent, width=2)
+    d.text((x + w - 46, oy), "只读", font=font(19), fill=WHITE, anchor="mm")
+    d.text((x, y + h + 8), tag, font=font(16), fill=FAINT)
+
+
+def motif_matrix(d, box, accent, tag):
+    """A tensor grid with one row lit, read into three verdicts."""
+    x, y, w, h = box
+    cols, rows, gap = 9, 9, 5
+    cell = min((w * 0.52 - gap * (cols - 1)) / cols, (h - gap * (rows - 1)) / rows)
+    gx, gy = x, y + (h - (cell * rows + gap * (rows - 1))) / 2
+    lit_row, lit_cell = 4, (2, 7)
+    for r in range(rows):
+        for c in range(cols):
+            cx = gx + c * (cell + gap)
+            cy = gy + r * (cell + gap)
+            on = r == lit_row or (r, c) == lit_cell
+            d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=3,
+                                fill=accent if on else tint(accent, 0.14),
+                                outline=None if on else mix(BG_TOP, accent, 0.22))
+
+    ax0 = gx + cols * (cell + gap) + 6
+    ay = gy + (cell * rows + gap * (rows - 1)) / 2
+    d.line((ax0, ay, ax0 + 30, ay), fill=mix(BG_TOP, accent, 0.7), width=3)
+    d.polygon([(ax0 + 38, ay), (ax0 + 22, ay - 8), (ax0 + 22, ay + 8)], fill=mix(BG_TOP, accent, 0.7))
+
+    cx0 = ax0 + 56
+    chw = x + w - cx0
+    ch = 72
+    cy = ay - (3 * ch + 2 * 16) / 2 + ch / 2
+    for name, hot in [("up", True), ("down", False), ("same", False)]:
+        top = cy - ch / 2
+        d.rounded_rectangle((cx0, top, cx0 + chw, top + ch), radius=12,
+                            fill=tint(accent, 0.22) if hot else (16, 22, 34),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.3), width=2)
+        d.text((cx0 + 20, cy), name, font=font(23, hot), fill=WHITE if hot else DIM, anchor="lm")
+        cy += ch + 16
+
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
+def motif_boundary(d, box, accent, tag):
+    """A pipe from the user side to root, with three gates on it."""
+    x, y, w, h = box
+    cy = y + h * 0.52
+    # left: the unprivileged side, with a wifi ripple above it
+    lx, lw, lh = x + 20, 140, 108
+    d.rounded_rectangle((lx, cy - lh / 2, lx + lw, cy + lh / 2), radius=12,
+                        fill=tint(accent, 0.16), outline=mix(BG_TOP, accent, 0.55), width=2)
+    d.text((lx + lw / 2, cy - 8), "GUI", font=font(26, True), fill=WHITE, anchor="mm")
+    d.text((lx + lw / 2, cy + 24), "uid 1000", font=font(16), fill=DIM, anchor="mm")
+    for i in range(3):
+        r = 16 + i * 13
+        d.arc((lx + lw / 2 - r - 30, cy - lh / 2 - r - 18, lx + lw / 2 + r - 30, cy - lh / 2 + r - 18),
+              200, 340, fill=mix(BG_TOP, accent, 0.55), width=3)
+
+    # right: root
+    rx, rw, rh = lx + lw + 250, 140, 108
+    d.rounded_rectangle((rx, cy - rh / 2, rx + rw, cy + rh / 2), radius=12,
+                        fill=accent, outline=accent, width=2)
+    d.text((rx + rw / 2, cy - 8), "agent", font=font(25, True), fill=(18, 22, 30), anchor="mm")
+    d.text((rx + rw / 2, cy + 24), "root", font=font(16), fill=mix((18, 22, 30), accent, 0.55), anchor="mm")
+
+    # the pipe and its gates
+    x0, x1 = lx + lw + 8, rx - 8
+    d.line((x0, cy, x1, cy), fill=mix(BG_TOP, accent, 0.55), width=5)
+    for i in range(3):
+        gx = x0 + (x1 - x0) * (0.24 + i * 0.26)
+        d.line((gx, cy - 15, gx, cy + 15), fill=WHITE, width=4)
+        r = 13
+        d.ellipse((gx - r, cy - 34 - r, gx + r, cy - 34 + r), fill=accent)
+        d.text((gx, cy - 34), str(i + 1), font=font(16, True), fill=(16, 20, 28), anchor="mm")
+
+    d.text((x + 20, cy + 90), "① 0600   ② peer uid   ③ 只 accept 一次",
+           font=font(15), fill=mix(BODY, accent, 0.35))
+    d.text((x + 20, y + h - 6), tag, font=font(16), fill=FAINT)
+
+
+def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=(11, 16, 26),
+                        outline=mix(BG_TOP, accent, 0.4), width=2)
+    d.line((x, y + 36, x + w, y + 36), fill=mix(BG_TOP, accent, 0.28), width=2)
+    d.text((x + 18, y + 9), "intervention.py", font=font(15), fill=FAINT)
+    mono = ImageFont.truetype(r"C:\Windows\Fonts\consola.ttf", 17)
+    cy = y + 52
+    for text, kind in code:
+        col = accent if kind == "hot" else (WHITE if kind == "code" else FAINT)
+        d.text((x + 22, cy), text, font=mono, fill=col)
+        cy += 30
+
+    gx, gy, gw, gh = gpu_box
+    mx = x + w / 2
+    d.line((mx, y + h + 4, mx, gy - 6), fill=accent, width=3)
+    d.polygon([(mx, gy - 2), (mx - 8, gy - 16), (mx + 8, gy - 16)], fill=accent)
+    d.text((mx + 16, y + h + 14), "排队到远程执行", font=font(16), fill=FAINT)
+
+    d.rounded_rectangle((gx, gy, gx + gw, gy + gh), radius=12, fill=tint(accent, 0.14),
+                        outline=accent, width=2)
+    d.text((gx + gw / 2, gy + gh * 0.36), gpu_title, font=font(30, True), fill=WHITE, anchor="mm")
+    d.text((gx + gw / 2, gy + gh * 0.72), gpu_sub, font=font(17), fill=mix(DIM, accent, 0.55), anchor="mm")
+
+
+def motif_duplex(d, box, accent, tag):
+    """One mixed track forks into two tracks that take turns."""
+    x, y, w, h = box
+    cy = y + h * 0.50
+    y1, y2 = y + h * 0.34, y + h * 0.70
+
+    # the single mixed track
+    bw, gap = 9, 7
+    for i, v in enumerate([0.34, 0.62, 0.44, 0.82, 0.52, 0.70, 0.30]):
+        bx = x + i * (bw + gap)
+        bh = v * h * 0.17
+        col = accent if i % 2 else mix(BG_TOP, accent, 0.55)
+        d.rounded_rectangle((bx, cy - bh, bx + bw, cy + bh), radius=3, fill=col)
+    d.text((x, cy + h * 0.21), "1 路混合", font=font(16), fill=DIM)
+
+    # the fork
+    fork = mix(BG_TOP, accent, 0.62)
+    d.line((x + w * 0.28, cy, x + w * 0.35, cy), fill=fork, width=4)
+    d.line((x + w * 0.35, cy, x + w * 0.44, y1), fill=fork, width=4)
+    d.line((x + w * 0.35, cy, x + w * 0.44, y2), fill=fork, width=4)
+    d.text((x + w * 0.285, cy + 24), "分离", font=font(15), fill=mix(DIM, accent, 0.6))
+
+    # two aligned tracks: whoever is not talking leaves a gap
+    user_on = [1, 1, 1, 0, 1, 1, 1, 0]
+    model_on = [0, 1, 1, 1, 0, 0, 1, 1]
+    cx0, step, bwidth = x + w * 0.46, 36, 20
+    heights = [26, 44, 30, 40, 34, 46, 24, 32]
+    for i in range(len(user_on)):
+        bx = cx0 + i * step
+        if user_on[i]:
+            d.rounded_rectangle((bx, y1 - heights[i], bx + bwidth, y1 + heights[i]),
+                                radius=3, fill=accent)
+        if model_on[i]:
+            d.rounded_rectangle((bx, y2 - heights[i], bx + bwidth, y2 + heights[i]),
+                                radius=3, fill=mix(BG_TOP, accent, 0.55))
+
+    d.text((cx0, y1 - 62), "用户流", font=font(15), fill=mix(DIM, accent, 0.55))
+    d.text((cx0, y2 + 52), "模型流", font=font(15), fill=mix(DIM, accent, 0.40))
+    d.text((cx0, y2 + 82), "同一帧号对齐 · 每格 133 ms", font=font(14), fill=FAINT)
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
+def motif_inverse(d, box, accent, tag):
+    """A state, its changed self, and the arrow that brings it back."""
+    x, y, w, h = box
+    cy = y + h * 0.52
+    bw, bh = 152, 118
+    lx, rx = x + w * 0.03, x + w * 0.97 - bw
+
+    d.rounded_rectangle((lx, cy - bh / 2, lx + bw, cy + bh / 2), radius=14,
+                        fill=(14, 19, 30), outline=mix(BG_TOP, accent, 0.5), width=2)
+    d.text((lx + bw / 2, cy - 8), "doc", font=font(26, True), fill=DIM, anchor="mm")
+    d.text((lx + bw / 2, cy + 24), "旧", font=font(17), fill=FAINT, anchor="mm")
+
+    d.rounded_rectangle((rx, cy - bh / 2, rx + bw, cy + bh / 2), radius=14,
+                        fill=tint(accent, 0.28), outline=accent, width=3)
+    d.text((rx + bw / 2, cy - 8), "doc'", font=font(26, True), fill=WHITE, anchor="mm")
+    d.text((rx + bw / 2, cy + 24), "新", font=font(17), fill=mix(DIM, accent, 0.7), anchor="mm")
+
+    x0, x1 = lx + bw + 16, rx - 16
+    mid = (x0 + x1) / 2
+    # forward
+    d.line((x0, cy - 34, mid - 14, cy - 34), fill=accent, width=4)
+    d.line((mid + 14, cy - 34, x1, cy - 34), fill=accent, width=4)
+    arrow(d, (mid - 14, cy - 34), (mid + 14, cy - 34), color=accent, width=4, head=15)
+    d.text((mid, cy - 56), "apply", font=font(16), fill=mix(DIM, accent, 0.6), anchor="mm")
+    # and back
+    d.line((x1, cy + 34, mid + 14, cy + 34), fill=mix(BG_TOP, accent, 0.45), width=4)
+    d.line((mid - 14, cy + 34, x0, cy + 34), fill=mix(BG_TOP, accent, 0.45), width=4)
+    arrow(d, (mid + 14, cy + 34), (mid - 14, cy + 34), color=mix(BG_TOP, accent, 0.45), width=4, head=15)
+    d.text((mid, cy + 58), "返回的逆", font=font(15), fill=FAINT, anchor="mm")
+
+    # the stack underneath
+    sy = cy + bh / 2 + 34
+    for i in range(3):
+        wid = 210 - i * 26
+        d.rounded_rectangle((x + w * 0.5 - wid / 2, sy + i * 13, x + w * 0.5 + wid / 2, sy + i * 13 + 8),
+                            radius=4, fill=tint(accent, 0.55 - i * 0.14))
+    d.text((x + w * 0.5, sy + 56), "undo 栈", font=font(15), fill=FAINT, anchor="ma")
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
+# ------------------------------------------------------------------ cards
+def motif_grades(d, box, accent, tag):
+    """A support matrix where a third of the cells are holes, not fills."""
+    x, y, w, h = box
+    cols, rows = 8, 6
+    gap = 10
+    cell = min((w - gap * (cols - 1)) / cols, (h - gap * (rows - 1)) / rows)
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + (h - gh) / 2
+    for r in range(rows):
+        for c in range(cols):
+            v = GRADES[r][c]
+            cx = x0 + c * (cell + gap)
+            cy = y0 + r * (cell + gap)
+            if v == 0:
+                # a hole, not a filled cell: the column decides not to support it
+                d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=4,
+                                    fill=(14, 19, 30),
+                                    outline=mix(BG_TOP, accent, 0.30), width=2)
+            else:
+                d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=4,
+                                    fill=mix(MID, accent, v),
+                                    outline=mix(BG_TOP, accent, 0.18 + 0.5 * v), width=1)
+    d.text((x, y + h + 14), tag, font=font(17), fill=FAINT)
+
+
+def motif_helix(d, box, accent, tag):
+    """Two strands wound around each other — the name, drawn."""
+    x, y, w, h = box
+    cy = y + h * 0.44
+    amp = h * 0.27
+    n = 240
+    a_pts, b_pts = [], []
+    for i in range(n + 1):
+        t = i / n
+        px = x + w * t
+        phase = math.sin(2 * math.pi * (t * 1.55) - 0.4)
+        a_pts.append((px, cy - amp * phase))
+        b_pts.append((px, cy + amp * phase))
+
+    # rungs sit under the strands
+    for k in range(1, 11):
+        i = int((k / 11) * n)
+        (ax, ay), (bx, by) = a_pts[i], b_pts[i]
+        wide = abs(ay - by) > amp * 1.2
+        d.line((ax, ay, bx, by), fill=accent if wide else tint(accent, 0.45),
+               width=4 if wide else 3)
+
+    d.line(a_pts, fill=accent, width=7, joint="curve")
+    d.line(b_pts, fill=mix(BG_TOP, accent, 0.45), width=7, joint="curve")
+
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
+def motif_tiers(d, box, accent, tag):
+    """Three residency tiers, each labelled with the decode speed it buys."""
+    x, y, w, h = box
+    bands = [("VRAM", "最热专家 + dense 链", "9.0–9.2", 1.0, 7),
+             ("RAM", "dense 常驻 + LRU 命中", "1.83", 0.42, 6),
+             ("NVMe", "冷专家，按需 pread", "0.05–0.1", 0.12, 13)]
+    bh, gap, bw = 104, 26, w * 0.70
+    for i, (name, what, speed, lit, cells) in enumerate(bands):
+        by = y + i * (bh + gap)
+        d.rounded_rectangle((x, by, x + bw, by + bh), radius=12,
+                            fill=tint(accent, 0.06 + 0.30 * lit) if lit > 0.2 else (12, 17, 27),
+                            outline=mix(BG_TOP, accent, 0.18 + 0.60 * lit), width=2)
+        d.text((x + 18, by + 11), name, font=font(22, True),
+               fill=WHITE if lit > 0.5 else mix(BODY, BG_TOP, 0.45))
+        d.text((x + 18, by + 43), what, font=font(15), fill=DIM)
+        cw, cgap = 17, 7
+        for c in range(cells):
+            cx = x + 18 + c * (cw + cgap)
+            if cx + cw > x + bw - 14:
+                break
+            on = (c % 2 == 0) if lit > 0.2 else (c % 4 == 0)
+            d.rounded_rectangle((cx, by + bh - 31, cx + cw, by + bh - 14), radius=3,
+                                fill=mix(accent, MID, 0.25) if on else tint(accent, 0.12))
+        d.text((x + w * 0.74, by + bh / 2), speed, font=font(24, True),
+               fill=mix(accent, WHITE, 0.2) if lit > 0.2 else FAINT, anchor="lm")
+
+    d.text((x + w * 0.74, y - 32), "tok/s", font=font(15), fill=FAINT)
+    d.text((x, y + 3 * (bh + gap) + 4), tag, font=font(16), fill=FAINT)
+
+
+def motif_evidence(d, box, accent, tag):
+    """A source document with three pieces of evidence inserted into the prose."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.07),
+                        outline=mix(BG_TOP, accent, 0.34), width=2)
+    d.text((x + 24, y + 16), "被改写的那一份来源", font=font(18), fill=mix(DIM, accent, 0.5))
+    d.line((x + 24, y + 48, x + w - 24, y + 48), fill=mix(BG_TOP, accent, 0.22), width=2)
+
+    widths = [0.40, 0.24, 0.40, 0.18, 0.58]
+    chips = {0: "“据 2024 年行业报告”", 1: "62%", 2: "[来源 3]"}
+    for i, wf in enumerate(widths):
+        ly = y + 86 + i * 44
+        bar_end = x + 26 + (w - 52) * wf
+        d.rounded_rectangle((x + 26, ly, bar_end, ly + 11), radius=5,
+                            fill=(44, 56, 76))
+        if i in chips:
+            txt = chips[i]
+            f = font(17)
+            tw = d.textlength(txt, font=f)
+            d.rounded_rectangle((bar_end + 10, ly - 9, bar_end + 26 + tw, ly + 22), radius=6,
+                                fill=tint(accent, 0.45), outline=accent, width=2)
+            d.text((bar_end + 18, ly - 4), txt, font=f, fill=WHITE)
+    d.text((x, y + h + 12), tag, font=font(17), fill=FAINT)
+
+
+def band_shares(d, x0, x1, y, accent):
+    """Five sources splitting one answer; the third one grew."""
+    shares = [19.3, 19.3, 27.2, 17.1, 17.1]
+    gap = 10
+    avail = (x1 - x0) - gap * (len(shares) - 1)
+    cx = x0
+    for i, v in enumerate(shares):
+        bw = avail * v / sum(shares)
+        hot = i == 2
+        d.rounded_rectangle((cx, y, cx + bw, y + 34), radius=6,
+                            fill=tint(accent, 0.45 if hot else 0.10),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.26), width=2)
+        d.text((cx + 12, y + 6), f"{v:.1f}", font=font(18), fill=WHITE if hot else FAINT)
+        cx += bw + gap
+
+
+def build(slug, out_dir):
+    A = CARDS[slug]
+    accent = A["color"]
+    img, d = canvas(A["glow"], accent, A.get("glow_r", 430), A.get("strength", 0.32))
+
+    if slug == "saelens":
+        head(d, accent, "Decode Research / MIT / v6",
+             "SAELens", "重建误差不告诉你特征对不对",
+             (M, 138), 112, (M, 320), 560)
+        motif_grid(d, (690, 112, 430, 320), accent, cols=13, rows=9,
+                   lit=[12, 25, 38, 41, 57, 70, 83, 96, 104, 21, 64, 88],
+                   ring=(3, 4), tag="1 / 16384")
+        d.text((694, 460), "2304 维激活 到 16384 个稀疏方向", font=font(21), fill=DIM)
+        d.text((694, 494), "重建误差降下去，不代表特征为真", font=font(21), fill=mix(DIM, accent, 0.6))
+
+    elif slug == "tokeneconomizer":
+        head(d, accent, "Microsoft Research / UC Berkeley / Apache 2.0",
+             "TokenEconomizer", "成本按仓库累积，不按任务计价",
+             (M, 124), 84, (M, 244), 700)
+        motif_area(d, (M, 348, W - 2 * M, 146), accent,
+                   [0.02, 0.03, 0.05, 0.07, 0.13, 0.21, 0.46, 0.72, 0.86, 0.94],
+                   "同一个仓库 / 12 个任务 / 一份预算", "累计成本", "任务")
+        d.text((W - M, 250), "失败的 32% 也在计费", font=font(22),
+               fill=mix(DIM, accent, 0.6), anchor="ra")
+
+    elif slug == "transformer-explainer":
+        motif_browser(d, (M, 112, 496, 392), accent,
+                      ["The", "cat", "sat", "on", "the", "mat"],
+                      [(0, 0.32, 168), (1, 0.6, 120), (3, 0.95, 66)],
+                      "softmax 到下一个 token")
+        head(d, accent, "Georgia Tech / ONNX Runtime Web",
+             "Transformer\nExplainer", "把 GPT-2 塞进浏览器，让模型边算边解释自己",
+             (W - M, 146), 80, (W - M, 350), 420, align="right", thesis_size=27)
+        d.text((W - M, 500), "Svelte / D3", font=font(21), fill=mix(DIM, accent, 0.6), anchor="ra")
+
+    elif slug == "boubou":
+        head(d, accent, "Local Voice AI Runtime / Rust / MIT",
+             "Boubou", "本地语音模型变成全屋可调用的服务",
+             (M, 146), 112, (M, 326), 520)
+        motif_rings(d, 930, 262, accent, "一台机器，全屋可调用", "barge-in / QR + 密钥 / MIT")
+
+    elif slug == "hy-mt2":
+        head(d, accent, "Tencent Hunyuan / 1T tokens / 33 languages",
+             "Hy-MT2", "把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+             (M, 138), 104, (M, 296), 420)
+        motif_tree(d, (500, 104, 628, 388), accent, "1 个 1.25-bit 模型",
+                   "EN / ZH / JA / 33 种语言，一支语料路由")
+        d.text((M, 462), "Chimera Teacher / 在线蒸馏 / 家族 GRPO", font=font(20), fill=DIM)
+
+    elif slug == "gpt2-forward":
+        motif_layers(d, (M, 104, 136, 400), accent, 12, (322, 132, 226, 310))
+        head(d, accent, "GPT-2 small / 12 layers / 124M",
+             "GPT-2", "一条 768 维向量，被改写 12 次",
+             (W - M, 186), 132, (W - M, 356), 430, align="right")
+        d.text((W - M, 466), "残差流 / Hook / 干预", font=font(21), fill=mix(DIM, accent, 0.6), anchor="ra")
+
+    elif slug == "ohmygame":
+        head(d, accent, "Agent / Game Studio / Playwright",
+             "OhMyGame", "AI 写游戏不难，难的是让它自己发现游戏跑不起来",
+             (M, 138), 86, (M, 282), 470)
+        motif_game(d, (620, 104, 508, 380), accent, "canary: 控制台 / 截图 / 重跑")
+
+    elif slug == "nnsight":
+        head(d, accent, "Harvard NLP / NDIF",
+             "NNsight", "干预写进前向传播，同一段代码跑 405B",
+             (M, 138), 112, (M, 320), 460)
+        motif_code(d, (600, 96, 528, 206), accent,
+                   [("with model.trace():", "hot"),
+                    ("    x = model.layers[6].output", "code"),
+                    ("    x.save()", "dim"),
+                    ("    x[:] = x + v", "hot"),
+                    ("    logits = model.lm_head(x)", "code")],
+                   (664, 356, 464, 152), "405B", "一次 forward，介入在执行时注入")
+
+    elif slug == "blender-kiln":
+        head(d, accent, "Claude Code / Blender MCP / MIT",
+             "Blender\nKiln", "干活的不是 3D 引擎，是一套能被量出来的流程",
+             (M, 128), 88, (M, 364), 500)
+        motif_sheet(d, (686, 104, 442, 408), accent, "每轮换一个人来读")
+
+    elif slug == "yogurt":
+        head(d, accent, "Frigade / MIT / Electron 44 / whisper.cpp",
+             "Yogurt", "本地优先不是一句承诺，是一组能被算出来的预算",
+             (M, 138), 112, (M, 316), 470)
+        motif_audio(d, (620, 112, 512, 372), accent, "两路音频 · 一个权限口 · 一份纪要")
+        d.text((M, 434), "0.5 RTF · 15 tok/s · 0o600", font=font(21), fill=mix(DIM, accent, 0.7))
+
+    elif slug == "wsr":
+        head(d, accent, "Poindexter Labs / alphaXiv / Apache-2.0",
+             "WSR", "权重确实多给了 15 个点，也让它更敢说「变了」",
+             (M, 138), 124, (M, 330), 450)
+        motif_matrix(d, (600, 104, 540, 396), accent, "只读张量 · 0 次前向 · 猜 up / down / same")
+        d.text((M, 470), "0.730 vs 0.578 · 53–88% 误报", font=font(21), fill=mix(DIM, accent, 0.7))
+
+    elif slug == "airgorah":
+        head(d, accent, "Rust / GTK4 / Polkit / Linux",
+             "Airgorah", "把 root 赶出 GUI 之后，每个参数都得重新验一遍",
+             (M, 138), 108, (M, 316), 470)
+        motif_boundary(d, (600, 122, 540, 340), accent, "16 个请求 · 1 个客户端 · 0600")
+        d.text((M, 452), "id 1000 → socket → root", font=font(21), fill=mix(DIM, accent, 0.7))
+
+    elif slug == "haru":
+        head(d, accent, "higurashi-ai / Apache 2.0 / 40M hours",
+             "Haru-4B", "全双工的瓶颈不在架构，在没人录得下双声道对话",
+             (M, 146), 106, (M, 322), 480)
+        motif_duplex(d, (600, 112, 540, 356), accent, "13M 小时分离对话 · 7.5 Hz · 65 ms")
+
+    elif slug == "desigma":
+        head(d, accent, "Rust / MIT OR Apache-2.0 / 1,600+ tests",
+             "Desigma", "撤销不是功能，是编辑原语自己算出来的",
+             (M, 146), 106, (M, 322), 480)
+        motif_inverse(d, (600, 112, 540, 356), accent, "Command::apply → 逆命令 · 同一个 undo 栈")
+
+    elif slug == "mnn":
+        head(d, accent, "Alibaba / Apache 2.0 / MNN 3.6.2",
+             "MNN", "端侧推理引擎真正的产品，是一张敢给自己标 C 的支持矩阵",
+             (M, 150), 124, (M, 322), 470)
+        motif_grades(d, (610, 118, 500, 336), accent,
+                     "18 行（CPU 8 · GPU 4 · NPU 6）× 4 种精度，C 格是空的")
+        d.text((M, 452), "Prefill 3542.91 tok/s · Decode 111.89 → 233.98",
+               font=font(20), fill=mix(DIM, accent, 0.65))
+        d.text((M, 492), "iPhone 18 Pro 上 173 MB / 350 tok/s", font=font(20), fill=DIM)
+
+    elif slug == "helixharness":
+        head(d, accent, "didi / Apache 2.0 / 9 commands / 1.0.0",
+             "Helix\nHarness", "两份契约：读什么由 index 决定，改得对不对由冻结版本决定",
+             (M, 128), 88, (M, 358), 470)
+        motif_helix(d, (600, 120, 540, 320), accent, "账本默认关闭 · 平台截图是合成数据")
+
+    elif slug == "colibri":
+        head(d, accent, "Apache 2.0 / 13 engines / GLM-5.2",
+             "colibri", "权重住在哪一层，只准改速度，不准改模型",
+             (M, 146), 112, (M, 322), 430)
+        motif_tiers(d, (600, 138, 540, 386), accent, "同一份 int4 权重 · 184×")
+
+    elif slug == "geo":
+        head(d, accent, "arXiv 2311.09735 / KDD 2024",
+             "GEO", "", (M, 138), 118, (M, 300), 470)
+        d.text((M, 302), "论文里最有效的三种写法，", font=font(28), fill=BODY)
+        d.text((M, 342), "官方提示词都允许编造", font=font(28), fill=BODY)
+        motif_evidence(d, (640, 100, 488, 300), accent, "插入的不是信息，是可被指认的碎片")
+        d.text((M, 456), "一条答案的份额总和是 1.0，均分 20", font=font(20), fill=DIM)
+        d.text((W - M, 456), "引用语句 +40.9%", font=font(20),
+               fill=mix(DIM, accent, 0.7), anchor="ra")
+        band_shares(d, M, W - M, 486, accent)
+
+    domain(d)
+    path = os.path.join(out_dir, A["file"])
+    img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
+    return path
+
+
+CARDS = {
+    "saelens": dict(file="saelens-sparse-autoencoder-instrument.jpg", color=(198, 112, 228),
+                    glow=(880, 240), glow_r=380, strength=0.30),
+    "tokeneconomizer": dict(file="tokeneconomizer-experience-driven-cost-control.jpg",
+                            color=(232, 164, 62), glow=(740, 420), glow_r=470, strength=0.24),
+    "transformer-explainer": dict(file="transformer-explainer.jpg", color=(84, 158, 238),
+                                  glow=(300, 300), glow_r=420, strength=0.28),
+    "boubou": dict(file="boubou-local-voice-runtime.jpg", color=(72, 198, 158),
+                   glow=(930, 262), glow_r=420, strength=0.30),
+    "hy-mt2": dict(file="hy-mt2-family-centric-post-training.jpg", color=(140, 128, 240),
+                   glow=(800, 300), glow_r=430, strength=0.30),
+    "gpt2-forward": dict(file="gpt2-forward-pass-intervention.jpg", color=(72, 198, 216),
+                         glow=(380, 300), glow_r=400, strength=0.26),
+    "ohmygame": dict(file="ohmygame-agent-game-studio.jpg", color=(178, 208, 78),
+                     glow=(870, 300), glow_r=420, strength=0.24),
+    "nnsight": dict(file="nnsight-deferred-intervention.jpg", color=(232, 112, 104),
+                    glow=(860, 300), glow_r=420, strength=0.26),
+    "blender-kiln": dict(file="blender-kiln-3d-asset-pipeline.jpg", color=(204, 74, 72),
+                         glow=(900, 300), glow_r=430, strength=0.26),
+    "yogurt": dict(file="yogurt-local-meeting-notes.jpg", color=(212, 170, 92),
+                   glow=(886, 300), glow_r=440, strength=0.26),
+    "wsr": dict(file="wsr-weight-space-reading.jpg", color=(216, 138, 168),
+                glow=(880, 300), glow_r=440, strength=0.26),
+    "airgorah": dict(file="airgorah-privilege-boundary.jpg", color=(64, 152, 172),
+                     glow=(880, 300), glow_r=440, strength=0.26),
+    "haru": dict(file="haru-4b-full-duplex.jpg", color=(94, 122, 236),
+                 glow=(900, 300), glow_r=440, strength=0.28),
+    "desigma": dict(file="desigma-command-inverse.jpg", color=(200, 106, 62),
+                    glow=(900, 300), glow_r=440, strength=0.28),
+    "mnn": dict(file="mnn-backend-precision-matrix.jpg", color=(176, 138, 72),
+                glow=(900, 300), glow_r=440, strength=0.30),
+    "helixharness": dict(file="helixharness-harness-contracts.jpg", color=(36, 158, 108),
+                         glow=(880, 300), glow_r=440, strength=0.28),
+    "colibri": dict(file="colibri-tiered-expert-placement.jpg", color=(146, 96, 196),
+                    glow=(880, 300), glow_r=440, strength=0.30),
+    "geo": dict(file="geo-generative-engine-optimization.jpg", color=(232, 190, 62),
+                glow=(900, 280), glow_r=450, strength=0.28),
+}
+
+if __name__ == "__main__":
+    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.getcwd(), "_covers")
+    os.makedirs(out, exist_ok=True)
+    for s in CARDS:
+        print("wrote", build(s, out))
+
+
+
+
