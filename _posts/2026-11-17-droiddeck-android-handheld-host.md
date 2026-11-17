@@ -27,7 +27,7 @@ og_image: /assets/img/blog/droiddeck-android-handheld-host.jpg
 
 **20,543。**这是本文写作时（2026-11-17）的 star 数。仓库建于 2026-09-24，也就是说这些星是八周内涨起来的。
 
-**195,108。**0.7.1 主 APK 的下载次数，发布八天。APK 本身 92.1 MB，同版本还有三个换了包名的构建（PUBG、安兔兔、鲁大师），各自还有几千次下载。
+**195,108。**0.7.1 主 APK 的下载次数，发布七天。APK 本身 92.1 MB，同版本还有三个换了包名的构建（PUBG、安兔兔、鲁大师），各自还有几千次下载。
 
 **1.7 µs。**0.6.7 之后，Wine 两个线程之间一次 event ping-pong 的往返成本。动手之前是 24–29 µs。
 
@@ -37,17 +37,17 @@ og_image: /assets/img/blog/droiddeck-android-handheld-host.jpg
 
 大部分介绍会把它写成「Wine + Proton 的游戏模拟器」。这个说法把主次搞反了。按代码归属摊开看：
 
-| 层                   | 是谁的代码                        | DroidDeck 做了什么                     |
-| -------------------- | --------------------------------- | -------------------------------------- |
+| 层                   | 是谁的代码                        | DroidDeck 做了什么                       |
+| -------------------- | --------------------------------- | ---------------------------------------- |
 | Android 启动器与会话 | 自己的 Kotlin / Compose           | 十英尺界面、会话守护、输入路由、驱动选择 |
-| Linux 用户空间       | Ubuntu 26.04 + Kubuntu Plasma     | 打包、裁剪、注入 shim                  |
-| 系统调用边界         | PRoot                             | 18 个补丁 + 一个 `libblfastpath.so`    |
-| x86-64 指令          | FEX-Emu（MIT）                    | 自己的构建、TSO 行为、AppImage 启动链  |
-| Windows API          | Wine（经 DroidDeck-Proton）       | 跟着 GE-Proton11-12 走，补 ARM64 的坑  |
-| 图形翻译             | DXVK / VKD3D-Proton / Zink        | 编成 ARM64X，按 GPU 选版本             |
-| GPU 驱动             | Mesa / Turnip / RADV              | DD-Turnip 分支、MaliBridge、补丁       |
-| 合成与帧控           | gamescope（BSD-2）                | 帧率上限、亮度音量接管、焦点           |
-| 商店后端             | Legendary / gogdl / nexus-backend | 挑着用，挑不动的自己写                 |
+| Linux 用户空间       | Ubuntu 26.04 + Kubuntu Plasma     | 打包、裁剪、注入 shim                    |
+| 系统调用边界         | PRoot                             | 18 个补丁 + 一个 `libblfastpath.so`      |
+| x86-64 指令          | FEX-Emu（MIT）                    | 自己的构建、TSO 行为、AppImage 启动链    |
+| Windows API          | Wine（经 DroidDeck-Proton）       | 跟着 GE-Proton11-12 走，补 ARM64 的坑    |
+| 图形翻译             | DXVK / VKD3D-Proton / Zink        | 编成 ARM64X，按 GPU 选版本               |
+| GPU 驱动             | Mesa / Turnip / RADV              | DD-Turnip 分支、MaliBridge、补丁         |
+| 合成与帧控           | gamescope（BSD-2）                | 帧率上限、亮度音量接管、焦点             |
+| 商店后端             | Legendary / gogdl / nexus-backend | 挑着用，挑不动的自己写                   |
 
 真正属于「模拟器」的那一格，几乎全是别人的。项目自己在写的是**宿主**：一台 Android 手机上本来不存在的、SteamOS 有的那些系统服务。
 
@@ -80,6 +80,8 @@ DroidDeck 维护了 18 个 PRoot 补丁，外加一个 `libblfastpath.so`：libc
 结论是「不换」：
 
 > proroot 不是替换 proot 的模板。它没有 tracer 可以兜底，漏掉一个调用点、或者遇到一个没见过的 glibc，就会静默地破坏隔离或正确性。它对 DroidDeck 的价值，是作为 proot **前面**的一条快路径。
+>
+> ——译自 `docs/development/proroot-analysis.md`
 
 我很少在项目文档里看到这么干脆的「我们评估过，不采用，理由是」。同一份文档里还给出了具体做法：在自己的 `libblfastpath.so` 构造器里 patch glibc 的 svc 站点，把快路径的覆盖面从 libc 包装推进到 glibc 内部。
 
@@ -114,12 +116,12 @@ Steam 客户端本身**不是**跑在 Proton 里的。DroidDeck 默认安装的�
 
 通道逻辑里也能看出这套东西有多脆：
 
-| 情况                                       | 行为                                            |
-| ------------------------------------------ | ----------------------------------------------- |
-| 默认                                       | `steamdeck_publicbeta`（清单 `..._linuxarm64`） |
-| 客户端连续两次启动后没显示出来             | 触发修复；再两次，自动退到 `steamdeck_stable`   |
-| beta 清单里没有 arm64 组件                 | 安装日志列出清单的块名，退到 stable             |
-| stable 也没了                              | 只剩 x86-64 客户端走 FEX                        |
+| 情况                           | 行为                                            |
+| ------------------------------ | ----------------------------------------------- |
+| 默认                           | `steamdeck_publicbeta`（清单 `..._linuxarm64`） |
+| 客户端连续两次启动后没显示出来 | 触发修复；再两次，自动退到 `steamdeck_stable`   |
+| beta 清单里没有 arm64 组件     | 安装日志列出清单的块名，退到 stable             |
+| stable 也没了                  | 只剩 x86-64 客户端走 FEX                        |
 
 还有一个只有在这种环境里才会遇到的问题：Valve 2026-10-15 的 beta 把 x86 客户端塞进了 Steam Runtime 容器（pressure-vessel），而那个容器需要非特权的 user/mount namespace 和一个 D-Bus session bus——Android 应用两样都没有。于是有了 `STEAM_STEAMRT_RECURSION_GUARD`（告诉客户端它已经在容器里，别再自己套一层）和一个 `droiddeck-steamrt-shim`：逐文件链接 Valve 的运行时，把 `steam-runtime-check-requirements` 换成 `exit 0`。
 
@@ -137,13 +139,13 @@ _六个格子里只有一个状态是「默认」。_
 
 **DXVK 和 VKD3D-Proton 编成了 ARM64X。**这不是性能优化，是正确性要求：Wine 既能跑被 FEX 翻译的 x64 程序，也能跑原生 arm64 的 Windows 程序（比如 `Wow-arm64.exe`）。原生程序加载不了只有 ARM64EC 的 `dxgi.dll`，所以每个 DLL 都得两种都有。项目文档里甚至写了这条规则的例外条件：只有当包里每个 Direct3D 和 DXGI DLL 都是 ARM64X 时，才给 ARM64X 的 Proton 用 `arm64ec` 包。
 
-**Turnip 默认走系统内存。**游戏、Steam 客户端、模拟器和 AppImage/Flatpak/Snap 程序默认带 `TU_DEBUG=sysmem`，也就是 Turnip 的系统内存渲染路径。原因是 tiled 内存在这类设备上不稳。0.7.1 之后模拟器可以拿到「游戏 GPU 设置」，不再被一律按系统内存处理。
+**Turnip 默认走系统内存。**游戏、Steam 客户端、模拟器和 AppImage/Flatpak/Snap 程序默认带 `TU_DEBUG=sysmem`，也就是 Turnip 的系统内存渲染路径。文档只写了默认值和开关，没写原因（我的猜测是 tiled 内存在这类设备上更不稳，但这是推测）。0.7.1 之后模拟器可以拿到「游戏 GPU 设置」，不再被一律按系统内存处理。
 
 **DD-Turnip 是 Turnip 的一个分支。**0.4.0 换到更新的 Mesa，修的是 Adreno 8xx 上间接绘制过早读取参数的问题——现象是 UE5 游戏经 VKD3D-Proton 跑起来地面全黑或阴影过重。
 
 **非 Adreno 是另一套栈。**Mali 走 MaliBridge 加 Venus（把客人的 Vulkan 转发给主机），Xclipse 950/960 用上游 RADV 的一对驱动，PowerVR 用自带 Mesa 加一个补丁（`d55418dae7`，修 Zink 下颜色纹理掉色，0.7.1 修的就是 Pixel 10 Pro 上的灰度画面）。Adreno 6xx 按公开的表格选，DXVK 固定停在 gplasync 2.7.1。
 
-**Adreno 710/720 目前没法选。**README 写得很直白：Adreno 710 不受支持；720 在 0.7.1 里被认出来是「Supported」，但驱动仍然是那对永远走 sysmem 的。
+**Adreno 710 那两档目前没法选。**README 写得很直白：Adreno 710 不受支持；710 和 720 用的那对驱动永远走 sysmem，关不掉。0.6.7 之后 Retroid Pocket Duo 的 Adreno 722 能被认成 Supported，但那是另一档。
 
 至于 D3D12，0.6.7 补上了 feature level 12_1，于是《赛博朋克 2077》能过掉光追初始化，《机械战警：暴戾之城》和 ReSkate 能跑。ReSkate 需要 12_1 这一条，是写在它的 README 里的。
 
@@ -155,16 +157,16 @@ _0.7.0 才开始有 Mali / PowerVR / Xclipse 的初步支持，截图来自官�
 
 DroidDeck 支持 Steam、GOG、Epic、Xbox、EA、Battle.net、itch.io、Game Jolt（0.7.0 加入）。它不是「把八个启动器塞进一个壳」，每个商店的实现策略都不一样，而策略的选择标准很清楚：**能跑厂商自己的客户端就跑，跑不动就把协议重写一遍。**
 
-| 商店       | 策略                                                                   |
-| ---------- | ---------------------------------------------------------------------- |
-| Steam      | 官方客户端，arm64 原生（见上一节）                                     |
-| GOG        | gogdl，支持 depot 增量、修复复用已校验分块、银河格式云存档             |
-| Epic       | Legendary 的一个改造分支；官方 Linux 启动器预览版走 FEX                |
-| Xbox       | nexus-backend 0.2.15（Xodus 分支）+ nexus-runtime 的 Windows 模块      |
-| EA         | 按 EA app 的协议自己实现（GraphQL 查询原样内嵌，因为 EA 按哈希匹配）   |
-| Battle.net | 跑暴雪**真实客户端**，在独立的 Proton prefix 里                        |
-| itch.io    | butler，附带 itch.io 自己编的 7-Zip                                    |
-| Game Jolt  | 和 itch.io 同一套浏览/安装/更新逻辑                                    |
+| 商店       | 策略                                                                 |
+| ---------- | -------------------------------------------------------------------- |
+| Steam      | 官方客户端，arm64 原生（见上一节）                                   |
+| GOG        | gogdl，支持 depot 增量、修复复用已校验分块、银河格式云存档           |
+| Epic       | Legendary 的一个改造分支；官方 Linux 启动器预览版走 FEX              |
+| Xbox       | nexus-backend 0.2.15（Xodus 分支）+ nexus-runtime 的 Windows 模块    |
+| EA         | 按 EA app 的协议自己实现（GraphQL 查询原样内嵌，因为 EA 按哈希匹配） |
+| Battle.net | 跑暴雪**真实客户端**，在独立的 Proton prefix 里                      |
+| itch.io    | butler，附带 itch.io 自己编的 7-Zip                                  |
+| Game Jolt  | 和 itch.io 同一套浏览/安装/更新逻辑                                  |
 
 几个细节值得单独拎出来：
 
@@ -239,7 +241,7 @@ DroidDeck 带一个 `droiddeckctl`，通过 ADB 驱动整台设备：起停会�
 2. **proot 下 Firefox 的沙箱被削弱。**这是架构决定的，不是没修。
 3. **Adreno 710 完全不受支持**，720 只能走固定驱动。买设备前要查表。
 4. **兼容性和性能按机型、驱动、游戏、散热剧烈变化。**README 的原话是「vary by device」。
-5. **Android 14 及以上要关掉「子进程限制」。**这是一个真实的安全妥协，项目给的替代是「Fix it for me」引导按钮。0.6.7 还因为一个无障碍服务把若干银行应用挡在门外，0.7.1 才改成只在你真的打开时才声明。
+5. **Android 14 及以上要关掉「子进程限制」。**这是一个真实的安全妥协，项目给的替代是「Fix it for me」引导按钮。0.6.7 还因为一个无障碍服务把若干银行应用挡在门外，0.6.9 才改成只在你真的打开时才声明。
 6. **它在追一个别人不管的构建。**Valve 不支持 arm64 客户端，随时可能改清单。
 7. **商店协议会变。**EA 的 GraphQL 按哈希匹配、GOG 的登录要过 Cloudflare、Battle.net 有中国区差异——每一条都是长期维护成本。
 8. **仓库还很年轻。**2026-09-24 建仓，本文写作时有 623 个 open issue。0.7.1 本身就是在修 0.7.0 引入的「Processing install script」卡死和无尽加载。
