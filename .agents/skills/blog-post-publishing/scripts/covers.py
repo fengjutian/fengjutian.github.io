@@ -989,6 +989,9 @@ def build(slug, out_dir):
              "DroidDeck", "翻译层会过时，宿主层不会",
              (M, 152), 84, (M, 330), 430)
         motif_seam(d, (620, 176, 508, 294), accent, "1.7 µs 一次事件往返 · 9.5 W → 7.1 W")
+        d.text((M, 424), "18 个 PRoot 补丁 · ntsync · 双屏 · 眼镜", font=font(21), fill=DIM)
+        d.text((M, 462), "195,108 次下载 · 92 MB APK", font=font(21),
+               fill=mix(DIM, accent, 0.65))
 
     domain(d)
     path = os.path.join(out_dir, A["file"])
