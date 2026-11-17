@@ -103,7 +103,7 @@ nav_order: 3
   .knowledge-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 17rem;
-    min-height: 34rem;
+    min-height: 42rem;
     overflow: hidden;
     border: 1px solid var(--global-divider-color);
     border-radius: 0.9rem;
@@ -114,13 +114,48 @@ nav_order: 3
 
   .knowledge-canvas {
     position: relative;
-    min-height: 34rem;
+    min-height: 42rem;
+  }
+
+  .knowledge-canvas-controls {
+    position: absolute;
+    z-index: 2;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--global-divider-color);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--global-bg-color) 92%, transparent);
+    box-shadow: 0 0.25rem 0.9rem color-mix(in srgb, var(--global-text-color) 10%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .knowledge-canvas-controls button {
+    width: 2.3rem;
+    height: 2.3rem;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid var(--global-divider-color);
+    color: var(--global-text-color);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .knowledge-canvas-controls button:last-child {
+    border-right: 0;
+  }
+
+  .knowledge-canvas-controls button:hover,
+  .knowledge-canvas-controls button:focus-visible {
+    color: var(--global-theme-color);
+    background: color-mix(in srgb, var(--global-theme-color) 8%, transparent);
   }
 
   .knowledge-canvas svg {
     display: block;
     width: 100%;
-    height: 34rem;
+    height: 42rem;
     touch-action: none;
   }
 
@@ -128,6 +163,11 @@ nav_order: 3
     stroke: var(--global-divider-color);
     stroke-width: 1.15;
     transition: opacity 160ms ease, stroke 160ms ease;
+  }
+
+  .knowledge-edge.is-hidden {
+    pointer-events: none;
+    opacity: 0;
   }
 
   .knowledge-node {
@@ -150,11 +190,23 @@ nav_order: 3
     stroke-width: 3px;
     stroke-linejoin: round;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .knowledge-node.is-topic text,
+  .knowledge-node.show-label text {
+    opacity: 1;
   }
 
   .knowledge-node.is-topic text {
     font-size: 12px;
     font-weight: 700;
+  }
+
+  .knowledge-node.is-hidden {
+    pointer-events: none;
+    opacity: 0;
   }
 
   .knowledge-node:hover circle,
@@ -440,10 +492,47 @@ nav_order: 3
 
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("aria-label", `${topicNodes.length} 个主题组成的知识关系图`);
+    const viewport = document.createElementNS(svgNS, "g");
     const edgeLayer = document.createElementNS(svgNS, "g");
     const nodeLayer = document.createElementNS(svgNS, "g");
-    svg.append(edgeLayer, nodeLayer);
+    viewport.append(edgeLayer, nodeLayer);
+    svg.append(viewport);
     canvas.append(svg);
+
+    const controls = document.createElement("div");
+    controls.className = "knowledge-canvas-controls";
+    controls.setAttribute("aria-label", "图谱缩放控制");
+    controls.innerHTML = `
+      <button type="button" data-zoom="in" aria-label="放大图谱" title="放大">＋</button>
+      <button type="button" data-zoom="out" aria-label="缩小图谱" title="缩小">−</button>
+      <button type="button" data-zoom="reset" aria-label="适应画布" title="适应画布">⌂</button>`;
+    canvas.append(controls);
+
+    const view = { x: 0, y: 0, scale: 1 };
+    let pan = null;
+
+    function renderViewport() {
+      viewport.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.scale})`);
+    }
+
+    function resetViewport() {
+      view.x = 0;
+      view.y = 0;
+      view.scale = 1;
+      renderViewport();
+    }
+
+    function zoomAt(factor, clientX, clientY) {
+      const rect = svg.getBoundingClientRect();
+      const pointX = ((clientX ?? rect.left + rect.width / 2) - rect.left) * (width / rect.width);
+      const pointY = ((clientY ?? rect.top + rect.height / 2) - rect.top) * (height / rect.height);
+      const nextScale = Math.max(0.65, Math.min(2.5, view.scale * factor));
+      const ratio = nextScale / view.scale;
+      view.x = pointX - (pointX - view.x) * ratio;
+      view.y = pointY - (pointY - view.y) * ratio;
+      view.scale = nextScale;
+      renderViewport();
+    }
 
     const edgeEls = links.map((link) => {
       const line = document.createElementNS(svgNS, "line");
@@ -474,6 +563,8 @@ nav_order: 3
       group.setAttribute("tabindex", "0");
       group.setAttribute("role", "button");
       group.setAttribute("aria-label", `${kindName[node.kind]}：${node.name}`);
+      group.append(document.createElementNS(svgNS, "title"));
+      group.querySelector("title").textContent = node.name;
       group.dataset.id = node.id;
       circle.setAttribute("r", node.radius);
       circle.setAttribute("fill", colorFor(node));
@@ -481,6 +572,9 @@ nav_order: 3
       label.setAttribute("y", "4");
       label.textContent = node.name.length > 18 ? `${node.name.slice(0, 18)}…` : node.name;
       group.append(circle, label);
+      // The layout needs the rendered label width, not only the circle radius.
+      // A conservative fallback keeps the first layout stable while fonts load.
+      node.labelWidth = Math.max(24, label.textContent.length * (node.kind === "topic" ? 12 : 11));
       group.addEventListener("click", () => selectNode(node.id));
       group.addEventListener("pointerenter", () => {
         hoveredId = node.id;
@@ -505,7 +599,7 @@ nav_order: 3
         const point = svg.createSVGPoint();
         point.x = event.clientX;
         point.y = event.clientY;
-        const local = point.matrixTransform(svg.getScreenCTM().inverse());
+        const local = point.matrixTransform(viewport.getScreenCTM().inverse());
         node.x = local.x;
         node.y = local.y;
         node.fixed = true;
@@ -514,6 +608,14 @@ nav_order: 3
       group.addEventListener("pointerup", () => { drag = null; });
       nodeLayer.append(group);
       return { node, group };
+    });
+
+    requestAnimationFrame(() => {
+      nodeEls.forEach(({ node, group }) => {
+        const label = group.querySelector("text");
+        node.labelWidth = Math.ceil(label.getComputedTextLength()) || node.labelWidth;
+      });
+      layout();
     });
 
     topics.forEach((topic) => {
@@ -576,22 +678,25 @@ nav_order: 3
       if (term) matches.forEach((id) => (neighbors.get(id) || []).forEach((neighborId) => searchContext.add(neighborId)));
       let visibleCount = 0;
       nodeEls.forEach(({ node, group }) => {
-        const visible = (!focus || focus.has(node.id)) && (!term || searchContext.has(node.id));
+        const inOverview = !focus && !term;
+        const visible = (inOverview ? node.kind === "topic" : (!focus || focus.has(node.id)) && (!term || searchContext.has(node.id)));
         if (visible) visibleCount += 1;
-        group.classList.toggle("knowledge-muted", !visible);
+        group.classList.toggle("is-hidden", !visible);
+        group.classList.toggle("show-label", node.kind === "topic" || node.id === selectedId || node.id === hoveredId || (term && matches.has(node.id)));
         group.classList.toggle("is-selected", node.id === selectedId);
       });
       edgeEls.forEach(({ link, line }) => {
         const highlighted = selectedId && (link.source === selectedId || link.target === selectedId);
         const hovered = hoveredId && (link.source === hoveredId || link.target === hoveredId);
-        const visible = (!focus || (focus.has(link.source) && focus.has(link.target))) && (!term || (searchContext.has(link.source) && searchContext.has(link.target)));
-        line.classList.toggle("knowledge-muted", !visible);
+        const inOverview = !focus && !term;
+        const visible = !inOverview && (!focus || (focus.has(link.source) && focus.has(link.target))) && (!term || (searchContext.has(link.source) && searchContext.has(link.target)));
+        line.classList.toggle("is-hidden", !visible);
         line.classList.toggle("knowledge-highlight", highlighted || hovered);
       });
       if (term) status.textContent = `找到 ${matches.size} 个结果，显示 ${visibleCount} 个相关节点`;
       else if (activeTopic) status.textContent = `正在查看 ${nodeById.get(activeTopic).name}`;
       else if (selectedId) status.textContent = `正在查看 ${nodeById.get(selectedId).name} 的相邻关系`;
-      else status.textContent = "显示全部内容";
+      else status.textContent = "选择一个主题展开内容";
     }
 
     function escapeHtml(value) {
@@ -603,27 +708,48 @@ nav_order: 3
     function initializePositions() {
       const cx = width / 2;
       const cy = height / 2;
-      const topicRadius = Math.min(width, height) * 0.33;
+      const topicRadiusX = Math.max(110, width * 0.34);
+      const topicRadiusY = Math.max(150, height * 0.34);
       topicNodes.forEach((topic, index) => {
         const node = nodeById.get(topic.id);
         const angle = (Math.PI * 2 * index) / topicNodes.length - Math.PI / 2;
-        node.x = cx + Math.cos(angle) * topicRadius;
-        node.y = cy + Math.sin(angle) * topicRadius;
+        node.x = cx + Math.cos(angle) * topicRadiusX;
+        node.y = cy + Math.sin(angle) * topicRadiusY;
         node.anchorX = node.x;
         node.anchorY = node.y;
       });
-      nodes.filter((node) => node.kind !== "topic").forEach((node, index) => {
+
+      const clusterSizes = new Map();
+      nodes.filter((node) => node.kind !== "topic").forEach((node) => {
         const parentId = [...neighbors.get(node.id)].find((id) => id.startsWith("topic:"));
         const parent = nodeById.get(parentId) || { x: cx, y: cy };
-        const angle = index * 2.39996;
-        const distance = 42 + (index % 4) * 14;
+        const index = clusterSizes.get(parentId) || 0;
+        clusterSizes.set(parentId, index + 1);
+        const angle = index * 2.39996 + Math.atan2(parent.y - cy, parent.x - cx);
+        const distance = 58 + Math.floor(index / 5) * 34 + (index % 5) * 5;
         node.x = parent.x + Math.cos(angle) * distance;
         node.y = parent.y + Math.sin(angle) * distance;
       });
     }
 
+    function labelBounds(node) {
+      return {
+        left: node.x - node.radius - 3,
+        right: node.x + node.radius + 5 + node.labelWidth,
+        top: node.y - Math.max(node.radius, 9) - 3,
+        bottom: node.y + Math.max(node.radius, 9) + 3
+      };
+    }
+
+    function keepInside(node) {
+      const leftExtent = node.radius + 8;
+      const rightExtent = node.radius + 9 + node.labelWidth;
+      node.x = Math.max(leftExtent, Math.min(Math.max(leftExtent, width - rightExtent), node.x));
+      node.y = Math.max(node.radius + 12, Math.min(height - node.radius - 12, node.y));
+    }
+
     function settle() {
-      for (let iteration = 0; iteration < 150; iteration += 1) {
+      for (let iteration = 0; iteration < 240; iteration += 1) {
         nodes.forEach((a, i) => {
           if (a.fixed) return;
           let fx = 0;
@@ -633,12 +759,30 @@ nav_order: 3
             const dx = a.x - b.x || 0.1;
             const dy = a.y - b.y || 0.1;
             const distance2 = Math.max(dx * dx + dy * dy, 100);
-            const force = 190 / distance2;
+            const force = 260 / distance2;
             fx += dx * force;
             fy += dy * force;
             if (!b.fixed) {
               b.x -= dx * force;
               b.y -= dy * force;
+            }
+
+            // Resolve overlapping label rectangles. Moving along the smaller
+            // overlap preserves clusters while preventing rows of stacked text.
+            const boxA = labelBounds(a);
+            const boxB = labelBounds(b);
+            const overlapX = Math.min(boxA.right, boxB.right) - Math.max(boxA.left, boxB.left);
+            const overlapY = Math.min(boxA.bottom, boxB.bottom) - Math.max(boxA.top, boxB.top);
+            if (overlapX > 0 && overlapY > 0) {
+              if (overlapY <= overlapX) {
+                const push = (overlapY + 4) * 0.22 * (a.y <= b.y ? -1 : 1);
+                fy += push;
+                if (!b.fixed) b.y -= push;
+              } else {
+                const push = (overlapX + 6) * 0.12 * (a.x <= b.x ? -1 : 1);
+                fx += push;
+                if (!b.fixed) b.x -= push;
+              }
             }
           }
           links.forEach((link) => {
@@ -661,10 +805,12 @@ nav_order: 3
             fx += (width / 2 - a.x) * 0.0008;
             fy += (height / 2 - a.y) * 0.0008;
           }
-          a.x = Math.max(18, Math.min(width - 18, a.x + fx));
-          a.y = Math.max(18, Math.min(height - 18, a.y + fy));
+          a.x += fx;
+          a.y += fy;
+          keepInside(a);
         });
       }
+      nodes.forEach(keepInside);
       draw();
     }
 
@@ -694,11 +840,37 @@ nav_order: 3
     }
 
     search.addEventListener("input", applyVisibility);
+    svg.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      zoomAt(event.deltaY < 0 ? 1.12 : 1 / 1.12, event.clientX, event.clientY);
+    }, { passive: false });
+    svg.addEventListener("pointerdown", (event) => {
+      if (event.target !== svg) return;
+      pan = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY, x: view.x, y: view.y };
+      svg.setPointerCapture(event.pointerId);
+    });
+    svg.addEventListener("pointermove", (event) => {
+      if (!pan || pan.pointerId !== event.pointerId) return;
+      const rect = svg.getBoundingClientRect();
+      view.x = pan.x + (event.clientX - pan.clientX) * (width / rect.width);
+      view.y = pan.y + (event.clientY - pan.clientY) * (height / rect.height);
+      renderViewport();
+    });
+    svg.addEventListener("pointerup", () => { pan = null; });
+    svg.addEventListener("pointercancel", () => { pan = null; });
+    svg.addEventListener("dblclick", resetViewport);
+    controls.addEventListener("click", (event) => {
+      const action = event.target.closest("button")?.dataset.zoom;
+      if (action === "in") zoomAt(1.2);
+      if (action === "out") zoomAt(1 / 1.2);
+      if (action === "reset") resetViewport();
+    });
     reset.addEventListener("click", () => {
       search.value = "";
       activeTopic = null;
       filters.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", "false"));
       clearSelection();
+      resetViewport();
       layout();
     });
 
@@ -725,5 +897,6 @@ nav_order: 3
       });
     });
     layout();
+    applyVisibility();
   })();
 </script>
