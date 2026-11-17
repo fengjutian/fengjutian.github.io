@@ -617,6 +617,42 @@ def motif_inverse(d, box, accent, tag):
     d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
 
 
+def motif_wall(d, box, accent, tag):
+    """Fifty app tiles on one wall, a handful of them heavy, and a single
+    account bar running underneath all of them."""
+    x, y, w, h = box
+    cols, rows, gap, cell = 10, 5, 8, 44
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + (h - gh - 60) / 2 + 10
+    heavy = {3, 12, 15, 24, 27, 31, 38, 42}
+    for r in range(rows):
+        for c in range(cols):
+            i = r * cols + c
+            cx = x0 + c * (cell + gap)
+            cy = y0 + r * (cell + gap)
+            if i in heavy:
+                fill = mix(MID, accent, 0.55)
+                outline = accent
+                wd = 2
+            else:
+                v = 0.09 + 0.05 * ((i * 7) % 3)
+                fill = mix(BG_TOP, accent, v)
+                outline = mix(BG_TOP, accent, 0.14)
+                wd = 1
+            d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=4,
+                                fill=fill, outline=outline, width=wd)
+
+    bar_y = y0 + gh + 24
+    d.rounded_rectangle((x0, bar_y, x0 + gw, bar_y + 30), radius=8,
+                        fill=tint(accent, 0.30),
+                        outline=mix(BG_TOP, accent, 0.58), width=2)
+    d.text((x0 + 14, bar_y + 6), "1 个账号：文件 · KV · AI", font=font(16),
+           fill=(216, 228, 242))
+    d.text((x, bar_y + 40), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 def motif_grades(d, box, accent, tag):
     """A support matrix where a third of the cells are holes, not fills."""
@@ -993,6 +1029,15 @@ def build(slug, out_dir):
         d.text((M, 462), "195,108 次下载 · 92 MB APK", font=font(21),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "everything":
+        head(d, accent, "HeyPuter / 50 apps / 0 frameworks",
+             "Everything", "50 款软件压成 50 个目录，账号是唯一的公共设施",
+             (M, 152), 88, (M, 306), 430)
+        motif_wall(d, (600, 132, 520, 356), accent, "51 次部署 · 15 个 AGPL")
+        d.text((M, 424), "1,327 MB · 37,424 个文件", font=font(21), fill=DIM)
+        d.text((M, 462), "Excel 到 AutoCAD：每个应用自己写内核", font=font(21),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1040,6 +1085,8 @@ CARDS = {
                    glow=(880, 300), glow_r=440, strength=0.28),
     "droiddeck": dict(file="droiddeck-android-handheld-host.jpg", color=(238, 132, 58),
                       glow=(770, 300), glow_r=450, strength=0.28),
+    "everything": dict(file="everything-monorepo-fifty-apps.jpg", color=(206, 86, 178),
+                       glow=(860, 260), glow_r=440, strength=0.30),
 }
 
 if __name__ == "__main__":
