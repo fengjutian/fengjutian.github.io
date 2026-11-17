@@ -8,17 +8,18 @@ nav_order: 4
 _styles: |
   .post-header { display: none; }
   .prompt-library { --muted: color-mix(in srgb, var(--global-text-color) 62%, transparent); width: calc(100vw - 2rem); max-width: 1780px; min-height: calc(100vh - 8rem); margin: 0 calc(50% - 50vw + 1rem) 2rem; }
-  .prompt-shell { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr); gap: 1.25rem; }
-  .prompt-sidebar { position: sticky; top: 5.5rem; height: calc(100vh - 7rem); padding: 1rem 0.8rem; align-self: start; border-right: 1px solid var(--global-divider-color); }
-  .prompt-brand { display: flex; gap: 0.7rem; align-items: center; margin: 0 0 1.4rem; font-size: 1.05rem; font-weight: 750; }
+  .prompt-shell { display: grid; gap: .65rem; }
+  .prompt-sidebar { position: relative; z-index: 6; display: flex; gap: 1rem; align-items: center; min-width: 0; padding: .8rem 0; border-bottom: 1px solid var(--global-divider-color); }
+  .prompt-brand { display: flex; flex: 0 0 auto; gap: 0.7rem; align-items: center; margin: 0; font-size: 1.05rem; font-weight: 750; }
   .prompt-brand-mark { display: grid; width: 2rem; height: 2rem; place-items: center; color: #fff; background: linear-gradient(135deg, #7c4dff, #ff7a59); border-radius: 0.65rem; }
-  .prompt-search { position: relative; display: block; margin-bottom: 1.25rem; }
+  .prompt-search { position: relative; display: block; flex: 0 1 18rem; margin: 0; }
   .prompt-search i { position: absolute; top: 50%; left: 0.85rem; color: var(--muted); pointer-events: none; transform: translateY(-50%); }
   .prompt-search input { width: 100%; min-height: 2.75rem; padding: 0.58rem 0.8rem 0.58rem 2.45rem; color: var(--global-text-color); background: var(--global-card-bg-color); border: 1px solid var(--global-divider-color); border-radius: 999px; }
   .prompt-search input:focus { border-color: var(--global-theme-color); outline: 3px solid color-mix(in srgb, var(--global-theme-color) 16%, transparent); }
-  .prompt-filter-label { margin: 1.4rem 0 0.5rem; color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-  .prompt-filters { display: grid; gap: 0.22rem; }
-  .prompt-chip { width: 100%; padding: 0.62rem 0.8rem; color: var(--muted); text-align: left; background: transparent; border: 0; border-radius: 0.7rem; cursor: pointer; }
+  .prompt-filter-label { display: none; }
+  .prompt-filters { display: flex; min-width: 0; gap: 0.22rem; overflow-x: auto; scrollbar-width: none; }
+  .prompt-filters::-webkit-scrollbar { display: none; }
+  .prompt-chip { width: auto; padding: 0.62rem 0.8rem; color: var(--muted); text-align: left; white-space: nowrap; background: transparent; border: 0; border-radius: 0.7rem; cursor: pointer; }
   .prompt-chip:hover, .prompt-chip:focus-visible { color: var(--global-text-color); background: color-mix(in srgb, var(--global-text-color) 6%, transparent); }
   .prompt-chip[aria-pressed="true"] { color: var(--global-text-color); font-weight: 700; background: color-mix(in srgb, var(--global-text-color) 9%, transparent); }
   .prompt-main { min-width: 0; }
@@ -52,9 +53,9 @@ _styles: |
   .prompt-empty { margin: 4rem 1rem; color: var(--muted); text-align: center; }
   .prompt-empty[hidden] { display: none; }
   body.prompt-modal-open { overflow: hidden; }
-  .prompt-modal { width: min(68rem, calc(100vw - 2rem)); max-width: none; max-height: calc(100dvh - 2rem); padding: 0; overflow: hidden; color: var(--global-text-color); background: var(--global-bg-color); border: 1px solid var(--global-divider-color); border-radius: 1rem; box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34); }
-  .prompt-modal::backdrop { background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
-  .prompt-modal-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); max-height: calc(100dvh - 2rem); }
+  .prompt-modal { position: fixed; inset: 0; z-index: 1000; display: grid; padding: 1rem; place-items: center; color: var(--global-text-color); background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
+  .prompt-modal[hidden] { display: none; }
+  .prompt-modal-layout { display: grid; width: min(68rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); overflow: hidden; background: var(--global-bg-color); border: 1px solid var(--global-divider-color); border-radius: 1rem; box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34); }
   .prompt-modal-layout--text { grid-template-columns: 1fr; }
   .prompt-modal-visual { min-height: 35rem; background: linear-gradient(145deg, var(--modal-accent, #6945d2), #15131c 72%); }
   .prompt-modal-visual[hidden] { display: none; }
@@ -74,8 +75,8 @@ _styles: |
   .prompt-modal-detail { color: var(--global-text-color); border: 1px solid var(--global-divider-color); }
   .prompt-modal-detail:hover { color: var(--global-theme-color); text-decoration: none; }
   @media (max-width: 1280px) { .prompt-grid { column-count: 3; } }
-  @media (max-width: 960px) { .prompt-library { width: 100%; margin: 0 0 2rem; } .prompt-shell { grid-template-columns: 1fr; } .prompt-sidebar { position: static; height: auto; padding: 0; border-right: 0; } .prompt-brand { display: none; } .prompt-filter-label { margin-top: 0.7rem; } .prompt-filters { display: flex; gap: 0.35rem; overflow-x: auto; } .prompt-chip { width: auto; white-space: nowrap; } .prompt-topbar { top: 3.25rem; } }
-  @media (max-width: 680px) { .prompt-grid { column-count: 2; } .prompt-count { display: none; } .prompt-card-actions { opacity: 1; transform: none; } .prompt-modal { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); } .prompt-modal-layout { display: block; max-height: calc(100dvh - 1rem); overflow-y: auto; } .prompt-modal-visual { min-height: 15rem; height: 34dvh; } .prompt-modal-cover { max-height: none; } .prompt-modal-content { padding: 1.4rem; overflow: visible; } }
+  @media (max-width: 960px) { .prompt-library { width: 100%; margin: 0 0 2rem; } .prompt-sidebar { flex-wrap: wrap; } .prompt-brand { display: none; } .prompt-search { flex-basis: 100%; } .prompt-filters { width: 100%; } .prompt-topbar { top: 3.25rem; } }
+  @media (max-width: 680px) { .prompt-grid { column-count: 2; } .prompt-count { display: none; } .prompt-card-actions { opacity: 1; transform: none; } .prompt-modal { padding: .5rem; } .prompt-modal-layout { display: block; width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); overflow-y: auto; } .prompt-modal-visual { min-height: 15rem; height: 34dvh; } .prompt-modal-cover { max-height: none; } .prompt-modal-content { padding: 1.4rem; overflow: visible; } }
   @media (max-width: 430px) { .prompt-grid { column-count: 1; } }
 ---
 
@@ -124,7 +125,7 @@ _styles: |
   </div>
 </section>
 
-<dialog class="prompt-modal" aria-labelledby="prompt-modal-title">
+<div class="prompt-modal" role="dialog" aria-modal="true" aria-labelledby="prompt-modal-title" hidden>
   <div class="prompt-modal-layout">
     <div class="prompt-modal-visual"><img class="prompt-modal-cover" alt="" /></div>
     <div class="prompt-modal-content">
@@ -141,7 +142,7 @@ _styles: |
       </div>
     </div>
   </div>
-</dialog>
+</div>
 
 <script>
   (() => {
@@ -174,11 +175,13 @@ _styles: |
       modalLayout.classList.toggle("prompt-modal-layout--text", !card.dataset.cover);
       returnFocus = document.activeElement;
       document.body.classList.add("prompt-modal-open");
-      modal.showModal();
+      modal.hidden = false;
       modal.querySelector(".prompt-modal-close").focus();
     }
     function closeModal() {
-      modal.close();
+      modal.hidden = true;
+      document.body.classList.remove("prompt-modal-open");
+      returnFocus?.focus();
     }
     function update() {
       const term = query.value.trim().toLocaleLowerCase();
@@ -217,9 +220,8 @@ _styles: |
     modal.addEventListener("click", (event) => {
       if (event.target === modal) closeModal();
     });
-    modal.addEventListener("close", () => {
-      document.body.classList.remove("prompt-modal-open");
-      returnFocus?.focus();
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !modal.hidden) closeModal();
     });
     modalCopy.addEventListener("click", async () => {
       await navigator.clipboard.writeText(modalPrompt);
