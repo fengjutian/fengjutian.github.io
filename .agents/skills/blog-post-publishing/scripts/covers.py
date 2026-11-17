@@ -891,6 +891,69 @@ def motif_seam(d, box, accent, tag):
     d.text((x, bot_y + gh + 40), tag, font=font(17), fill=mix(DIM, accent, 0.45))
 
 
+def motif_gates(d, box, accent, tag):
+    """A diagram on a 4px grid, one accent node, one node crossed out, and the
+    row of gates that would have caught the rest."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=14, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+    for gx in range(int(x) + 20, int(x + w) - 12, 16):
+        d.line((gx, y + 10, gx, y + h - 10), fill=mix(BG_TOP, accent, 0.12), width=1)
+    for gy in range(int(y) + 20, int(y + h) - 12, 16):
+        d.line((x + 10, gy, x + w - 10, gy), fill=mix(BG_TOP, accent, 0.12), width=1)
+
+    nodes = {
+        "a": (x + 36, y + 36, 100, 44, "网关", False),
+        "b": (x + 196, y + 36, 100, 44, "订单", True),
+        "c": (x + 356, y + 36, 100, 44, "库存", False),
+        "e": (x + 96, y + 136, 100, 44, "队列", False),
+        "f": (x + 256, y + 136, 100, 44, "支付", False),
+        "g": (x + 196, y + 236, 100, 44, "库", False),
+    }
+    for k, (nx, ny, nw, nh, name, hot) in nodes.items():
+        d.rounded_rectangle((nx, ny, nx + nw, ny + nh), radius=8,
+                            fill=accent if hot else (16, 22, 34),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.5), width=2)
+        d.text((nx + nw / 2, ny + nh / 2), name, font=font(20, hot),
+               fill=(18, 22, 30) if hot else (222, 230, 242), anchor="mm")
+
+    # orthogonal, one bend each — the only legal connector
+    for a, b in (("a", "e"), ("b", "f"), ("c", "f"), ("e", "g"), ("f", "g")):
+        ax, ay, aw, ah, _, _ = nodes[a]
+        bx, by, bw, bh, _, _ = nodes[b]
+        mx = ax + aw / 2
+        my = ay + ah + 22
+        d.line((mx, ay + ah, mx, my), fill=mix(BG_TOP, accent, 0.62), width=3)
+        d.line((mx, my, bx + bw / 2, my), fill=mix(BG_TOP, accent, 0.62), width=3)
+        d.line((bx + bw / 2, my, bx + bw / 2, by), fill=mix(BG_TOP, accent, 0.62), width=3)
+        d.polygon([(bx + bw / 2, by), (bx + bw / 2 - 6, by - 10),
+                   (bx + bw / 2 + 6, by - 10)], fill=mix(BG_TOP, accent, 0.62))
+
+    # the node that got deleted
+    gx, gy, gw2, gh2 = x + 398, y + 196, 96, 42
+    for i in range(0, gw2, 8):
+        d.line((gx + i, gy, gx + min(i + 5, gw2), gy), fill=FAINT, width=2)
+        d.line((gx + i, gy + gh2, gx + min(i + 5, gw2), gy + gh2), fill=FAINT, width=2)
+    for i in range(0, gh2, 8):
+        d.line((gx, gy + i, gx, gy + min(i + 5, gh2)), fill=FAINT, width=2)
+        d.line((gx + gw2, gy + i, gx + gw2, gy + min(i + 5, gh2)), fill=FAINT, width=2)
+    d.line((gx + 18, gy + 12, gx + gw2 - 18, gy + gh2 - 12), fill=mix(FAINT, accent, 0.4), width=3)
+    d.line((gx + 18, gy + gh2 - 12, gx + gw2 - 18, gy + 12), fill=mix(FAINT, accent, 0.4), width=3)
+
+    # the gates underneath
+    gates = ["网格", "对比度", "几何", "单文件", "CJK", "导出"]
+    cy = y + h + 22
+    cw = (w - 5 * 10) / 6
+    for i, name in enumerate(gates):
+        cx = x + i * (cw + 10)
+        d.rounded_rectangle((cx, cy, cx + cw, cy + 34), radius=8,
+                            fill=tint(accent, 0.22), outline=mix(BG_TOP, accent, 0.5), width=2)
+        d.line((cx + 12, cy + 17, cx + 17, cy + 23), fill=accent, width=3)
+        d.line((cx + 17, cy + 23, cx + 27, cy + 10), fill=accent, width=3)
+        d.text((cx + 32, cy + 9), name, font=font(15), fill=(214, 224, 240))
+    d.text((x, cy + 44), tag, font=font(16), fill=FAINT)
+
+
 def band_shares(d, x0, x1, y, accent):
     """Five sources splitting one answer; the third one grew."""
     shares = [19.3, 19.3, 27.2, 17.1, 17.1]
@@ -1122,6 +1185,15 @@ def build(slug, out_dir):
         d.text((M, 410), "SS0 0x00000001 → 0x88888888", font=font(21), fill=mix(DIM, accent, 0.85))
         d.text((M, 446), "输出逐位相同，只有速度变了", font=font(21), fill=DIM)
 
+    elif slug == "diagram-design":
+        head(d, accent, "Agent Skill / MIT / 67,720 stars",
+             "Diagram\nDesign", "审美不是提示词，是会失败的检查",
+             (M, 122), 92, (M, 336), 470, thesis_size=27)
+        motif_gates(d, (600, 128, 546, 336), accent, "9 个节点 · 2 个 accent · 4.71:1")
+        d.text((M, 438), "481 KB 参考 · 一次只读 1 KB", font=font(21), fill=DIM)
+        d.text((M, 472), "6 条连线规则 · 38 个 test-verify", font=font(21),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1174,6 +1246,8 @@ CARDS = {
                        glow=(860, 260), glow_r=440, strength=0.30),
     "gpu-unlock": dict(file="gpu-unlock-geforce-tensor-half-rate.jpg", color=(108, 178, 84),
                        glow=(880, 280), glow_r=450, strength=0.28),
+    "diagram-design": dict(file="diagram-design-agent-skill-lint.jpg", color=(191, 69, 32),
+                           glow=(880, 250), glow_r=450, strength=0.30),
 }
 
 if __name__ == "__main__":
