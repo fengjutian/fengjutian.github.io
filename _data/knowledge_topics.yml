@@ -1,0 +1,39 @@
+- id: model-internals
+  name: 模型内部机制
+  description: 从权重、激活与稀疏特征理解模型内部发生了什么。
+  color: "#7c5cff"
+
+- id: model-intervention
+  name: 模型干预
+  description: 定位、修改和验证模型行为的工具与方法。
+  color: "#e65f8e"
+
+- id: inference-serving
+  name: 推理与服务
+  description: 模型路由、部署、缓存、量化与系统效率。
+  color: "#2a9d8f"
+
+- id: agent-systems
+  name: Agent 系统
+  description: 智能体运行时、协作协议与自主软件工程。
+  color: "#e9a23b"
+
+- id: developer-tools
+  name: 开发者工具
+  description: 面向构建、调试和自动化的软件工具。
+  color: "#3f88c5"
+
+- id: knowledge-systems
+  name: 知识系统
+  description: 笔记、检索、知识连接与个人信息基础设施。
+  color: "#8f6f4e"
+
+- id: multimodal-creation
+  name: 多模态创作
+  description: 图像、语音、视频、3D 与游戏生成工作流。
+  color: "#d66b3d"
+
+- id: software-architecture
+  name: 软件架构
+  description: 边界、契约、可靠性与可演进系统设计。
+  color: "#657786"

@@ -4,7 +4,7 @@ title: 项目
 permalink: /projects/
 description: 持续维护的项目，每个都有详情页与源码入口。
 nav: true
-nav_order: 4
+nav_order: 5
 _styles: |
   .all-projects-summary {
     display: grid;

@@ -769,6 +769,50 @@ def motif_launcher(d, box, accent, tag):
     d.text((fx, fy + fh + 12), tag, font=font(16), fill=FAINT)
 
 
+def motif_seam(d, box, accent, tag):
+    """A host slab above, a guest slab below, and the thin bright seam between
+    them -- the only part of the stack this project actually wrote."""
+    x, y, w, h = box
+    pad = 18
+    top_h = 118
+    seam_y = y + top_h + 16
+    bot_y = seam_y + 16
+
+    # host slab: a launcher strip over a row of game cards
+    d.rounded_rectangle((x, y, x + w, y + top_h), radius=12, fill=(15, 21, 33),
+                        outline=mix(BG_TOP, accent, 0.26), width=2)
+    d.rounded_rectangle((x + pad, y + 16, x + pad + 120, y + 30), radius=6,
+                        fill=mix(BG_TOP, accent, 0.30))
+    for c in range(4):
+        cx = x + pad + c * ((w - 2 * pad) / 4)
+        cw = (w - 2 * pad) / 4 - 14
+        d.rounded_rectangle((cx, y + 44, cx + cw, y + top_h - 14), radius=7,
+                            fill=(26, 34, 48), outline=mix(BG_TOP, accent, 0.16), width=1)
+    d.text((x + 2, y - 26), "Android 主机", font=font(16), fill=FAINT)
+
+    # the seam: accent bar with three notches, and two arrows crossing it
+    d.rounded_rectangle((x, seam_y, x + w, seam_y + 16), radius=8, fill=accent)
+    for nx in (0.22, 0.5, 0.78):
+        cx = x + w * nx
+        d.rounded_rectangle((cx - 3, seam_y - 5, cx + 3, seam_y + 21), radius=3,
+                            fill=mix(accent, WHITE, 0.55))
+    arrow(d, (x + 58, seam_y - 30), (x + 58, seam_y + 44), WHITE, 3, 11)
+    arrow(d, (x + w - 58, seam_y + 46), (x + w - 58, seam_y - 28), WHITE, 3, 11)
+
+    # guest slab: a terminal, dim lines and one bright prompt
+    gh = y + h - bot_y
+    d.rounded_rectangle((x, bot_y, x + w, bot_y + gh), radius=12, fill=(11, 15, 24),
+                        outline=mix(BG_TOP, accent, 0.22), width=2)
+    for i, lw in enumerate((0.52, 0.34, 0.61, 0.28)):
+        ly = bot_y + 22 + i * 26
+        d.rounded_rectangle((x + pad, ly, x + pad + (w - 2 * pad) * lw, ly + 9), radius=4,
+                            fill=(40, 50, 68))
+    d.rounded_rectangle((x + pad, bot_y + 22 + 4 * 26, x + pad + 14, bot_y + 22 + 4 * 26 + 9),
+                        radius=4, fill=accent)
+    d.text((x + 2, bot_y + gh + 12), "Ubuntu 客人", font=font(16), fill=FAINT)
+    d.text((x, bot_y + gh + 40), tag, font=font(17), fill=mix(DIM, accent, 0.45))
+
+
 def band_shares(d, x0, x1, y, accent):
     """Five sources splitting one answer; the third one grew."""
     shares = [19.3, 19.3, 27.2, 17.1, 17.1]
@@ -940,6 +984,12 @@ def build(slug, out_dir):
                font=font(20), fill=mix(DIM, accent, 0.65))
         d.text((M, 492), "无障碍服务 · 通知监听 · 同步适配器", font=font(20), fill=DIM)
 
+    elif slug == "droiddeck":
+        head(d, accent, "GPL-3.0 / Kotlin + Compose / 20k stars",
+             "DroidDeck", "翻译层会过时，宿主层不会",
+             (M, 152), 84, (M, 330), 430)
+        motif_seam(d, (620, 176, 508, 294), accent, "1.7 µs 一次事件往返 · 9.5 W → 7.1 W")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -985,6 +1035,8 @@ CARDS = {
                 glow=(900, 280), glow_r=450, strength=0.28),
     "aerial": dict(file="aerial-tv-launcher-foreground-takeover.jpg", color=(96, 186, 226),
                    glow=(880, 300), glow_r=440, strength=0.28),
+    "droiddeck": dict(file="droiddeck-android-handheld-host.jpg", color=(238, 132, 58),
+                      glow=(770, 300), glow_r=450, strength=0.28),
 }
 
 if __name__ == "__main__":
