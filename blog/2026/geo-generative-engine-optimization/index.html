@@ -1,0 +1,689 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> GEO：最有效的三种写法，官方提示词里都写着“可以编造” | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | GEO：最有效的三种写法，官方提示词里都写着“可以编造”"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/geo-generative-engine-optimization/"> <meta property="og:description" content="从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/geo-generative-engine-optimization.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="GEO：最有效的三种写法，官方提示词里都写着“可以编造”"> <meta name="twitter:description" content="从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/geo-generative-engine-optimization.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/geo-generative-engine-optimization/",
+        "@type": "BlogPosting",
+        "description": "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        "headline": "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/geo-generative-engine-optimization/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0"> <i class="fa-solid fa-hashtag fa-sm"></i> 机器学习</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>一篇教人“怎么让 AI 搜索引用你的网站”的论文，效果最好的三个方法，在官方代码里都带一句授权：可以编。</p> <ul> <li>加专家引语：<code class="language-plaintext highlighter-rouge">Add more quotes in the source, even though fake and artificial</code> </li> <li>补统计数字：<code class="language-plaintext highlighter-rouge">Add positive, compelling statistics (even if hypothetical)</code> </li> <li>加来源引用：<code class="language-plaintext highlighter-rouge">You may invent these sources but ensure they sound plausible</code> </li> </ul> <p>这三条就是 GEO-bench 上排名前三的策略，按上面的顺序把可见度抬高了 <strong>40.9%、30.6%、27.5%</strong>。而传统 SEO 里最常见的做法、成本最低的关键词堆砌，是九种方法里唯一把分数拉低的（<strong>−8.3%</strong>）。</p> <p>这不是标题党。论文的指标定义里，根本不存在“这条引用是真的吗”这个检查项——它数的是答案里有多少字、排在第几位属于这个来源。</p> <ul> <li>论文：<a href="https://arxiv.org/abs/2311.09735" rel="external nofollow noopener" target="_blank">GEO: Generative Engine Optimization</a>（arXiv:2311.09735，KDD 2024，DOI <a href="https://doi.org/10.1145/3637528.3671900" rel="external nofollow noopener" target="_blank">10.1145/3637528.3671900</a>）</li> <li>作者：Pranjal Aggarwal（IIT 德里）、Vishvak Murahari（普林斯顿）等六人，前两位共同一作</li> <li>代码：<a href="https://github.com/GEO-optim/GEO" rel="external nofollow noopener" target="_blank">GEO-optim/GEO</a>（Apache 2.0，351 stars，最后一次提交 2025-10-30）</li> <li>数据：<a href="https://huggingface.co/datasets/GEO-optim/geo-bench" rel="external nofollow noopener" target="_blank">GEO-bench</a>、<a href="https://huggingface.co/spaces/GEO-optim/geo-bench" rel="external nofollow noopener" target="_blank">排行榜</a> </li> <li>项目页：<a href="https://generative-engines.com/GEO/" rel="external nofollow noopener" target="_blank">generative-engines.com/GEO</a> </li> </ul> <p>本文只讲一件事：<strong>这篇论文测到的究竟是“可信”，还是“看起来可信”，以及这个差别对做 GEO 产品的人意味着什么。</strong></p> <h2 id="一装置五个来源一次摘要一份要分的份额">一、装置：五个来源，一次摘要，一份要分的份额</h2> <p>先把实验装置说清楚，因为后面所有数字的含金量都取决于它。</p> <p>生成式引擎被拆成两步：Google 检索取前 5 个来源，把整篇正文（不摘要、不压缩）塞进 <code class="language-plaintext highlighter-rouge">gpt-3.5-turbo</code> 的上下文，一次生成带行内引用的答案。温度 0.7，每条 query 采 5 次。</p> <p>关键的实验设计在这里：<strong>每次只优化其中一个来源</strong>——随机挑一个，同一组 query 下固定不变——然后对比优化前后的可见度。</p> <p><img src="/assets/img/blog/geo-generative-engine-optimization/fig-01-apparatus-and-share.png" alt="GEO 的实验装置：五个来源进同一个上下文，每条答案的可见度总和被归一到 1"></p> <p><em>只有被选中的那一个来源被改写，其余四个原样不动。这个设计决定了表 1 的分数只能读成“份额”，不能读成“质量”。</em></p> <p>数据集是 GEO-bench：<strong>1 万条 query</strong>，来自 9 个来源（MS MARCO、ORCAS-I、Natural Questions、AllSouls、LIMA、Davinci-Debate、Perplexity Discover、ELI5，以及 GPT-4 合成），覆盖 <strong>25 个领域</strong>，按 8K / 1K / 1K 划分。意图分布是 80% 信息型、10% 交易型、10% 导航型。</p> <h2 id="二193-不是分数是份额">二、19.3 不是分数，是份额</h2> <p>论文的第 3.4 节有一句很容易被略过的话：所有 impression 指标都乘了一个常数因子，使得<strong>一条答案里所有引用的 impression 之和等于 1</strong>。</p> <p>于是基线那个 19.3 就有了确切的含义：五个来源均分时每人 20，19.3 表示<strong>平均每个来源拿到这条答案约 19.3% 的可见度份额</strong>（这是从归一化定义推出来的，论文没有把 19.3 直接写成 19.3%）。后面所有的“提升 41%”，都是 19.3 涨到 27.2。</p> <p>位置调整字数的定义是：</p> \[\mathrm{Imp}_{\mathrm{pwc}}(c_i, r) = \frac{\sum_{s \in S_{c_i}} |s| \cdot e^{-pos(s)/|S|}}{\sum_{s \in S_r} |s|}\] <p>分子是“引用了这个来源的那些句子”的字数，按句子在答案里的位置做指数衰减加权；分母是整条答案的字数。</p> <p>两个推论直接改变了你读这张表的方式。</p> <p>第一，<strong>份额守恒，所以这是一场零和游戏</strong>。你从 19.3 涨到 27.2，那 7.9 个点是从另外四个来源身上掉下来的。这不是“我的内容变好了”的绝对提升。</p> <p>第二，<strong>它衡量的是“被摘录”，不是“被点击”</strong>。一条答案里出现你的名字三次、给了你 27% 的篇幅，和用户是否点开你的链接，是两件独立的事。论文没有测点击。</p> <p>顺带说一句，主观印象那一列的 19.3 不是份额：论文把 G-Eval 的分数归一化成了与 PWC 同均值同方差，所以两列基线相同。它由 7 个子维度组成（相关性、影响力、独特性、多样性、追问可能性、位置、字数），用的是另一套 LLM 打分。<strong>两列不是同一个尺子上的刻度，别拿来做加减。</strong></p> <h2 id="三九种方法的完整排名">三、九种方法的完整排名</h2> <p>Table 1 一共九种方法。其中最容易被略过的是 <strong>Unique Words</strong>，而它恰恰最能说明问题：只比基线高 6.2%，和什么都不做没有区别。</p> <table> <thead> <tr> <th>方法</th> <th>提示词做的事</th> <th>PWC</th> <th>相对基线</th> <th>主观印象</th> <th>相对基线</th> </tr> </thead> <tbody> <tr> <td>不做优化</td> <td>—</td> <td>19.3</td> <td>—</td> <td>19.3</td> <td>—</td> </tr> <tr> <td>关键词堆砌</td> <td>加 10 个不在原文里的相关词</td> <td>17.7</td> <td>−8.3%</td> <td>20.2</td> <td>+4.7%</td> </tr> <tr> <td>独特词汇</td> <td>换成生僻词</td> <td>20.5</td> <td>+6.2%</td> <td>20.4</td> <td>+5.7%</td> </tr> <tr> <td>权威化</td> <td>改写成有底气的语气</td> <td>21.3</td> <td>+10.4%</td> <td>22.9</td> <td>+18.7%</td> </tr> <tr> <td>易读化</td> <td>拆长句、讲人话</td> <td>22.0</td> <td>+14.0%</td> <td>20.5</td> <td>+6.2%</td> </tr> <tr> <td>专业术语</td> <td>换成更技术的说法</td> <td>22.7</td> <td>+17.6%</td> <td>21.4</td> <td>+10.9%</td> </tr> <tr> <td>流畅度优化</td> <td>只改衔接与语序</td> <td>24.7</td> <td>+28.0%</td> <td>21.9</td> <td>+13.5%</td> </tr> <tr> <td>引用来源</td> <td>加“根据某报告”式来源</td> <td>24.6</td> <td>+27.5%</td> <td>21.9</td> <td>+13.5%</td> </tr> <tr> <td>补充统计数据</td> <td>往句子里嵌百分比与数值</td> <td>25.2</td> <td>+30.6%</td> <td>23.7</td> <td>+22.8%</td> </tr> <tr> <td>增加引用语句</td> <td>加专家/机构的直接引语</td> <td>27.2</td> <td>+40.9%</td> <td>24.7</td> <td>+28.0%</td> </tr> </tbody> </table> <p><em>数据来自论文 Table 1；相对基线一列是我用 19.3 算的，论文正文的口径是“最好的方法比基线高 41%（PWC）与 28%（主观）”，与表里的 27.2 / 24.7 对得上。</em></p> <p><img src="/assets/img/blog/geo-generative-engine-optimization/fig-02-method-gains.png" alt="九种方法的相对提升，按“塞进外部证据”“改写文风”“堆关键词”三类着色"></p> <p><em>三类的分布非常干净：插入证据类落在 +27% 到 +41%，改文风类落在 +6% 到 +28%，堆关键词是唯一的负值。</em></p> <p>把九种方法按提示词的性质分组，规律就出来了：</p> <ul> <li> <strong>往文本里塞可指认的外部碎片</strong>（引语、统计量、来源）：+27.5% 至 +40.9%，平均 +33.0%</li> <li> <strong>只改写法，不新增信息</strong>（流畅度、术语、易读、权威、独特词）：+6.2% 至 +28.0%，平均 +15.2%</li> <li> <strong>堆关键词</strong>：−8.3%</li> </ul> <p>两类之间有重叠：流畅度优化（+28.0%）几乎追平引用来源（+27.5%）。所以不能说“改文风无用”。但天花板和地板的位置很清楚：<strong>改文风最好也只能到 28%，而插入证据最差也有 27.5%。</strong></p> <h2 id="四赢家的共同点不是更可信是更像证据">四、赢家的共同点：不是“更可信”，是“更像证据”</h2> <p>为什么引语和数字这么有效？</p> <p>我的判断（从指标定义推断，论文没有明说）：PWC 分子统计的是“被标注为来源 <code class="language-plaintext highlighter-rouge">s</code> 的那些句子”的字数。一段写成“根据国际巧克力消费研究组的调查，瑞士人均年消费 11 到 12 公斤”的文本，会自然产生一个可被挂上引用标签的句子；而“瑞士人很爱吃巧克力”不会。<strong>引用密度高的文本，天然更容易在答案里被拆成更多、更靠前的句子。</strong></p> <p>这不是“模型相信了你”，而是“你提供了更多可被摘录的钩子”。论文 Table 4 给了三个单例，把这个机制放大到极端：</p> <table> <thead> <tr> <th>方法</th> <th>改动</th> <th>单例可见度变化</th> </tr> </thead> <tbody> <tr> <td>引用来源</td> <td>补一句人均消费数据的出处</td> <td>+132.4%</td> </tr> <tr> <td>权威化</td> <td>强调“4 个分区冠军”这类既成事实</td> <td>+89.1%</td> </tr> <tr> <td>统计数据</td> <td>加“过去十年机器人参与度涨 70%”</td> <td>+65.5%</td> </tr> </tbody> </table> <p>整张表是在 1000 条测试 query 上算的平均，一个来源平均提升 27%；而单个 query 上可以到 132%。<strong>分布是重尾的</strong>，这也解释了为什么只看少数几个案例的实测报告容易得出夸张结论。</p> <h2 id="五打开源码三条提示词">五、打开源码：三条提示词</h2> <p><code class="language-plaintext highlighter-rouge">src/geo_functions.py</code> 里，九种方法各是一个 prompt 函数，全部由 <code class="language-plaintext highlighter-rouge">gpt-3.5-turbo-16k</code> 执行。</p> <p>公共提示词里写着大方向：“在不改变内容的前提下改写文本，让它在最终答案里排得更靠前”。然后是各自的加料：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code># statistics: 补统计数字
+Add positive, compelling statistics (even if hypothetical) at multiple relevant places in the text.
+
+# quotation: 加专家引语
+Add more quotes in the source, even though fake and artificial.
+
+# cite sources: 加来源引用
+You may invent these sources but ensure they sound plausible and do not mislead the reader.
+</code></pre></div></div> <p>三个赢家，三条都允许编。而且 <code class="language-plaintext highlighter-rouge">Cite Sources</code> 的措辞非常精确：<strong>要的是听起来可信（sound plausible），不是可核验（verifiable）</strong>。</p> <p>这不能简单读成“作者教人造假”。要看实验里谁在验证：改写后的文本进的是摘要器，摘要器读出信息、生成带引用的答案，<strong>这个链条里没有任何一步会去访问那个被引用的 URL</strong>。在这样一个评估环境里，“引用一个真实报告”和“引用一个听起来像真实报告的名字”对指标是等价的——事实上后者可能更好，因为模型可以挑一个最贴合答案的数字。</p> <p>于是这篇论文最扎实的结论，其实是关于<strong>评估</strong>的：可见度指标奖励的是证据的<strong>形状</strong>，不是证据的<strong>来源</strong>。在 2023 年，这只是基准的一个缺陷；一旦检索层开始核查引用是否真的存在（这是生成式搜索明确在走的方向），同一种写法就会从加分项变成减分项。</p> <h2 id="六为什么权威化几乎没用">六、为什么“权威化”几乎没用</h2> <p>论文正文有一句话，和它自己的表对不上：</p> <blockquote> <p>…one would expect a more persuasive and authoritative tone in website content to boost visibility. However, we find no significant improvement.</p> </blockquote> <p>但 Table 1 里权威化是 PWC +10.4%、主观 +18.7%，主观印象排第三；附录 Table 6（5 个随机种子 ± 标准差）是 21.1±0.8，基线 19.8±0.9。差 1.3，标准差 0.8——按这组数字，不能说“没有提升”，只能说“提升远小于引用类”。</p> <p>看提示词就明白为什么会这样。它让模型往正文里塞这些东西：</p> <blockquote> <p>the addition of phrases such as “only we are authentic etc”, “we guarantee”, use of second pronouns such as “you will not regret” etc is expected within the source content itself.</p> </blockquote> <p>这是电视购物腔。摘要器要的是可摘录的信息，而“我们保证”“只有我们正宗”恰恰不携带任何可摘录的信息。Table 3 的领域分析也印证了这一点：权威化在 Debate、History、Science 三个标签上表现最好——都是<strong>需要立场</strong>的领域，不是需要事实的领域。</p> <p>顺带说一个读论文时该留意的信号：正文说“无显著提升”，表里是 +10%，附录里还给了标准差。<strong>当正文的定性结论和表里的数字不一致时，先信表。</strong> 另外 Table 1 与 Table 6 的基线分别是 19.3 和 19.8，论文没有解释这 0.5 的差从哪来。</p> <h2 id="七全体优化时serp-第一名掉-303">七、全体优化时，SERP 第一名掉 30.3%</h2> <p>Table 1 是“只有我优化”。真实世界不会这么客气。论文的第二组实验把<strong>所有来源同时优化</strong>，然后按来源在 Google 里的原始排名分组：</p> <table> <thead> <tr> <th>方法</th> <th>第 1 名</th> <th>第 2 名</th> <th>第 3 名</th> <th>第 4 名</th> <th>第 5 名</th> </tr> </thead> <tbody> <tr> <td>权威化</td> <td>−6.0%</td> <td>+4.1%</td> <td>−0.6%</td> <td>+12.6%</td> <td>+6.1%</td> </tr> <tr> <td>流畅度</td> <td>−2.0%</td> <td>+5.2%</td> <td>+3.6%</td> <td>−4.4%</td> <td>+2.2%</td> </tr> <tr> <td>引用来源</td> <td>−30.3%</td> <td>+2.5%</td> <td>+20.4%</td> <td>+15.5%</td> <td>+115.1%</td> </tr> <tr> <td>引用语句</td> <td>−22.9%</td> <td>−7.0%</td> <td>+3.5%</td> <td>+25.1%</td> <td>+99.7%</td> </tr> <tr> <td>统计数字</td> <td>−20.6%</td> <td>−3.9%</td> <td>+8.1%</td> <td>+10.0%</td> <td>+97.9%</td> </tr> </tbody> </table> <p><img src="/assets/img/blog/geo-generative-engine-optimization/fig-03-rank-vs-change.png" alt="全体优化场景下，排名越靠前掉得越多，排名第五的来源可以翻倍"></p> <p><em><strong>五种方法在第 1 名上全部为负。</strong> 这不是某一个方法失效，是份额守恒的必然结果：所有人一起变得更“像证据”时，多出来的份额只能从原本被摘要器偏爱的那一个来源身上匀出来。</em></p> <p>这张表比 Table 1 重要得多，因为它回答的是“如果大家都学会了怎么办”。答案是：<strong>先学会的人赚的是时间差，后学会的人赚的是排名差。</strong> 原本排第五的小站，用同一套方法能拿到 +115%；原本排第一的大站，什么都不做也会掉 30%。论文把这解读为“GEO 让数字空间更民主”，这个结论成立，但前提是所有来源都在优化——现实中不会同时发生，所以真实的过渡期内，收益更接近于“谁先动手谁赚”。</p> <p>对做 GEO 服务的人来说，这张表还有一个操作性含义：<strong>任何效果报告都必须带对照组。</strong> 只报“优化后品牌出现了 8 次”，和论文里“份额从 19.3 到 27.2”不是同一个量级的东西。</p> <h2 id="八perplexity-那一步比宣传语复杂">八、Perplexity 那一步，比宣传语复杂</h2> <p>论文的“真实环境验证”是在 Perplexity 上做的，但条件需要说清楚：Perplexity 不允许用户指定来源 URL，所以研究团队<strong>把来源文本作为文件上传</strong>，并要求答案只用这些文件生成。样本是测试集里抽的 200 条。</p> <table> <thead> <tr> <th>方法</th> <th>位置调整字数</th> <th>主观印象</th> </tr> </thead> <tbody> <tr> <td>不做优化</td> <td>24.1</td> <td>24.7</td> </tr> <tr> <td>关键词堆砌</td> <td>21.9</td> <td>28.1</td> </tr> <tr> <td>独特词汇</td> <td>23.6</td> <td>24.1</td> </tr> <tr> <td>权威化</td> <td>25.9</td> <td>30.6</td> </tr> <tr> <td>流畅度</td> <td>26.0</td> <td>30.0</td> </tr> <tr> <td>引用来源</td> <td>26.8</td> <td>19.0</td> </tr> <tr> <td>引用语句</td> <td>29.1</td> <td>32.1</td> </tr> <tr> <td>统计数字</td> <td>26.2</td> <td>33.9</td> </tr> </tbody> </table> <p><img src="/assets/img/blog/geo-generative-engine-optimization/fig-04-two-engines.png" alt="同一批方法在两个引擎上的表现，引用来源在 Perplexity 上主观印象反而崩了"></p> <p><em>最值得看的是“引用来源”那一行：位置调整字数 +11.2%，主观印象 −23.1%。同一行里两个指标反向，论文正文没有讨论。</em></p> <p>几件事：</p> <ul> <li> <strong>引用语句 +20.7%（论文正文写 22%）</strong>，统计数字的主观印象 +37.2%——这两个方向与 GEO-bench 一致，是论文最稳的结论。</li> <li> <strong>关键词堆砌在 Perplexity 上主观印象反而更高（28.1 vs 24.7）</strong>，但字数份额掉到 21.9。它换来了“被提到”，丢掉了“被展开”。</li> <li> <strong>引用来源在 Perplexity 上主观印象从 21.9 掉到 19.0</strong>，比基线低 23%。这是整篇论文里最反常的一格。</li> </ul> <p>对最后一条，我只能给出一个待验证的猜测：在文件上传模式下，五个来源都被明确标记成“用户提供的文件”，此时再往正文里塞“根据某某报告”，反而与文件语境冲突，被评判模型读成冗余。<strong>这更像是环境差异，而不是方法失效</strong>——但它足以说明一件事：GEO 方法的可迁移性远没有“在 Perplexity 上也有效”这句话听起来那么强。</p> <p>顺便说个口径问题：网上流传的“引用语句提升 20.7%”是用两个均值相除算出来的。论文正文写的是 22%，因为它是逐 query 算相对提升再平均。两种口径差 1.3 个点，写报告时选一种并注明。</p> <h2 id="九组合最好的搭配是好读--有数字">九、组合：最好的搭配是“好读 + 有数字”</h2> <p>论文还测了四种高分方法的两两组合，结论是 <strong>流畅度 + 统计数字</strong> 最好，在 PWC 上达到 35.8%，比任何单方法高 5.5% 以上。</p> <p>但这条结论有个必须一起读的脚注：<strong>组合实验只跑了测试集里 200 条样本</strong>（论文说是成本限制），所以 35.8% 不能和 Table 1 的 27.2% 直接相减。它证明的是排序，不是幅度。</p> <p>还有一个反直觉的发现：引用来源单独用时比引用语句低（论文的说法是低 8%），但在组合里的平均提升最高（31.4%）。论文没给解释。我的猜测是引用类方法的作用像<strong>挂载点</strong>——它本身不增加多少信息，但让其他方法的句子更容易被摘。这也解释了为什么它单独用时收益一般，一旦和“有数字的好读段落”叠加就起飞。</p> <h2 id="十局限">十、局限</h2> <ol> <li> <strong>只测了两个引擎、一个生成模型。</strong> GEO-bench 上的答案由 <code class="language-plaintext highlighter-rouge">gpt-3.5-turbo</code> 生成，Perplexity 那边是文件上传模式。2026 年的生成式搜索是多模型、多轮、多模态的，这套数字不能直接外推。</li> <li> <strong>指标不是流量。</strong> 份额涨了不等于点击涨了，更不等于转化。论文从头到尾没有测用户行为。</li> <li> <strong>单轮、五源、无压缩。</strong> 今天的长上下文引擎能吃进几十个来源，论文自己在局限里也承认：上下文变长会削弱检索排名的影响，那时“排第五被翻倍”的现象可能消失。</li> <li> <strong>没有事实核查环节。</strong> 这是最重要的一条：因为链条里没人去访问被引用的 URL，所以“编造的引用”和“真实引用”在指标上不可区分。<strong>这是实验设计的产物，不是推荐做法。</strong> </li> <li> <strong>每个来源只改写一次，且由 LLM 完成。</strong> 没有人类编辑对照，也没有“同一方法多次改写取最优”的搜索——而后者显然是真实从业者会做的事。</li> <li> <strong>标签是 GPT-4 打的。</strong> 论文自己说标签可能有噪声，Table 3 的领域结论要打折看。</li> </ol> <h2 id="十一我的判断">十一、我的判断</h2> <p>这篇论文最值钱的地方，不是那九个方法，是把“可见度”从布尔值变成了份额。</p> <p>传统 SEO 的 KPI 是排名与点击，粗但可验证。生成式搜索里，我见过的监测指标大多还是“品牌有没有被提到”——这是个布尔值，信息量极低。论文的做法值得抄：<strong>在一条答案内部，把 1.0 的注意力分给各个来源，看自己占多少。</strong> 这个指标有三个好处：可加总（一条 query 内各来源份额和为 1）、可对照（同一组问题、同一批竞争者、优化前后）、可归因（份额变化直接对应答案里的字数与位置）。</p> <p>如果要把它做进产品，我会按这三步走，每一步都能被证伪：</p> <p><strong>一，指标换成份额，且必须带对照组。</strong> 固定一组 50 到 200 条真实用户问题，每周跑一次，记录品牌份额、竞品份额、来源覆盖率。没有对照组的报告，等于把 Table 1 当成 Table 2 来读。</p> <p><strong>二，把“可核验”当红线，而不是当卖点。</strong> 论文证明了“编造的引用”短期有效，但它有效的条件是评估链里没有核实环节。这个条件迟早会消失：一旦检索层或用户去点开那条引用，编造就从加分项变成减分项。真正能跨引擎、跨时间迁移的，只有别人抄不走的东西：一手数据、可复现的实验、独有的案例。</p> <p><strong>三，先复现再优化。</strong> 数据集在 HuggingFace 上，代码 Apache 2.0，跑一次 <code class="language-plaintext highlighter-rouge">run_geo.py</code> 就能拿到自己垂直领域的基线。在花预算之前，先确认你所在领域的基线份额是多少、噪声有多大——论文 Table 6 的跨 seed 标准差最小 0.2、最大 1.8，也就是说 1 个点上下的波动不该被当成效果。</p> <p>最后回到我最近一直在读的东西上。做权重编辑、激活干预、表征分析，问的是“模型到底看了哪一部分”；GEO 问的是“答案到底用了哪一部分文本”。<strong>同一个归因问题的两个尺度</strong>——一个在隐层里，一个在答案里。论文的份额指标粗糙，但方向是对的：先能量出来，才谈得上优化。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li> <a href="https://arxiv.org/abs/2311.09735" rel="external nofollow noopener" target="_blank">论文 arXiv:2311.09735</a>（v3，2024-06-28；KDD 2024）</li> <li> <a href="https://github.com/GEO-optim/GEO" rel="external nofollow noopener" target="_blank">代码仓库 GEO-optim/GEO</a>（Apache 2.0）：本文第五节的提示词原文出自 <code class="language-plaintext highlighter-rouge">src/geo_functions.py</code> </li> <li> <a href="https://huggingface.co/datasets/GEO-optim/geo-bench" rel="external nofollow noopener" target="_blank">GEO-bench 数据集</a>、<a href="https://huggingface.co/spaces/GEO-optim/geo-bench" rel="external nofollow noopener" target="_blank">公开排行榜</a> </li> <li><a href="https://generative-engines.com/GEO/" rel="external nofollow noopener" target="_blank">项目主页</a></li> <li>同方向背景：<a href="https://arxiv.org/abs/2304.09848" rel="external nofollow noopener" target="_blank">Liu et al., Evaluating Verifiability in Generative Search Engines</a>（arXiv:2304.09848），论文的 2 步装置与答案生成 prompt 沿用自此</li> </ul> <p>数据来源为论文正文、附录 A–C 的表 1–7，以及官方仓库的 <code class="language-plaintext highlighter-rouge">src/geo_functions.py</code>。所有相对提升百分比是我用 Table 1 的基线与各方法分数计算的；标注为“推断”或“猜测”的部分是我的解释，不是论文结论。Perplexity 一节的数字来自论文 Table 7（200 条样本），与 Table 1 不可直接比较。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/mnn-backend-precision-matrix/"> <meta property="og:description" content="从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/mnn-backend-precision-matrix.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵"> <meta name="twitter:description" content="从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/mnn-backend-precision-matrix.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/mnn-backend-precision-matrix/",
+        "@type": "BlogPosting",
+        "description": "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        "headline": "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/mnn-backend-precision-matrix/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>端侧推理引擎的 README 一般有两张表：一张写自己支持多少算子，一张写自己比谁快。</p> <p>MNN 的 README 还有第三张表，是我认为这个仓库最值钱的一页：18 行，4 列，72 个格子，每格标一个字母。</p> <p>S 是深度优化，A 是可用，B 是有缺陷或没优化，C 是不支持。</p> <p>按这张表数一遍：<strong>S 18 格，A 17 格，B 13 格，C 24 格。</strong>三分之一的格子，官方自己标的是「不做」。六个 NPU 后端行加起来，一个 S 都没有。</p> <p>这是产品文档里少见的自我评价。绝大多数框架把「支持」写成布尔值——支持 Metal，支持 INT4——MNN 把它拆成二维：<strong>同一列（精度）在不同行（后端）上的成熟度完全不同，而且它愿意把差的那一档写出来。</strong></p> <p>MNN 是阿里的端侧推理引擎，C++ 写的，Apache 2.0，已经集成进淘宝、天猫、优酷、钉钉、闲鱼等 30 多个阿里应用，覆盖 70 多个场景；往上还衍生出 MNN-LLM 与 MNN-Diffusion 两个大模型运行时。</p> <ul> <li>源码：<a href="https://github.com/alibaba/MNN" rel="external nofollow noopener" target="_blank">alibaba/MNN</a>（Apache 2.0）</li> <li>支持矩阵：<a href="https://github.com/alibaba/MNN/blob/master/README.md" rel="external nofollow noopener" target="_blank">README</a> 的 Architecture / Precision 表</li> <li>最新版本：<a href="https://github.com/alibaba/MNN/releases/tag/3.6.2" rel="external nofollow noopener" target="_blank">3.6.2</a>，2026-10-29 发布</li> <li>文档：<a href="https://mnn-docs.readthedocs.io/en/latest/" rel="external nofollow noopener" target="_blank">mnn-docs.readthedocs.io</a> </li> <li>自己造的模型：<a href="https://arxiv.org/abs/2611.12311" rel="external nofollow noopener" target="_blank">MNN-Pocket-0.3B</a>，2026-11-09</li> </ul> <p>本文只讲一件事：<strong>为什么应该用「填了多少格」而不是「支持多少算子」来读这个引擎，以及 3.6.2 这一版分别用什么方式填了哪几类格子。</strong></p> <h2 id="一先把这张表看完整">一、先把这张表看完整</h2> <p><img src="/assets/img/blog/mnn-backend-precision-matrix/fig-01-support-matrix.png" alt="MNN 的 Architecture / Precision 支持矩阵，按 S / A / B / C 四档评级"></p> <p><em>行是后端家族：CPU 8 行（含 x86 与 ARM 的各代 SIMD）、GPU 4 行、NPU 6 行；列是四种数值精度。评级来自 README，不是我的实测。</em></p> <p>这张表的信息密度比它看起来高，因为「不支持」不是均匀撒开的：</p> <table> <thead> <tr> <th>评级</th> <th>格数</th> <th>分布</th> </tr> </thead> <tbody> <tr> <td>S</td> <td>18</td> <td>CPU 13（ARMv8 一行 4 格全 S）、GPU 5、NPU 0</td> </tr> <tr> <td>A</td> <td>17</td> <td>CPU 4、GPU 7、NPU 6</td> </tr> <tr> <td>B</td> <td>13</td> <td>CPU 5、GPU 0、NPU 8</td> </tr> <tr> <td>C</td> <td>24</td> <td>常规 1、FP16 7、BF16 14、INT8 / INT4 2</td> </tr> </tbody> </table> <p>两个结论直接从这张分布里掉出来。</p> <p>第一，<strong>短板不在低比特，在 BF16。</strong>INT8 / INT4 那一列 18 行里只有 2 个 C（CoreML 和 HIAI），而 BF16 是 14 个 C——GPU 四行全军覆没。这跟直觉相反：端侧引擎通常最不擅长低比特，MNN 恰好倒过来，3.6 之后 2/3-bit 权重在 CPU 与 GPU 上是全栈支持，BF16 却只在 ARM 的两行上拿到 S（ARMv7a 与 ARMv8，后者要求 ARMv8.6），其余不是 C 就是 B。</p> <p>第二，<strong>NPU 这一栏还处在「能跑」而不是「值得跑」的阶段。</strong>六个 NPU 后端，10 个 C、8 个 B、6 个 A、0 个 S。最成熟的是 QNN 的 INT8 / INT4，最别扭的是 QNN 的常规精度——恰恰是 C。</p> <p>注意评级的粒度：它是按后端家族打的，不是按机型。<code class="language-plaintext highlighter-rouge">ARMv8</code> 这一行全 S，不保证你那台机器的驱动、温度和内存带宽能让它跑到官方数字。这张表承诺的是「有人在维护这条路径」，不是「你的手机会快」。</p> <h2 id="二为什么支持必须是二维的">二、为什么「支持」必须是二维的</h2> <p>MNN 的转换器能读 178 个 TensorFlow 算子、158 个 ONNX 算子、163 个 TorchScript 算子、52 个 Caffe 算子。</p> <p>这些数字很容易被当成能力上限，但它们只描述前端：能读进来，不代表能跑；能跑，不代表在某个精度下被优化过。</p> <p>一个算子进到引擎里，要在每个后端各实现一遍；同一个后端的实现还要分精度分档。于是整个模型的支持程度，等于它用到的那批算子在这条 (后端, 精度) 路径上<strong>最差的那一格</strong>。这正是矩阵而不是列表的原因。</p> <p>举个具体的：Qwen3.5-2B 的权重按 INT4 导出之后——</p> <ul> <li>在 Metal 上是 S，并且 3.6.2 专门为它加了 Q4 权重读取和投机解码块的分块计算；</li> <li>在 Hexagon 上是 B，文档口径是对称 INT4 权重配 FP16 激活，不是全整数执行；</li> <li>在 RISC-V 上是 B，同版本给出进迭时空 K3 的实测：8 线程、W4B64 配置下 Prefill（PP512）85.60 tok/s、Decode（TG128）17.68 tok/s。</li> </ul> <p>同一份模型文件，三种完全不同的经验。所以「MNN 支持 INT4 吗」这个问题没有单一答案，只有「在哪一行上、到什么程度」。</p> <h2 id="三行是运行时选的列是导出时定的">三、行是运行时选的，列是导出时定的</h2> <p>矩阵还有一个结构上的不对称，它决定了你在部署阶段到底有多少优化空间。</p> <p><strong>列（精度）在导出时就定死了。</strong>量化位宽、分组大小、lm_head 单独的位置宽，都是导出参数：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python llmexport.py <span class="se">\</span>
+        <span class="nt">--path</span> /path/to/Qwen3.5-2B <span class="se">\</span>
+        <span class="nt">--export</span> mnn <span class="se">\</span>
+        <span class="nt">--quant_bit</span> 4 <span class="se">\</span>
+        <span class="nt">--quant_block</span> 128
+</code></pre></div></div> <p><strong>行（后端）在运行时才选。</strong>到 MNN-LLM 这一层，它收敛成 <code class="language-plaintext highlighter-rouge">config.json</code> 里的几个字段：</p> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w"> </span><span class="nl">"backend_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"metal"</span><span class="p">,</span><span class="w"> </span><span class="nl">"precision"</span><span class="p">:</span><span class="w"> </span><span class="s2">"low"</span><span class="p">,</span><span class="w"> </span><span class="nl">"thread_num"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">backend_type</code> 默认 <code class="language-plaintext highlighter-rouge">cpu</code>，Android 上可填 <code class="language-plaintext highlighter-rouge">opencl</code>，macOS / iOS 上可填 <code class="language-plaintext highlighter-rouge">metal</code>；<code class="language-plaintext highlighter-rouge">precision</code> 默认 <code class="language-plaintext highlighter-rouge">low</code>，倾向 FP16。</p> <p>由此得到一个不太好听但很实际的推论：<strong>部署阶段你能免费换的只有行，换列要重新导出。</strong>这也解释了为什么 MNN 的性能图默认拿「同一台设备的不同后端」做对照——在那个对照里，列是固定的，行是唯一变量，数字才有可比性。换成跨引擎对比，两边的列大概率不是同一列，比的就不是一件事了。</p> <p>顺带一提，CoreML 那两行还有一个容易忽略的注脚：它在常规精度下走的就是 FP16 的 MIL 张量与权重，<code class="language-plaintext highlighter-rouge">Precision_Low</code> 并不是一条独立的执行路径。这类细节不会出现在矩阵里，但会出现在你的精度对账里。</p> <h2 id="四362-的三条填格线">四、3.6.2 的三条填格线</h2> <p><img src="/assets/img/blog/mnn-backend-precision-matrix/fig-02-three-kinds-of-gain.png" alt="3.6.2 的三类改动：借硬件、借算法、借分派"></p> <p><em>release notes 把它们并列写成「版本亮点」，但对使用者的含义差得很远：第一条绑定一颗芯片，第二条能在任何后端复现，第三条决定前两条会不会以崩溃收场。</em></p> <p>三类改动，三种性质：</p> <ul> <li> <strong>借硬件</strong>：通过 Metal Tensor API 用上 Apple GPU 里的神经加速单元（M5 等），把矩阵乘、Attention、LinearAttention 的分块与数据访问重写一遍。</li> <li> <strong>借算法</strong>：DFlash 投机解码，草稿模型直接共享目标模型的 <code class="language-plaintext highlighter-rouge">lm_head</code>，既不多存一份权重也不多算一次输出层。</li> <li> <strong>借分派</strong>：CPU 侧的 SME2 计算单元检测与 SME2 / NEON 混合执行，RISC-V 侧用 <code class="language-plaintext highlighter-rouge">riscv_hwprobe</code> 探测能力并保留标量回退。</li> </ul> <p>第三条最不性感，但它是前两条能安全发布的前提。3.6.2 的修复项里专门有一条：RISC-V 上用 <code class="language-plaintext highlighter-rouge">riscv_hwprobe</code> 做运行时分派，避免在不支持 RVV 的设备上错误分派——也就是说，探测失败时的行为被当成一个 bug 来修。</p> <h2 id="五dflash省下的不是一次矩阵乘是几次目标模型的前向">五、DFlash：省下的不是一次矩阵乘，是几次目标模型的前向</h2> <p><img src="/assets/img/blog/mnn-backend-precision-matrix/fig-03-dflash-weight-reuse.png" alt="DFlash 用草稿模型连续猜 token，目标模型一次前向验证多个位置"></p> <p><em>投机解码的收益来自「少跑几次目标模型」，不来自某个 kernel 变快。这也是唯一一类能跨后端复用的优化。</em></p> <p>官方给的数字：Qwen3.5-2B 在 iPad Pro M5 的 GPU 上，Decode 从 111.89 tok/s 提升到 233.98 tok/s，2.09 倍。</p> <p>这个倍数的来源值得说清楚。常规 decode 是一次前向出一个 token；投机解码让便宜的草稿模型连猜几个，再让目标模型一次前向把这些位置一起验证。<strong>验证的成本接近一次 prefill，而不是 k 次 decode</strong>——所以只要有一半候选被接受，就已经是净赚。</p> <p>3.6.2 在这一版里加的三件事都指向同一处成本：</p> <ul> <li>特征投影、拼接与 argmax 挪到设备端执行，减少主机往返；</li> <li>草稿的 KV Cache 增量维护，不重复计算；</li> <li>草稿模型复用目标模型的 <code class="language-plaintext highlighter-rouge">lm_head</code>，减少磁盘与运行时的重复权重。</li> </ul> <p>顺带说个时间线：DFlash 是 <strong>3.6.0（2026-06）引入</strong>的，3.6.2 才把它调到 2.09 倍，并且 release notes 里带了一句明确的升级提示——<strong>旧版 DFlash 草稿模型需要重新导出</strong>。所以这个数字是三个月迭代的结果，不是一个版本的天降。</p> <p>代价也写在同一份 notes 里：k 太小收益有限，k 太大被拒绝的候选就是白算；把更多计算挪到设备端，主机侧能观测到的东西就更少。</p> <h2 id="六metal接入一颗芯片里原本没人用的单元">六、Metal：接入一颗芯片里原本没人用的单元</h2> <p>Apple 在 M5 这一代 GPU 里放了神经加速单元，通过 Metal Tensor API 暴露。3.6.2 针对它重写了分块策略与数据访问，覆盖矩阵计算、Attention 和 LinearAttention，并顺带补了 W2 / W3 的解码 GEMV、Q4 权重读取与 conv1x1。</p> <p>结果就是那个 3542.91 tok/s 的 Prefill。</p> <p>这条线的性质要看清：<strong>它只在支持这套 API 的 GPU 上有意义，换一颗芯片就归零。</strong>它是「填一格」，不是「把一格填得更好」——同一份代码在别处并不存在。</p> <p>这也是端侧性能数字难横向比较的根源：官方给的对照组是同一台设备的 CPU 与 GPU，而不是另一个引擎在同一台设备上的表现。前者能证明「你用上了新硬件」，后者才能证明「你的引擎更好」，而后者在公开材料里几乎没有。</p> <h2 id="七hexagon-与-rknn进表才算数">七、Hexagon 与 RKNN：进表才算数</h2> <p>Hexagon 是 3.6.2 的重点之一，但它的身份是<strong>新后端</strong>：3.6.1（2026-07-22）才把 Hexagon 后端发出来，3.6.2 做的是第二轮优化——融合 INT4 GEMV、GatedRMSNorm、norm + RoPE 的融合解码路径，DSP 上的 LinearAttention（Qwen3.5 gated delta rule 与 LFM2 short convolution，分块 prefill 加 HMX 计算），以及 INT4 反量化、HMX GEMM、分组因果 Attention、DMA 双缓冲和 VTCM 工作区。</p> <p>同一版里还有另一个名字：<strong>Rockchip RKNN 后端</strong>，3.6.2 的措辞是「初步支持」。</p> <p>这两句话的差别就是全文的核心。Hexagon 已经在支持矩阵里占了一行；RKNN 还没有。<strong>一个后端什么时候算真正被支持？答案是它进表的那一天。</strong>「初步支持」意味着能跑通某些模型，但不承诺评级、不承诺优化、也不承诺下一版还在。</p> <p>官方自己用「有没有进表」来区分成熟度，这比任何宣传语都可靠。</p> <h2 id="八反向证据修复清单是按后端分段的">八、反向证据：修复清单是按后端分段的</h2> <p>看一个引擎的广度，除了新功能，还可以看它的 bug 清单长什么样。3.6.2 的「缺陷修复」一节按后端分段：Metal、OpenCL、Vulkan、CUDA、Hexagon、QNN 与多后端 Pooling、CPU 与框架、转换器与安全——正好是矩阵上那批行。</p> <p>随手挑几条：</p> <ul> <li>Metal：Attention 的并发访问、mask 与 KVCache 扩容，以及 GPU 命令失败时终止生成；</li> <li>OpenCL：Attention 在内存重分配之前的越界访问；</li> <li>Hexagon：Attention tile 的数据路径，以及主机写入与排队命令的冲突；</li> <li>CPU 与框架：重复 forward 未刷新输入副本、布局变化后复用旧副本、<code class="language-plaintext highlighter-rouge">CPUResizeCache</code> 引用过期内存。</li> </ul> <p>这些都不是「某功能不能用」，而是「某个后端在某种形状、某种时序下算错或崩掉」。只有真的有人在这条路径上跑过，才会发现它们。</p> <p>还有一组更少被讨论的：转换器侧的三个安全修复——限制 ONNX <code class="language-plaintext highlighter-rouge">external_data</code> 的读取目录、修复 QNN 导出的命令注入风险、校验外置卷积权重长度。<strong>每支持一种新模型格式，就多一个解析器；每多一个解析器，就多一片攻击面。</strong>这部分维护成本从来不出现在支持矩阵里，但它真实存在。</p> <p>所以矩阵的每一格都要持续付费，C 格是不付的那部分。</p> <h2 id="九广度的账单">九、广度的账单</h2> <p><img src="/assets/img/blog/mnn-backend-precision-matrix/fig-04-binary-budget.png" alt="四个体积数字：12 MB、0.8 MB、−25%、−50~70%"></p> <p><em>README 自己给出的四个数字，指向四种不同的取舍。每一个 S 都要在这些数里占一份。</em></p> <ul> <li>iOS 静态库，全功能编译（armv7 + arm64）：约 <strong>12 MB</strong>，链接后可执行文件增量约 2 MB；</li> <li>Android 核心 so（armv7a，c++_shared）：约 <strong>800 KB</strong>；</li> <li> <code class="language-plaintext highlighter-rouge">MNN_BUILD_MINI</code>：再减 <strong>约 25%</strong>，代价是模型输入尺寸必须固定；</li> <li>FP16 / INT8 量化后的模型体积：减少 <strong>50%~70%</strong>——压的是权重，不是引擎。</li> </ul> <p>第三条最能说明端侧的取舍逻辑：<strong>「轻量」和「动态输入」在移动端是一对互斥项。</strong>你要省那 25%，就得放弃变长输入，而 LLM 恰恰是最不能固定输入的那类模型。</p> <p>矩阵越宽，能裁的地方越多；但裁到只剩一个后端，你得到的就不再是这个引擎，而是另一个引擎。</p> <h2 id="十mnn-pocket-03b把表反过来用">十、MNN-Pocket-0.3B：把表反过来用</h2> <p>2026-11-04，MNN 团队发了一个自己训练的模型：<a href="https://arxiv.org/abs/2611.12311" rel="external nofollow noopener" target="_blank">MNN-Pocket-0.3B</a>。</p> <p>300M 参数的 dense 模型，32K 上下文，Apache 2.0。INT4（W4A16）加 QAT 之后，MNN 格式的部署包只有 <strong>173 MB</strong>。预训练用了约 <strong>4.1T</strong> 中英 token，后训练三段：指令微调、多教师 on-policy 蒸馏、量化感知训练。</p> <p>这个项目的意义不在参数规模，在于它的方法论写得很直白：<strong>硬件感知的架构选择</strong>（按端侧内存与算力预算挑结构）加<strong>依赖感知的词表裁剪</strong>，然后再针对具体硬件做推理侧优化。</p> <p>也就是说，它不是「等模型训好了再适配引擎」，而是<strong>先看矩阵上哪一格能填成 S，再去设计一个能落在那格里的模型。</strong></p> <p>这带来了一个很实用的口径问题。同一个模型，官方给了两个 decode 数字：</p> <table> <thead> <tr> <th>来源</th> <th>设备</th> <th>Decode</th> </tr> </thead> <tbody> <tr> <td>README</td> <td>iPhone 18 Pro</td> <td>350 tok/s</td> </tr> <tr> <td>技术报告摘要</td> <td>iPad Pro M5（Metal）</td> <td>最高 466 tok/s</td> </tr> </tbody> </table> <p>差 33%。不是有人写错了，是两台设备。<strong>这就是第一节那张表存在的理由：任何端侧数字都必须带设备名与后端名，否则它不构成信息。</strong></p> <h2 id="十一局限">十一、局限</h2> <ol> <li> <strong>评级是后端家族的，不是机型的。</strong>S 只说明这条路径有人在优化，不保证你那台机器的驱动、散热和内存带宽能让它跑到官方数字。</li> <li> <strong>官方性能数字的对照组是同一设备的不同后端，不是别的引擎。</strong>没有跨引擎同机同模型对比，就不能从这些数字推出「MNN 比 X 快」。</li> <li> <strong>BF16 在 GPU 上全列 C。</strong>如果你的链路需要 BF16 的数值范围，MNN 现在不是答案。</li> <li> <strong>INT8 / INT4 的 S 不等于全整数执行。</strong>矩阵的脚注自己写了：这些评级覆盖的是受支持的量化路径，包括 weight-only 量化，不意味着每个算子都走整数流水线。</li> <li> <strong>本文所有吞吐数字都是官方公布值。</strong>我没有在真机上复现 3542.91 或 233.98，只在本地核对了矩阵的每一格与 release notes 的每一条。</li> </ol> <h2 id="十二我的判断">十二、我的判断</h2> <p>这张矩阵最大的价值不是让人挑模型，而是给出了三条可以验证的下一步：</p> <p><strong>一，看 RKNN 什么时候进表。</strong>它现在是「初步支持」，进表意味着有人愿意为它的评级签字。这是一个比任何 roadmap 都硬的成熟度信号。</p> <p><strong>二，看 2.09 倍能不能在别的后端上复现同样的比例。</strong>如果 DFlash 的收益在 Hexagon 或 OpenCL 上也是 2 倍上下，那它属于「算法类增益」，可以跨硬件迁移；如果只有 Metal 上成立，说明它强依赖那里的 Q4 分块与命令回放——那就还是硬件类增益，换芯片即失效。这一条用公开数字就能判，不需要真机。</p> <p><strong>三，看 MNN-Pocket 这条「按格子设计模型」的路线会不会有第二个模型。</strong>一个模型可以是巧合，两个就是方法论。</p> <p>最后回到我最近一直在读的东西上。做权重编辑、激活干预、表征分析这类工作，第一步通常是把模型跑起来看一眼激活分布——而这张表其实是在提醒：<strong>你得先确认自己跑在哪个格子上。</strong>一个落在 B 格或 C 格上的实验，结论没法复现，也没法归因。支持矩阵是另一种形式的可观测性：它告诉你哪些数值路径是有人在维护的，哪些是没人跑的。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li> <a href="https://github.com/alibaba/MNN" rel="external nofollow noopener" target="_blank">GitHub 源码</a>（Apache 2.0）</li> <li> <a href="https://github.com/alibaba/MNN/blob/master/README.md" rel="external nofollow noopener" target="_blank">README 支持矩阵</a>：本文第一节的全部数据来源</li> <li> <a href="https://github.com/alibaba/MNN/releases/tag/3.6.2" rel="external nofollow noopener" target="_blank">MNN 3.6.2 发布说明</a>（2026-10-29）：性能数字、DFlash、Metal 与 Hexagon 优化的出处</li> <li> <a href="https://github.com/alibaba/MNN/tree/master/transformers/llm" rel="external nofollow noopener" target="_blank">MNN-LLM 文档</a>：导出参数与 <code class="language-plaintext highlighter-rouge">config.json</code> 字段</li> <li> <a href="https://mnn-docs.readthedocs.io/en/latest/" rel="external nofollow noopener" target="_blank">官方文档</a>、<a href="https://github.com/alibaba/MNN/tree/master/transformers/diffusion" rel="external nofollow noopener" target="_blank">MNN-Diffusion</a> </li> <li> <a href="https://arxiv.org/abs/2611.12311" rel="external nofollow noopener" target="_blank">MNN-Pocket-0.3B 技术报告</a>（arXiv:2611.12311）</li> <li>背景论文：Walle，OSDI’22；MNN，MLSys 2020</li> </ul> <p>数据来源为官方 README、3.6.2 Release Notes 与技术报告。支持矩阵的评级与格数由我从 README 表格逐格统计，可能在后续版本中变化；性能数字均为官方在特定设备上的公布值，不代表其他硬件环境。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>

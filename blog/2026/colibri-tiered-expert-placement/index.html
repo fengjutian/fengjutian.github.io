@@ -1,0 +1,691 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/colibri-tiered-expert-placement/"> <meta property="og:description" content="从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/colibri-tiered-expert-placement.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层"> <meta name="twitter:description" content="从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/colibri-tiered-expert-placement.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/colibri-tiered-expert-placement/",
+        "@type": "BlogPosting",
+        "description": "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        "headline": "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/colibri-tiered-expert-placement/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0"> <i class="fa-solid fa-hashtag fa-sm"></i> 机器学习</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>同一个引擎，同一份 int4 权重，同一个模型。</p> <p>GLM-5.2，744B 参数。在 6 张 RTX 5090 上把专家全部驻留，解码 9.0–9.2 tok/s；同一份权重放在一台 25 GB 内存的笔记本上，专家全部从盘上读，0.05–0.1 tok/s。</p> <p>两个端点是 184 倍。按最保守的取法（9.0 与 0.1）也有 90 倍。</p> <p>变的只有一件事：<strong>每个被路由到的专家，住在 VRAM、RAM 还是 NVMe。</strong></p> <ul> <li>源码：<a href="https://github.com/JustVugg/colibri" rel="external nofollow noopener" target="_blank">JustVugg/colibri</a>（Apache 2.0，Copyright 2026 Vincenzo Fornaro）</li> <li>文档：<a href="https://justvugg.github.io/colibri" rel="external nofollow noopener" target="_blank">justvugg.github.io/colibri</a>，以及仓库里的 <code class="language-plaintext highlighter-rouge">docs/</code> </li> <li>规模：13 个引擎（10 个语言模型、1 个图像生成、2 个决策模型），纯 C，无 BLAS，运行时没有 Python 深度学习栈</li> </ul> <p>本文只讲一件事：<strong>它怎么把「权重放在哪」变成一个可测量、并且被自己证明「只影响速度」的变量。</strong></p> <h2 id="一一个-moe-的三本账">一、一个 MoE 的三本账</h2> <p><img src="/assets/img/blog/colibri-tiered-expert-placement/fig-01-three-budgets.png" alt="三个数量级：744B 总参数、5.4% 每 token 激活、约 11 GB 每 token 变动"></p> <p><em>这三条一起决定了整个设计的形状：第一条决定磁盘，第二条决定算力，第三条才决定 I/O。</em></p> <p>README 里最关键的三个数字是这么排的：</p> <table> <thead> <tr> <th>数字</th> <th>含义</th> <th>它决定什么</th> </tr> </thead> <tbody> <tr> <td>744B</td> <td>总参数，int4 容器 429 GB</td> <td>要多大磁盘</td> </tr> <tr> <td>≈5.4%</td> <td>每 token 激活的参数，约 40B</td> <td>算力</td> </tr> <tr> <td>≈11 GB</td> <td>每 token 变动的权重，即被路由到的专家</td> <td>I/O 量</td> </tr> </tbody> </table> <p>这组数字推翻了一个默认前提。我们习惯问「这个模型能不能装进显存」，而 MoE 的问法是「哪一部分必须常驻」。</p> <p>dense 部分（attention、共享专家、embedding）每 token 都要用，留在 RAM；routed 专家只在 router 选中时才需要，放在盘上，用时再读。<strong>模型不必装进快内存，它必须被放置。</strong></p> <p>这也解释了为什么这套设计只对 MoE 成立。dense 模型每个 token 都要过全部权重，「分层」就退化成把同一份东西换个地方放，没有可用的稀疏性。</p> <h2 id="二一个模型家族一份-c">二、一个模型家族，一份 <code class="language-plaintext highlighter-rouge">.c</code> </h2> <p>先说架构，因为它决定了这个项目能长到多大。</p> <p><strong>每个模型家族一个 C 文件，共享底层头文件。</strong> <code class="language-plaintext highlighter-rouge">c/colibri.c</code> 是 GLM-5.2/5.3（也跑 Mistral-Large-4），<code class="language-plaintext highlighter-rouge">c/glm53.c</code> 是 GLM-5.3-Flash，<code class="language-plaintext highlighter-rouge">c/kimi_k3.c</code> 是 Kimi K3；专家缓存、量化、Tokenizer、GGUF 读取、GPU 后端都在共享的 <code class="language-plaintext highlighter-rouge">expert_store.h</code>、<code class="language-plaintext highlighter-rouge">quant.h</code>、<code class="language-plaintext highlighter-rouge">tok.h</code>、<code class="language-plaintext highlighter-rouge">backend_*.c</code> 里。</p> <p>一个引擎只拥有自己的架构，两个引擎都需要的东西沉到一个头文件里——于是修一次，十个引擎一起受益。</p> <p>这不是个次要的工程决定。它让「支持一个新模型」的成本变成「写一个 attention + router」，而不是「把模型塞进一个通用图编译器」。</p> <p>目前它跑的东西，按下载体积排：</p> <table> <thead> <tr> <th>引擎</th> <th>模型</th> <th>下载</th> <th>RAM 下限</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">kimi_k3</code></td> <td>Kimi K3（2.8T）</td> <td>1.56 TB</td> <td>32 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">mimo</code></td> <td>MiMo-V2.6 Flash（309B）/ Pro（1.02T）</td> <td>172 / 564 GB</td> <td>32 / 54 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">inkling</code></td> <td>Inkling（975B）</td> <td>514 GB</td> <td>120 GB（dense 转换后 25 GB）</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">deepseek_v4</code></td> <td>DeepSeek V4 Flash（284B）</td> <td>167 GB</td> <td>16 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">deepseek_v41</code></td> <td>DeepSeek V4.1 Flash（552B）</td> <td>510 GB</td> <td>≈18 GB + 专家缓存</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">colibri</code></td> <td>GLM-5.2（744B）/ GLM-5.3</td> <td>429 / 419 GB</td> <td>16 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">glm53</code></td> <td>GLM-5.3-Flash（321B）</td> <td>328 GB</td> <td>25 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">qwen38</code></td> <td>Qwen3.8-Flash-Next（125B + 51B n-gram）</td> <td>186 GB</td> <td>24 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">qwen36</code></td> <td>Qwen3.6-35B-A3B（也跑 Qwen3-Coder、Qwen3.8-27B、Flint、Muse Spark、LFM3-VL）</td> <td>23 GB</td> <td>10 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">olmoe</code></td> <td>OLMoE（7B）</td> <td>14 GB</td> <td>8 GB</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">qwenimage</code></td> <td>Qwen-Image-2.1</td> <td>33 GB</td> <td>12 GB</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">laya</code> / <code class="language-plaintext highlighter-rouge">gliner_decide</code> </td> <td>两个决策模型</td> <td>0.85 / 1.95 GB</td> <td>1.7 / 1.9 GB</td> </tr> </tbody> </table> <p>「RAM 下限」是官方表格里的第一个数：低于它模型起不来。这个数字与下载体积几乎脱钩——1.56 TB 的 Kimi K3 只要 32 GB 就能启动。这是这张表里最值得看的一行。</p> <p>用起来是三步：<code class="language-plaintext highlighter-rouge">./start-here.sh</code> 探测硬件、推荐一个能跑的模型、构建引擎、下载权重；<code class="language-plaintext highlighter-rouge">./coli chat</code> / <code class="language-plaintext highlighter-rouge">web</code> / <code class="language-plaintext highlighter-rouge">serve</code> 分别起终端、界面与 API；手上已有 GGUF 的话，<code class="language-plaintext highlighter-rouge">./coli import xxx.gguf</code> 直接导入，不重新量化。</p> <h2 id="三每个-token-的每一层都走五个动作">三、每个 token 的每一层，都走五个动作</h2> <p><img src="/assets/img/blog/colibri-tiered-expert-placement/fig-02-five-actions.png" alt="五个动作：route、union、place、overlap、learn"></p> <p><em>README 把这条路径画成一张图。五个动作里，只有 place 和 overlap 是这套设计独有的。</em></p> <ol> <li> <strong>route</strong>：router 选出 top-k 专家。这是模型自己的决定，引擎不许改。</li> <li> <strong>union</strong>：同一批次里多个位置命中同一个专家时，只读一次。长 prompt 的 prefill 阶段，省下的是同一份权重的重复读取。</li> <li> <strong>place</strong>：按热度查三层，命中就从 VRAM / RAM 拿，没命中就从盘上读。</li> <li> <strong>overlap</strong>：没命中的专家在读的同时，已驻留的专家在算。</li> <li> <strong>learn</strong>：这一轮的路由结果写回 <code class="language-plaintext highlighter-rouge">.coli_usage</code>，下一轮 pin 得更准。</li> </ol> <p>第 2 步容易被忽略，但它是「一个专家三块矩阵一次 <code class="language-plaintext highlighter-rouge">pread</code>」的前提：gate / up / down 三块权重被组织成一次顺序读，不是三次随机读。</p> <h2 id="四三层和一个会过拟合的缓存">四、三层，和一个会过拟合的缓存</h2> <p>官方把这个机制叫 <strong>JIT for weights</strong>：编译器不会提前编译整个程序，它观察什么在跑，把热路径编译掉；colibri 观察什么专家在被路由，把热的那些留在快的地方。</p> <p>规则本身不复杂：每层一个 LRU，加上一个从你自己的对话里学出来、pinned 住的热点集合（<code class="language-plaintext highlighter-rouge">.coli_usage</code>，每轮更新）。<code class="language-plaintext highlighter-rouge">--policy balanced</code> 之下还会在安全边界做实时替换——一个 LFRU 分数混合衰减的会话频率与最近访问，25% 的滞回，一次最多换四个，防止层间抖动。</p> <p>三层各自装什么，README 写得很具体：<strong>GPU 存最热的专家和 dense 层</strong>（Vulkan 下分「专家层」与「dense 链」两件事，后者把整层记成一次提交，运行状态留在卡上）；<strong>RAM 装 dense 主体、KV 和 LRU 缓存得下的专家</strong>；<strong>NVMe 装剩下的一切</strong>。GLM-5.2 的 RAM 下限是 16 GB、推荐 24 GB——在这台机器上，常驻的只能是 dense 与最热的一小撮专家，其余全部留在盘上。<code class="language-plaintext highlighter-rouge">coli plan</code> 会把三层的大小、每个放置的理由和预期瓶颈打印出来，<code class="language-plaintext highlighter-rouge">coli doctor</code> 只读地检查一遍。</p> <p>真正有意思的是官方自己给出的那张覆盖率表。用 Qwen3.6 的历史（每个 int4 专家 1.7 MB）算「pin 多少内存能覆盖多少历史路由」：</p> <table> <thead> <tr> <th>pin 的内存</th> <th>覆盖的专家比例</th> <th>覆盖的历史路由</th> </tr> </thead> <tbody> <tr> <td>1 GB</td> <td>5.7%</td> <td>23.4%</td> </tr> <tr> <td>2 GB</td> <td>11.5%</td> <td>37.4%</td> </tr> <tr> <td>4 GB</td> <td>23.0%</td> <td>56.6%</td> </tr> <tr> <td>6 GB</td> <td>34.5%</td> <td>70.2%</td> </tr> <tr> <td>8 GB</td> <td>45.9%</td> <td>80.5%</td> </tr> </tbody> </table> <p>曲线的前半段是这套设计的全部说服力：<strong>11.5% 的专家覆盖了 37.4% 的选择。</strong>路由确实有结构。</p> <p>然后是紧接着的那句注解，也是我认为这份文档最诚实的地方：覆盖率是在它自己的历史上算的，必然高估。用 holdout 换一份历史：官方的 Qwen3.8 profile 在自身上覆盖 70%，用同样的专家去跑同一模型的另一次会话，只剩 57.7%。</p> <p>十二个点的落差，就是「学习型缓存」这个词的真实成本。它不是 bug，是这类方案的固有属性——而且官方把它写在了文档里，而不是留给别人去发现。</p> <h2 id="五不等磁盘第二次">五、不等磁盘第二次</h2> <p><img src="/assets/img/blog/colibri-tiered-expert-placement/fig-03-overlap.png" alt="三条泳道：GPU 在算驻留专家，I/O 池在读缺失的，PILOT 在预读下一层"></p> <p><em>同一段时间里同时跑的三件事。I/O 不是被消除，而是被摊进计算里。</em></p> <p>磁盘读一次，代价是一次；读两次，代价就翻倍。所以整套流水线都在避免第二次。</p> <p><strong>一个专家一次 <code class="language-plaintext highlighter-rouge">pread</code>。</strong> 三块矩阵排在一起读，不是三次寻道。</p> <p><strong>loader 池默认开着（<code class="language-plaintext highlighter-rouge">PIPE=1</code>）。</strong> 8 个 worker 读缺失的专家，驻留的照算，读完了再合进这一层。官方口径是磁盘服务时间降 18%，但真正重要的是前景可见的等待变小——<code class="language-plaintext highlighter-rouge">[PROF]</code> 会把这两个时间分开报，重叠是不是真的发生了，你不用猜。</p> <p><strong>路由预取（<code class="language-plaintext highlighter-rouge">PILOT=1</code>）。</strong> 把第 L+1 层的 router 套在第 L 层的 post-attention 状态上，能召回真实 top-8 的 71.6%。</p> <p>这个数字必须配一个基线才有意义：对照组「沿用上一个 token 的专家」是 41.3%。<strong>不写基线的 71.6%，只是个好听的广告。</strong></p> <p>预取本身也有层级：<code class="language-plaintext highlighter-rouge">PILOT=1</code> 只发提示，<code class="language-plaintext highlighter-rouge">PILOT_REAL=1</code> 把预取的读移出关键路径（大缓存机器上命中率 +11 个百分点），<code class="language-plaintext highlighter-rouge">PILOT_TWO=1</code> 把共享专家的结果折进预测（召回 +3%）。</p> <p><strong><code class="language-plaintext highlighter-rouge">DIRECT=1</code>（O_DIRECT）。</strong> 跳过 page cache，在 Strix Halo 上单这一项是 +65%。但在别的盘上是中性甚至更差——文档原话是「在你自己机器上测」。这句话不是免责声明，是这套系统的性质：收益几乎全部来自存储栈的具体形状。</p> <h3 id="同一份权重可以来自两块盘">同一份权重，可以来自两块盘</h3> <p>读不动的时候还可以加盘。<code class="language-plaintext highlighter-rouge">COLI_MODEL_MIRROR=/second/glm52_i4</code> 让第二块盘持有一份副本，两块独立控制器的 NVMe 实测 <strong>+37.5% 解码</strong>。</p> <p>注意后面的限定：加第三块<strong>更慢</strong>的盘，在加权条带之后是中性的。带宽够了之后，瓶颈换成了调度，不是盘的数量。</p> <p>往上还有 <code class="language-plaintext highlighter-rouge">COLI_NUMA=1</code>——多路机器上把常驻权重摊到各个内存控制器，6 张 5090 上从 5.8–6.8 到 9.0–9.2；以及 cluster 模式，把 routed 专家放到别的机器上。分层从 NVMe 一路延伸到网络，机制是同一个。</p> <h2 id="六那条纪律">六、那条纪律</h2> <p>这一节是全文的重点，也是我认为这个仓库最值得学的地方，而不是它的 184 倍。</p> <p>README 里有一句承诺：<strong>权重住在哪里只改变答案来得多快，不改变是哪些权重、哪些路由决策产出了这个答案。</strong></p> <p>大多数 offload 方案也这么写，但写完就完了。colibri 把它变成了可执行的判据。</p> <p><code class="language-plaintext highlighter-rouge">coli tune</code> 会在一台机器上扫一遍调度参数（线程数、NUMA、I/O 重叠、direct I/O、专家缓存大小……），但候选要过四道门才会被保存：</p> <ul> <li>中位吞吐至少 <strong>+3%</strong>；</li> <li>专家命中率变化在 <strong>0.5 个百分点</strong>以内；</li> <li>TTFT / p99 在基线的 <strong>20%</strong> 以内；</li> <li>最后，<strong>每一道 prompt 的 greedy 输出必须逐字节相同——任何一个字节的漂移，直接取消资格。</strong> </li> </ul> <p>还有一条我不太在别处见到的收尾：胜出的候选会被重新跑一遍，然后再跑一次基线，用倒序把热缓存剩下的一点便宜还给基线。启动漂移不算优化。</p> <p>再往外还有两层：每个引擎在 CI 里对着参考实现逐 token 核对；<code class="language-plaintext highlighter-rouge">coli plan</code> 默认走 <code class="language-plaintext highlighter-rouge">--policy quality</code>，不动量化也不动 top-k。</p> <p><strong>然后它自己写下了「这条纪律在哪里不成立」，带数字。</strong></p> <ul> <li> <code class="language-plaintext highlighter-rouge">--topp 0.7</code>：自适应的专家 top-p，少读 30–40% 的磁盘，<strong>有损</strong>，会打警告。</li> <li> <code class="language-plaintext highlighter-rouge">DEGRADE_ZERO=1</code>：预取超时的时候，把 gate 权重低于阈值的专家槽<strong>零填充</strong>而不是读盘。OLMoE 上阈值 0.03 时约 22% 的槽被清零，perplexity +2.9%；0.05 时约 60%，perplexity +41%。只对 decode 生效（prefill 掉专家会污染 KV cache），而且 GLM-5.2 与 Kimi K3 的对应工作点<strong>没有测过</strong>——文档原话就是这么写的。</li> <li>还有一处不是例外、而是数值现实：GPU 上加法顺序不同、部分激活保留 f32，所以<strong>一段长回答可能和 CPU 的结果差一个词</strong>。Vulkan 路径由 CI 用软件驱动对拍。</li> </ul> <p>三处都是「我知道这里会变，我把变化量写出来」。</p> <p>这套做法比任何 benchmark 表更能说明一个推理引擎的成熟度：<strong>它把「优化」和「改模型」分开了，并且给前者装了一扇只能出不能进的门。</strong></p> <h2 id="七184-倍那张表">七、184 倍那张表</h2> <p><img src="/assets/img/blog/colibri-tiered-expert-placement/fig-04-decode-ladder.png" alt="GLM-5.2 在不同硬件上的解码速度，同一引擎同一份 int4 容器，对数轴"></p> <p><em>同一引擎、同一份 int4 容器、同一个模型。唯一的变量是专家驻留在哪一层。数字来自 README 与 <code class="language-plaintext highlighter-rouge">docs/benchmarks.md</code>，不是同一台机器上的受控对比。</em></p> <table> <thead> <tr> <th>机器</th> <th>专家住在哪</th> <th>解码 tok/s</th> </tr> </thead> <tbody> <tr> <td>25 GB 内存笔记本（冷启动）</td> <td>全部 NVMe</td> <td>0.05–0.1</td> </tr> <tr> <td>单张 RTX 5070 Ti，笔记本级机器</td> <td>少数在 VRAM</td> <td>1.07</td> </tr> <tr> <td>128 GB，Ryzen AI Max+ 395</td> <td>热缓存，部分常驻 RAM</td> <td>1.83</td> </tr> <tr> <td>6× RTX 5090</td> <td>全部驻留 VRAM</td> <td>5.8–6.8</td> </tr> <tr> <td>同上 + <code class="language-plaintext highlighter-rouge">COLI_NUMA=1</code> </td> <td>全部驻留 + NUMA 交错</td> <td>9.0–9.2</td> </tr> </tbody> </table> <p>这张表最该被读成什么？</p> <p>不是「25 GB 能跑 744B」——那是营销点，官方自己把 0.05–0.1 tok/s 叫作 honest floor，二十秒一个 token，能跑，不能聊。</p> <p>该读成的是：<strong>放置不是一个微调旋钮，它是两个数量级。</strong>在显存里和在盘上，差的是「可交互」与「可运行」这两件事本身。</p> <p>而且这个梯度不是均匀的。从全盘读到 128 GB 热缓存是几十倍；从热缓存到六张卡全驻留是三倍上下；再叠一个 NUMA 参数，一点四倍。每一步都在换瓶颈：先是 I/O 的次数，然后是带宽，最后是内存控制器的分布。</p> <p>顺带说一件容易忽略的：这些数字全部由项目自己公布，来源分散在各个 <code class="language-plaintext highlighter-rouge">docs/*.md</code> 与 issue 里，测试条件不同。它证明的是「同一份权重在不同位置上的量级差」，<strong>不证明「colibri 比别的引擎快」</strong>——没有同机同模型的跨引擎对比。</p> <h2 id="八同一套动作用在-kv-上">八、同一套动作，用在 KV 上</h2> <p>这篇文章的论点是「放置」，但 colibri 里最漂亮的复用，发生在权重之外。</p> <p><strong>MLA 的压缩 KV。</strong> GLM-5.2 的 attention 每个 token 只保留 576 个浮点，而不是 32,768——57 倍。这份状态以约 182 KB/token 追加写入磁盘，崩溃安全；关掉对话明天再开，<strong>零 re-prefill</strong>，官方称与不中断的会话逐字节一致。</p> <p><strong>PARK。</strong> agent 两轮之间常有一个短请求（比如让它给这段对话起个标题），它不该把整个上下文状态抢走。<code class="language-plaintext highlighter-rouge">COLI_PARK</code> 把会话停在原地。Hermes Agent 的第二轮，14,810 个 token，从 86 秒降到 4.9 秒。</p> <p><strong>System One。</strong> 这个是同一个思路最直白的一次表达：把一次昂贵的读取变成一份可复用的快照。</p> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"340 lines, 8 files, no tests."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"questions"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"review"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"choice"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"instructions"</span><span class="p">:</span><span class="w"> </span><span class="s2">"What should the reviewer do?"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"criteria"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"merge"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nl">"request changes"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nl">"close"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div> <p>文档只读一次并 pin 住，之后每个问题只付自己的那几个词。四个问题共享一段指令块：<strong>45.7 秒一条，纯生成是 149.2 秒一条。</strong></p> <p>返回的不是一句话，而是每个选项的概率和一个 confidence，<code class="language-plaintext highlighter-rouge">(n·peak − 1) / (n − 1)</code>：质量全压在一个选项上是 1，摊平是 0。终端里同时显示熵——低于 0.4 是确定，0.8 以上就该交给人。有一点必须说清楚：<code class="language-plaintext highlighter-rouge">usage.output_tokens</code> 统计的是模型<strong>读</strong>过的选项 token，它一个都没有生成。</p> <p>同一份直觉，三次落地：权重读一次、会话状态存一次、文档读一次。<strong>贵的东西只读一遍，剩下的都是复用。</strong></p> <h2 id="九边界">九、边界</h2> <ol> <li> <strong>稀疏才有分层。</strong> dense 模型每 token 都要过全部权重，这套设计对它没有意义。</li> <li> <strong>磁盘不是免费内存。</strong> 0.05–0.1 tok/s 是官方写明的下限；NVMe 的延迟和带宽仍然决定体验，colibri 做的是把读取和计算重叠，不是消除差异。</li> <li> <strong>所有性能数字都是自测。</strong> 没有同机同模型跨引擎的对照，来源分散在 README、<code class="language-plaintext highlighter-rouge">docs/</code> 与 issue 里，条件各不相同。</li> <li> <strong>「纯 C」指的是引擎。</strong> 运行时没有 BLAS、没有 Python 深度学习栈；但 <code class="language-plaintext highlighter-rouge">coli</code> 启动器、<code class="language-plaintext highlighter-rouge">setup_*.py</code>、转换器和 OpenAI/Anthropic 网关都是 Python 3，安装与起服务时它必须在场。</li> <li> <strong>每个模型保留自己的许可。</strong> 引擎是 Apache 2.0；GLM-5.2 的权重由 Z.ai 以 MIT 发布；Qwen-Image-2.1 只能非商用。</li> <li> <strong>集显只在三个模型上默认开</strong>（Qwen3.6、Qwen3-Coder、Qwen3.8-Flash-Next）。OLMoE 这种专家本来就全在 RAM 的小模型，开 Vulkan 反而从 23.1 掉到 12.8 tok/s。</li> <li> <strong>学习型缓存会过拟合你自己的历史。</strong> 70% → 57.7% 是官方数字，不是意外。</li> </ol> <h2 id="十我的判断">十、我的判断</h2> <p>三条可以验证的下一步，都来自项目自己列出的开放问题表。</p> <p><strong>一，跨会话的 A/B。</strong>「学习到的 pin 比纯 LRU 好」目前只有重复工作负载上的证据，官方自己标注了可能过拟合单个 prompt。需要的实验是 held-out、跨 coding / chat / 多语言 / 长上下文四类负载。工具已经在了（<code class="language-plaintext highlighter-rouge">usage_coverage.py --holdout</code>），缺的是多份真实历史。这一条用公开工具就能复现，不需要那张 5090。</p> <p><strong>二，多盘的收益曲线。</strong> +37.5% 只有两个数据点，第三块慢盘在加权条带后是中性的。如果「带宽够了之后瓶颈换成调度」这个解释成立，那么更多盘、更慢盘的组合应该收敛到同一条线。这是个便宜的实验。</p> <p><strong>三，投机解码与放置的耦合。</strong> 开放问题表里有一行我盯了很久：MTP 在专家命中率约 85% 附近曾测到 32% 的<strong>损失</strong>。也就是说，当大部分专家已经在内存里，多猜几个 token 反而更亏——投机解码的收益依赖 cache 的温度，而 cache 的温度又由放置策略决定。这个 break-even 曲面目前只有零星几个点。</p> <p>最后回到我上一篇写的东西。我写 MNN 的支持矩阵时，关心的是「同一个模型在不同后端上还是不是同一个模型」；colibri 把同一个问题往下推了一层：<strong>同一个模型在不同存储层上，还是不是同一个模型。</strong></p> <p>前者的答案是矩阵——逐格标出成熟度，C 格就写 C。后者的答案是门禁——输出差一个字节，优化就不许发布。</p> <p>两种做法在回答同一件事：当一个系统开始为了速度做取舍时，它用什么方式证明自己还是原来那个模型。MNN 用一个愿意标 C 的表，colibri 用一道逐字节的闸。比起任何吞吐数字，这两样东西更难伪造。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li> <a href="https://github.com/JustVugg/colibri" rel="external nofollow noopener" target="_blank">GitHub 源码</a>（Apache 2.0）：引擎、CLI、dashboard、桌面壳</li> <li> <a href="https://justvugg.github.io/colibri" rel="external nofollow noopener" target="_blank">项目主页</a>：安装与模型目录</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/README.md" rel="external nofollow noopener" target="_blank">README</a>：三个数量级、五个动作、模型表与全部性能数字的出处</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/docs/tuning.md" rel="external nofollow noopener" target="_blank">docs/tuning.md</a>：学习型缓存、覆盖率曲线、预取、<code class="language-plaintext highlighter-rouge">DEGRADE_ZERO</code>、<code class="language-plaintext highlighter-rouge">coli tune</code> 的判据</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md" rel="external nofollow noopener" target="_blank">docs/benchmarks.md</a>：硬件阶梯与量化消融</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/docs/multidisk.md" rel="external nofollow noopener" target="_blank">docs/multidisk.md</a>、<a href="https://github.com/JustVugg/colibri/blob/main/docs/cluster.md" rel="external nofollow noopener" target="_blank">docs/cluster.md</a>：多盘与多机</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/docs/systemone.md" rel="external nofollow noopener" target="_blank">docs/systemone.md</a>：决策接口、快照与置信度</li> <li> <a href="https://github.com/JustVugg/colibri/blob/main/docs/gguf.md" rel="external nofollow noopener" target="_blank">docs/gguf.md</a>：直接读已发布的 GGUF，不重新量化</li> </ul> <p>文中所有性能数字均为项目公布值，我未在真机复现；架构、机制与判据核对自 README 与对应文档。184 倍取自公布区间的两个端点（0.05 与 9.2），按最保守取法是 90 倍。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Desigma：撤销不该靠人保证，它该由命令自己算出来 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Desigma：撤销不该靠人保证，它该由命令自己算出来"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/desigma-command-inverse/"> <meta property="og:description" content="从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/desigma-command-inverse.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Desigma：撤销不该靠人保证，它该由命令自己算出来"> <meta name="twitter:description" content="从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/desigma-command-inverse.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/desigma-command-inverse/",
+        "@type": "BlogPosting",
+        "description": "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        "headline": "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/desigma-command-inverse/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Desigma：撤销不该靠人保证，它该由命令自己算出来</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>一个创建于 2026 年 10 月 11 日、到今天刚满五周的 Rust 项目，已经有 1,237 个 star、124 个 fork，以及<strong>超过 1,600 个测试</strong>。</p> <p>1,600 个测试这件事比 star 数更值得看。设计工具的测试很难写——你很难为一个“拖动后卡片看起来对不对”断言一个值。Desigma 能把测试做到这个规模，是因为它在两件事上做了非常规的选择：<strong>渲染结果逐字节可复现</strong>，以及<strong>每一次编辑都自带精确的逆操作</strong>。</p> <p>第二个选择才是这篇文章要讲的东西。它看起来只是个数据结构决定，实际上撑住了三件通常要各写一套的事。</p> <ul> <li>仓库：<a href="https://github.com/deepfounder-ai/desigma" rel="external nofollow noopener" target="_blank">deepfounder-ai/desigma</a>（MIT OR Apache-2.0 双许可，Rust，15 个 crate）</li> <li>文档：<a href="https://github.com/deepfounder-ai/desigma/tree/main/docs" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/</code></a>（协作协议、AI 生图、安装说明各一篇）</li> <li>下载：<a href="https://github.com/deepfounder-ai/desigma/releases" rel="external nofollow noopener" target="_blank">Releases</a>（macOS <code class="language-plaintext highlighter-rouge">.dmg</code>、Windows 安装包、Linux <code class="language-plaintext highlighter-rouge">.tar.gz</code>，<strong>均未签名</strong>）</li> </ul> <p>本文只讲一件事：<strong>Desigma 如何把“撤销”从一个人人都在实现的功能，变成整个编辑器唯一需要正确一次的编辑原语。</strong>功能清单（自动布局、变体、白板、Deck、动画预设、Figma 导入）在 README 上比我能写得更全，我不复述。</p> <h2 id="一先把规模说清楚">一、先把规模说清楚</h2> <table> <thead> <tr> <th>数字</th> <th>是什么</th> </tr> </thead> <tbody> <tr> <td>15 个 crate</td> <td> <code class="language-plaintext highlighter-rouge">desigma-doc</code> / <code class="language-plaintext highlighter-rouge">engine</code> / <code class="language-plaintext highlighter-rouge">render</code> / <code class="language-plaintext highlighter-rouge">gpu</code> / <code class="language-plaintext highlighter-rouge">fig</code> / <code class="language-plaintext highlighter-rouge">mcp</code> 等</td> </tr> <tr> <td>1,600+</td> <td>workspace 内的测试数，含驱动 UI 的合成输入测试</td> </tr> <tr> <td>256 px</td> <td>并行分块缓存的 tile 尺寸</td> </tr> <tr> <td>5,000 层</td> <td>官方称在此规模页面上平移与拖拽“仍在一帧预算内”</td> </tr> <tr> <td>32</td> <td> <code class="language-plaintext highlighter-rouge">desigma-mcp</code> 暴露的工具数</td> </tr> </tbody> </table> <p>技术栈是 <code class="language-plaintext highlighter-rouge">egui</code>（界面）+ <code class="language-plaintext highlighter-rouge">tiny-skia</code>（CPU 光栅化）+ <code class="language-plaintext highlighter-rouge">wgpu</code>（可选 GPU 路径），不依赖 Electron 和 WebView。不过“不用 Electron”只是结果，不是它的论点，理由在第七节。</p> <h2 id="二撤销在设计工具里为什么是硬问题">二、撤销在设计工具里为什么是硬问题</h2> <p>一个普通编辑器里，撤销一块文本就是恢复一段字符串。</p> <p>设计工具不一样。用户拖动一个图层，同时被牵动的东西可能有：</p> <ul> <li> <strong>自动布局</strong>：父容器里其它元素的位置与尺寸会重排；</li> <li> <strong>组件实例</strong>：改主组件时所有实例同步更新，但每个实例保留自己的覆盖；</li> <li> <strong>变量与模式</strong>：切换主题模式会让一批绑定了变量的属性整体变更；</li> <li> <strong>动画</strong>：一个属性上有多个关键帧轨道；</li> <li> <strong>原型</strong>：连线和交互也可能被顺带改写。</li> </ul> <p>所以“撤销一次拖动”的难点不是记住旧坐标，而是<strong>让这一堆联动结果整体回到原样，且不多不少</strong>。</p> <p>最直觉的写法是给每个命令两个方法，一个正着做、一个反着做——通常落成一个带 <code class="language-plaintext highlighter-rouge">execute</code> 与 <code class="language-plaintext highlighter-rouge">undo</code> 的 trait。问题在于这两份实现是两段独立代码，它们必须对同一个状态得出同一个结果，而这个“必须”只能靠人保证。<strong>但仓库里不是这么写的。</strong></p> <h2 id="三仓库里的写法apply-返回自己的逆">三、仓库里的写法：apply 返回自己的逆</h2> <p>看 <code class="language-plaintext highlighter-rouge">crates/desigma-doc/src/history.rs</code>。<code class="language-plaintext highlighter-rouge">Command</code> 不是 trait，是 <strong>enum</strong>；<code class="language-plaintext highlighter-rouge">apply</code> 的返回值就是撤销它所需的那条命令：</p> <p><img src="/assets/img/blog/desigma-command-inverse/fig-01-inverse-by-construction.png" alt="撤销由谁计算：两条路的差别不在风格，在谁保证逆操作是对的"></p> <p><em>左边是常见的 trait 写法，两条路径各写一次；右边是仓库里的写法，只有一个入口。</em></p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span> <span class="k">enum</span> <span class="n">Command</span> <span class="p">{</span>
+    <span class="n">Insert</span> <span class="p">{</span> <span class="n">parent</span><span class="p">:</span> <span class="n">NodeId</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span> <span class="p">},</span>
+    <span class="n">Remove</span> <span class="p">{</span> <span class="n">id</span><span class="p">:</span> <span class="n">NodeId</span> <span class="p">},</span>
+    <span class="n">Reparent</span> <span class="p">{</span> <span class="n">id</span><span class="p">:</span> <span class="n">NodeId</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">NodeId</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">usize</span> <span class="p">},</span>
+    <span class="n">Update</span> <span class="p">{</span> <span class="n">node</span><span class="p">:</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span> <span class="p">},</span>
+    <span class="nf">Batch</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">Command</span><span class="o">&gt;</span><span class="p">),</span>
+    <span class="c1">// …还有 SetVariables / SetNodeMotion / SetTimeline 等</span>
+<span class="p">}</span>
+
+<span class="k">impl</span> <span class="n">Command</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="k">fn</span> <span class="nf">apply</span><span class="p">(</span><span class="k">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">Document</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Result</span><span class="o">&lt;</span><span class="n">Command</span><span class="p">,</span> <span class="n">DocError</span><span class="o">&gt;</span> <span class="p">{</span> <span class="err">…</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>文件头那句注释把设计意图写得很清楚：“Every edit goes through <code class="language-plaintext highlighter-rouge">Command</code>; applying returns its inverse.”</p> <p>于是整个撤销栈只有几十行：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span> <span class="k">fn</span> <span class="nf">exec</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="k">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">Document</span><span class="p">,</span> <span class="n">cmd</span><span class="p">:</span> <span class="n">Command</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">Result</span><span class="o">&lt;</span><span class="p">(),</span> <span class="n">DocError</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">inv</span> <span class="o">=</span> <span class="n">cmd</span><span class="nf">.apply</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+    <span class="k">self</span><span class="py">.undo</span><span class="nf">.push</span><span class="p">(</span><span class="n">inv</span><span class="p">);</span>
+    <span class="k">self</span><span class="py">.redo</span><span class="nf">.clear</span><span class="p">();</span>
+    <span class="nf">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>栈里存的不是“操作记录”，而是<strong>能把它抵消掉的那条命令</strong>。<code class="language-plaintext highlighter-rouge">undo()</code> 做的事就是弹出栈顶再 <code class="language-plaintext highlighter-rouge">apply</code> 一次——不需要知道原操作是什么，也不需要为原操作额外保存快照。</p> <p>这个设计的好处不是代码短，而是<strong>逆操作没有第二份实现可以和第一份不一致</strong>。<code class="language-plaintext highlighter-rouge">Update</code> 的逆就是“把旧节点还回去”，这个逻辑写在 <code class="language-plaintext highlighter-rouge">apply</code> 里面，和正向逻辑共处一个 <code class="language-plaintext highlighter-rouge">match</code> 分支，改一个必然看到另一个。</p> <h2 id="四一条命令的一生">四、一条命令的一生</h2> <p><img src="/assets/img/blog/desigma-command-inverse/fig-02-command-lifecycle.png" alt="一次改名编辑，两次 apply：命令在栈里存的是它自己的逆"></p> <p><em>名字从 <code class="language-plaintext highlighter-rouge">Rectangle</code> 改成 <code class="language-plaintext highlighter-rouge">Renamed</code> 再撤销：每一步都是同一个 <code class="language-plaintext highlighter-rouge">apply</code>，只是喂进去的命令不同。</em></p> <p><code class="language-plaintext highlighter-rouge">Command::Update</code> 处理方式值得一提，它是“把整个节点换掉”：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">Command</span><span class="p">::</span><span class="n">Update</span> <span class="p">{</span> <span class="k">mut</span> <span class="n">node</span> <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">cur</span> <span class="o">=</span> <span class="n">doc</span><span class="nf">.get_mut</span><span class="p">(</span><span class="n">node</span><span class="py">.id</span><span class="p">)</span><span class="nf">.ok_or</span><span class="p">(</span><span class="nn">DocError</span><span class="p">::</span><span class="nf">NotFound</span><span class="p">(</span><span class="n">node</span><span class="py">.id</span><span class="p">))</span><span class="o">?</span><span class="p">;</span>
+    <span class="n">node</span><span class="py">.parent</span> <span class="o">=</span> <span class="n">cur</span><span class="py">.parent</span><span class="p">;</span>
+    <span class="n">node</span><span class="py">.children</span> <span class="o">=</span> <span class="nn">std</span><span class="p">::</span><span class="nn">mem</span><span class="p">::</span><span class="nf">take</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span> <span class="n">cur</span><span class="py">.children</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">old</span> <span class="o">=</span> <span class="nn">std</span><span class="p">::</span><span class="nn">mem</span><span class="p">::</span><span class="nf">replace</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="o">*</span><span class="n">node</span><span class="p">);</span>
+    <span class="nn">Command</span><span class="p">::</span><span class="n">Update</span> <span class="p">{</span> <span class="n">node</span><span class="p">:</span> <span class="nn">Box</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">Node</span> <span class="p">{</span> <span class="n">children</span><span class="p">:</span> <span class="nn">Vec</span><span class="p">::</span><span class="nf">new</span><span class="p">(),</span> <span class="o">..</span><span class="n">old</span> <span class="p">})</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>执行时把旧节点换出来、新节点换进去，返回的逆命令里装的就是那个旧节点。<strong>一次 <code class="language-plaintext highlighter-rouge">mem::replace</code> 同时完成“应用”和“制造逆操作”两件事</strong>，这也是它快的原因——不需要遍历属性逐项比对差异。</p> <h2 id="五一个原语三处分叉">五、一个原语，三处分叉</h2> <p>这才是这套设计真正的产出。因为“每次编辑都能精确回退”是一个可以被复用的性质，另外两件事就不用各自发明一套：</p> <p><img src="/assets/img/blog/desigma-command-inverse/fig-03-one-primitive-three-forks.png" alt="一个原语，三处分叉：它们共享的不是代码，是同一个撤销栈"></p> <p><strong>第一处是编辑器本身。</strong><code class="language-plaintext highlighter-rouge">Ctrl+Z</code> 弹栈再 <code class="language-plaintext highlighter-rouge">apply</code>，这部分和所有编辑器一样。</p> <p><strong>第二处是协作。</strong>Desigma 的实时协作是 P2P 的：通过 <a href="https://github.com/n0-computer/iroh" rel="external nofollow noopener" target="_blank">iroh</a> 的 QUIC 连接，端到端加密，直连不通时走公共中继（仍然加密）；没有账号也没有服务器，由打开文件的那台机器充当 host。合并规则是<strong>按属性</strong>的：两个人分别改同一图层的颜色和位置，两边都能留下；往同一容器里插入，两条都保留；删除优先于编辑。</p> <p>最值得注意的一条是：<strong>你的撤销只撤销你自己的编辑。</strong>（从代码结构推断，这更接近“每位参与者各持一份 <code class="language-plaintext highlighter-rouge">History</code>，只有本地操作会入栈”，而不是把远端操作也塞进同一个栈。）</p> <p><strong>第三处是 MCP。</strong><code class="language-plaintext highlighter-rouge">desigma-mcp</code> 暴露 32 个工具，覆盖导入、检查图层与 token、生成代码、编辑（图层 / 页面 / 组件 / 实例 / 动画）与保存。开启编辑器的 agent bridge（<code class="language-plaintext highlighter-rouge">desigma --bridge</code>，或偏好设置里那一项）之后，“同一批工具会编辑屏幕上打开的那份文档，并共享它的 Undo”。</p> <p>这句话的分量值得拆开：<strong>Agent 的一次改动，对人来说就是一步 <code class="language-plaintext highlighter-rouge">Ctrl+Z</code>。</strong>它不是新做的功能，是“命令持有自己的逆”这个前提让这件事免费成立。如果没有这个前提，agent 想做可回退的编辑，就得在应用层再造一套事务。</p> <h2 id="六边界什么时候换整块更划算">六、边界：什么时候“换整块”更划算</h2> <p>这套设计也不是没有取舍。看 enum 就能发现有两类命令：</p> <table> <thead> <tr> <th>类型</th> <th>例子</th> <th>逆操作怎么来</th> </tr> </thead> <tbody> <tr> <td>结构化</td> <td> <code class="language-plaintext highlighter-rouge">Insert</code> / <code class="language-plaintext highlighter-rouge">Remove</code> / <code class="language-plaintext highlighter-rouge">Reparent</code> / <code class="language-plaintext highlighter-rouge">Update</code> </td> <td>精确反向，只动被改的那部分</td> </tr> <tr> <td>整体替换（<code class="language-plaintext highlighter-rouge">Set*</code>）</td> <td> <code class="language-plaintext highlighter-rouge">SetVariables</code> / <code class="language-plaintext highlighter-rouge">SetNodeMotion</code> / <code class="language-plaintext highlighter-rouge">SetTimeline</code> / <code class="language-plaintext highlighter-rouge">SetStyles</code> </td> <td>把旧的那一整块塞回去</td> </tr> </tbody> </table> <p>后者是明确的妥协：变量集合、动画轨道这类状态形状复杂，算精细差分得不偿失，直接把旧快照换回来更省事。源码注释里写得很直白——动画编辑全部编译成 <code class="language-plaintext highlighter-rouge">SetNodeMotion</code>，“so undo is a snapshot swap”。</p> <p><code class="language-plaintext highlighter-rouge">Batch</code> 的反向逻辑同样干脆：逐条 <code class="language-plaintext highlighter-rouge">apply</code>，收集返回的逆命令，然后 <strong>reverse</strong> 一下，就是整批的逆。</p> <p>还有一个细节说明作者踩过坑：<code class="language-plaintext highlighter-rouge">History</code> 里有个 <code class="language-plaintext highlighter-rouge">for_each_command_mut</code>，用来遍历撤销栈与重做栈（包括 <code class="language-plaintext highlighter-rouge">Batch</code> 内部）去<strong>改写已存命令里引用的节点</strong>。因为文档变化后，栈里那些“旧节点快照”可能已经和当前文档不一致，需要被修正。这类问题正是快照式撤销的典型后遗症。</p> <h2 id="七确定性为什么用-cpu-渲染反而是个前提">七、确定性：为什么用 CPU 渲染反而是个前提</h2> <p>如果你只把 <code class="language-plaintext highlighter-rouge">tiny-skia</code> 当成“另一个渲染库”，就会漏掉它在这套架构里的位置。README 的原话是：<code class="language-plaintext highlighter-rouge">desigma-render</code> 在 CPU 上用 tiny-skia 绘制，<strong>因此输出可以逐字节复现</strong>；而且分块拼起来的结果与整页渲染一致。</p> <p><img src="/assets/img/blog/desigma-command-inverse/fig-04-determinism-to-assertion.png" alt="确定性的用处：让“两个截图一样吗”变成一个可以被断言的布尔值"></p> <p><em>确定性不是为了洁癖，是为了让“这次改动有没有动到别的地方”变成 CI 能回答的问题。</em></p> <p>这条性质直接支撑了 <code class="language-plaintext highlighter-rouge">desigma-diff</code>：它比对截图时会做抗锯齿检测与 SSIM，并生成一份 HTML 报告。也就是说，<strong>“视觉回归”在这个项目里是可用的</strong>——一张基线图与一张新图之间的差异能被判定，而不是靠人眼看。</p> <p>而这正是第二节那个“撤销有没有回到原样”的另一半：<strong>撤销的断言靠单元测试（比较文档结构），渲染的断言靠截图比对（比较像素）。</strong>两者都要求系统本身不给结果注入随机性。</p> <p>代价也在同一处：CPU 光栅化要自己还性能债。于是有了空间索引与 256 px 的并行分块缓存——官方说的是五千层页面上平移和拖拽“仍在一帧预算内”。注意这条承诺是分块缓存背书的结果，不是 CPU 渲染天然如此。</p> <p>顺带一提 <code class="language-plaintext highlighter-rouge">wgpu</code> 那条路的位置：它是可选加速，<strong>并且带 CPU fallback</strong>。它不承担“可重复”这个承诺，所以确定性测试仍然跑在 CPU 路径上。</p> <h2 id="八它并不打算成为-figma-的复刻">八、它并不打算成为 Figma 的复刻</h2> <p>这点容易被误读。“Figma 替代品”是社区给的说法，项目自己的表述克制得多：文件兼容与熟悉的工作流是开发指南，<strong>复刻 Figma 的编辑器外观不是目标</strong>。</p> <p>它真正想覆盖的是“设计文件能去哪里”：</p> <table> <thead> <tr> <th>方向</th> <th>支持的东西</th> </tr> </thead> <tbody> <tr> <td>读入</td> <td> <code class="language-plaintext highlighter-rouge">.fig</code>（zip 容器 + kiwi schema，deflate 或 zstd）、Figma REST JSON、Pencil <code class="language-plaintext highlighter-rouge">.pen</code>、SVG、原生 <code class="language-plaintext highlighter-rouge">.desigma</code> </td> </tr> <tr> <td>写出</td> <td> <code class="language-plaintext highlighter-rouge">.desigma</code>、Figma REST JSON、PNG / JPG / SVG / PDF、动画 GIF / WebM（AV1）/ PNG 序列</td> </tr> <tr> <td>交付</td> <td>Dev mode：量测、盒模型，以及 CSS / Tailwind / SwiftUI / Jetpack Compose / React 代码</td> </tr> </tbody> </table> <p>几个我需要点名的诚实之处：</p> <ul> <li> <strong><code class="language-plaintext highlighter-rouge">.fig</code> 格式没有公开规范。</strong>他们的解码器依据社区逆向工程，并且明确提醒：真实文件上会有缺口。</li> <li> <strong>导入不回写。</strong><code class="language-plaintext highlighter-rouge">.fig</code> 与 <code class="language-plaintext highlighter-rouge">.pen</code> 都是单向往 <code class="language-plaintext highlighter-rouge">.desigma</code>，保存不会写回原格式。</li> <li> <strong>PDF 是栅格的。</strong>Deck 的 Slide PDF / Deck PDF 都存在，但每页是高分辨率位图，文字不可选——README 自己把 PDF 导出也列进了早期缺口清单里。</li> </ul> <h2 id="九局限">九、局限</h2> <p>按重要性排：</p> <ol> <li> <strong>它自己说了不是专业日常工具。</strong>README 的原话是 “not yet a replacement for professional daily work”，最大的缺口是协作、插件、PDF 导出、真实 <code class="language-plaintext highlighter-rouge">.fig</code> 文件覆盖度，以及<strong>没有代码签名的发布包</strong>。</li> <li> <strong>发布包未签名。</strong>Windows 会弹 SmartScreen（要 More info → Run anyway），macOS 要走“仍要打开”或 <code class="language-plaintext highlighter-rouge">xattr -dr com.apple.quarantine</code>。这不是小事，很多人在第一步就放弃。</li> <li> <strong><code class="language-plaintext highlighter-rouge">Set*</code> 类命令是快照式撤销。</strong>变量、动画、样式这类整体状态靠换整块回退，意味着栈里的旧快照需要 <code class="language-plaintext highlighter-rouge">for_each_command_mut</code> 定期修正——快照式设计的后遗症，代码里已经能看到应对它的补丁。</li> <li> <strong>协作仍标注 beta。</strong>P2P 意味着 host 关掉文件会话就结束，字体也还没同步过去；能拿到一份副本，但不是真正的多端持久化。</li> <li> <strong>插件能力被刻意收窄。</strong>只支持 <code class="language-plaintext highlighter-rouge">document:insert-svg</code> 与 <code class="language-plaintext highlighter-rouge">storage:local</code> 两种权限，下载上限 16 个资源 / 单文件 2 MiB / 总计 8 MiB。这是安全上的克制，也意味着短时间不可能有 Figma 那样的插件生态。</li> <li> <strong>AI 生图用的是你自己的 OpenRouter key</strong>，费用自负，key 存系统钥匙串（Windows 凭据管理器 / macOS 钥匙串 / Linux Secret Service）。它不是内置能力，是一条外接管道。</li> <li> <strong>15 个 crate 的学习成本不低。</strong>想读懂它的渲染与布局，得在 <code class="language-plaintext highlighter-rouge">doc</code> / <code class="language-plaintext highlighter-rouge">engine</code> / <code class="language-plaintext highlighter-rouge">render</code> 三层之间来回跳。</li> </ol> <h2 id="十我的判断">十、我的判断</h2> <p>Desigma 值得学的不是“用 Rust 写个 Figma”这个叙事，而是它把两个通常被当成“实现细节”的东西提成了一等约束：</p> <ul> <li> <strong>每次编辑都能精确回退</strong> → 于是撤销、协作的按人撤销、Agent 的共享撤销栈，三件事共用一个原语；</li> <li> <strong>渲染输出可复现</strong> → 于是“改坏了没有”可以被 CI 而不是人眼回答。</li> </ul> <p>这两条都属于同一类工程品味：<strong>先让系统的行为可断言，再往上堆功能。</strong>1,600 个测试是这个选择的证据，不是勤奋的证据。</p> <p>如果要继续验证这条路，我会盯三件可检验的事：</p> <ol> <li> <strong><code class="language-plaintext highlighter-rouge">Set*</code> 快照命令会不会成为瓶颈。</strong>变量密集的文件里，每次编辑都换整块，栈的深度与内存会不会失控——这决定了这套设计的适用上限。</li> <li> <strong>确定性在 wgpu 路径上怎么处理。</strong>如果将来 GPU 成为默认渲染路径，“逐字节可复现”要么被放弃，要么需要在 GPU 上重建确定性（固定批次、禁用无序原子）。这是个真正的技术分叉点。</li> <li> <strong>MCP 的工具粒度会不会收敛成“事务”。</strong>现在是 32 个工具，每个都可能改动文档；当 agent 连续调用十几个工具时，人希望的是“这一步是 agent 干的一件事”，而不是十几次撤销。</li> </ol> <p>第三点是我最在意的，也是它和我最近在读的那条线的接口：NNsight / pyvene 那套东西之所以有用，是因为它把“模型内部发生了什么”变成了可读、可改、可归因的量。<strong>归根结底是同一个动作：先让一个变化可以被精确定位、精确回退，你才有资格谈理解它。</strong></p> <p>一个设计工具愿意为了“可归因”付出 CPU 渲染和 1,600 个测试的代价，这件事本身比它现在缺多少功能更值得注意。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li>仓库：<a href="https://github.com/deepfounder-ai/desigma" rel="external nofollow noopener" target="_blank">github.com/deepfounder-ai/desigma</a>（MIT OR Apache-2.0，双许可；许可证只覆盖代码，不含名称与图标——fork 需换名换标识）</li> <li>文档：<a href="https://github.com/deepfounder-ai/desigma/tree/main/docs" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/</code></a>（<a href="https://github.com/deepfounder-ai/desigma/blob/main/docs/collaboration.md" rel="external nofollow noopener" target="_blank">协作协议</a>、<a href="https://github.com/deepfounder-ai/desigma/blob/main/docs/ai-images.md" rel="external nofollow noopener" target="_blank">AI 生图</a>、<a href="https://github.com/deepfounder-ai/desigma/blob/main/docs/install.md" rel="external nofollow noopener" target="_blank">安装</a>）</li> <li>MCP：<a href="https://github.com/deepfounder-ai/desigma/blob/main/crates/desigma-mcp/README.md" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">crates/desigma-mcp/README.md</code></a>、<a href="https://github.com/deepfounder-ai/desigma/blob/main/docs/agent-workflows.md" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">docs/agent-workflows.md</code></a> </li> <li>插件注册表：<a href="https://github.com/deepfounder-ai/desigma-plugins" rel="external nofollow noopener" target="_blank">deepfounder-ai/desigma-plugins</a> </li> <li>撤销实现：<a href="https://github.com/deepfounder-ai/desigma/blob/main/crates/desigma-doc/src/history.rs" rel="external nofollow noopener" target="_blank"><code class="language-plaintext highlighter-rouge">crates/desigma-doc/src/history.rs</code></a> </li> </ul> <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/deepfounder-ai/desigma
+<span class="nb">cd </span>desigma
+cargo run <span class="nt">--release</span> <span class="nt">-p</span> desigma-app               <span class="c"># 编辑器，带一份演示文档</span>
+cargo run <span class="nt">--release</span> <span class="nt">-p</span> desigma-app <span class="nt">--</span> file.fig   <span class="c"># 直接打开一个 Figma 文件</span>
+cargo <span class="nb">test</span> <span class="nt">--workspace</span>                           <span class="c"># 那 1,600+ 个测试</span>
+</code></pre></div></div> <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 无头截图，适合接进 CI</span>
+desigma <span class="nt">--fixture</span> showcase <span class="nt">--select</span> Home <span class="nt">--size</span> 1600x1000 <span class="nt">--scale</span> 2 <span class="nt">--screenshot</span> hero.png
+desigma-diff compare reference.png actual.png <span class="nt">--out</span> diff.png
+</code></pre></div></div> <p>数据来源与口径：star / fork / 创建时间取 GitHub API（2026-11-17）；crate 清单、1,600+ 测试、256 px tile、5,000 层、32 个 MCP 工具、41 个动画预设、19 种混合模式、iroh 协作细节、格式矩阵、未签名发布与早期缺口清单均来自 README；<code class="language-plaintext highlighter-rouge">Command</code> 是 enum、<code class="language-plaintext highlighter-rouge">apply</code> 返回逆命令、<code class="language-plaintext highlighter-rouge">Batch</code> 反向、<code class="language-plaintext highlighter-rouge">for_each_command_mut</code>、<code class="language-plaintext highlighter-rouge">SetNodeMotion</code> 的注释原文与 <code class="language-plaintext highlighter-rouge">exec</code> 的写法均来自 <code class="language-plaintext highlighter-rouge">crates/desigma-doc/src/history.rs</code> 源码。常见教程会把命令写成带 <code class="language-plaintext highlighter-rouge">execute</code> / <code class="language-plaintext highlighter-rouge">undo</code> 的 trait，本文以仓库实现为准；另有流传的架构图里画着一个 “Layout Engine” 组件，crate 表里并无此项，布局能力分布在 <code class="language-plaintext highlighter-rouge">desigma-doc</code>（模型）与 <code class="language-plaintext highlighter-rouge">desigma-engine</code>（布局与文本测量）中。“确定性是视觉回归的前提”“协作的按人撤销更像每人一份 History”是我的推断，已在正文标注。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
