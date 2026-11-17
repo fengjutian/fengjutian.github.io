@@ -995,6 +995,58 @@ def motif_registry(d, box, accent, tag=None):
     d.text((x0, ty - 4), "0", font=font(38, True), fill=accent)
     d.text((x0 + 30, ty + 6), "条标了 commercial_use: true", font=font(19), fill=BODY)
     d.text((x0 + 30, ty + 34), "默认引擎那一条写的是 CC-BY-NC", font=font(18), fill=mix(DIM, accent, 0.55))
+
+
+def motif_funnel(d, box, accent, tag=None):
+    """Four surfaces, one process boundary, one database — and no queue."""
+    x, y, w, h = box
+    edge = mix(accent, MID, 0.25)
+    d.rounded_rectangle((x, y, x + w, y + h), radius=24, fill=tint(accent, 0.12),
+                        outline=edge, width=3)
+    if tag:
+        d.text((x + 28, y + 24), tag, font=font(18), fill=mix(DIM, accent, 0.55))
+
+    chips = ["Web", "IM", "Cron", "CLI"]
+    cw = (w - 56 - 36) / 4
+    ch_h = 46
+    cy = y + 66
+    centers = []
+    for i, c in enumerate(chips):
+        cx = x + 28 + i * (cw + 12)
+        d.rounded_rectangle((cx, cy, cx + cw, cy + ch_h), radius=9,
+                            fill=mix(MID, BG_TOP, 0.25), outline=accent, width=2)
+        d.text((cx + cw / 2, cy + ch_h / 2), c, font=font(19), fill=WHITE, anchor="mm")
+        centers.append(cx + cw / 2)
+
+    spine = cy + ch_h + 40
+    for cxx in centers:
+        d.line((cxx, cy + ch_h, cxx, spine), fill=mix(accent, MID, 0.35), width=3)
+    d.line((centers[0], spine, centers[-1], spine), fill=accent, width=3)
+    mid = (centers[0] + centers[-1]) / 2
+
+    node_y = spine + 22
+    d.line((mid, spine, mid, node_y), fill=accent, width=3)
+    nw, nh = 300, 56
+    d.rounded_rectangle((mid - nw / 2, node_y, mid + nw / 2, node_y + nh), radius=10,
+                        fill=mix(MID, accent, 0.30), outline=accent, width=2)
+    d.text((mid, node_y + nh / 2), "HarnessProcessor", font=font(19), fill=WHITE, anchor="mm")
+
+    db_y = node_y + nh + 34
+    arrow(d, (mid, node_y + nh), (mid, db_y), mix(accent, MID, 0.35), width=3, head=10)
+    dw = 320
+    d.rounded_rectangle((mid - dw / 2, db_y, mid + dw / 2, db_y + 56), radius=10,
+                        fill=mix(MID, BG_TOP, 0.25), outline=mix(accent, MID, 0.5), width=2)
+    d.text((mid, db_y + 28), "SQLite / PostgreSQL", font=font(18), fill=BODY, anchor="mm")
+
+    ax, ay = x + 28, y + h + 26
+    aw = 258
+    d.rounded_rectangle((ax, ay, ax + aw, ay + 44), radius=9,
+                        fill=(20, 27, 40), outline=mix(DIM, BG_TOP, 0.35), width=2)
+    d.text((ax + 18, ay + 22), "×", font=font(24, True), fill=(192, 84, 78), anchor="lm")
+    d.text((ax + 48, ay + 22), "没有队列 · 没有 worker", font=font(17),
+           fill=FAINT, anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1194,6 +1246,15 @@ def build(slug, out_dir):
         d.text((M, 472), "6 条连线规则 · 38 个 test-verify", font=font(21),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "octop":
+        head(d, accent, "TencentCloud / MIT / 12.1k stars",
+             "Octop", "单进程是它的地基，也是它的天花板",
+             (M, 132), 112, (M, 320), 470, thesis_size=28)
+        motif_funnel(d, (620, 116, 508, 356), accent, "octop run --port 8088")
+        d.text((M, 424), "1.0.3b6 · Python 3.12 + React 18", font=font(21), fill=DIM)
+        d.text((M, 462), "Web · IM · Cron · CLI 共用一个 HarnessProcessor", font=font(20),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1248,6 +1309,8 @@ CARDS = {
                        glow=(880, 280), glow_r=450, strength=0.28),
     "diagram-design": dict(file="diagram-design-agent-skill-lint.jpg", color=(191, 69, 32),
                            glow=(880, 250), glow_r=450, strength=0.30),
+    "octop": dict(file="octop-single-process-agent-platform.jpg", color=(40, 176, 168),
+                  glow=(880, 260), glow_r=460, strength=0.28),
 }
 
 if __name__ == "__main__":
