@@ -160,9 +160,25 @@ nav_order: 3
   }
 
   .knowledge-edge {
+    marker-end: url(#knowledge-arrow);
     stroke: var(--global-divider-color);
     stroke-width: 1.15;
     transition: opacity 160ms ease, stroke 160ms ease;
+  }
+
+  .knowledge-edge.is-compares_with,
+  .knowledge-edge.is-related_to {
+    marker-end: none;
+    stroke-dasharray: 5 4;
+  }
+
+  .knowledge-edge.is-grounds {
+    stroke-width: 2;
+  }
+
+  .knowledge-edge.is-implemented_by {
+    stroke: #d18a36;
+    stroke-dasharray: 2 3;
   }
 
   .knowledge-edge.is-hidden {
@@ -310,6 +326,27 @@ nav_order: 3
     content: "";
   }
 
+  .knowledge-relation-legend {
+    gap: 0.55rem 1rem;
+    margin-top: 0.35rem;
+  }
+
+  .knowledge-relation-legend span::before {
+    width: 1.35rem;
+    height: 0;
+    border-top: 2px solid var(--relation-color, var(--global-divider-color));
+    border-radius: 0;
+    background: none;
+  }
+
+  .knowledge-relation-legend .is-dashed::before {
+    border-top-style: dashed;
+  }
+
+  .knowledge-relation-legend .is-thick::before {
+    border-top-width: 3px;
+  }
+
   .knowledge-directory {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -413,6 +450,12 @@ nav_order: 3
   <span style="--legend-color: #6f8ea8">文章</span>
   <span style="--legend-color: #d18a36">项目</span>
 </div>
+<div class="knowledge-legend knowledge-relation-legend" aria-label="关系图例">
+  <span>解释 / 应用 / 延伸</span>
+  <span class="is-thick">提供基础</span>
+  <span class="is-dashed">对比 / 相关</span>
+  <span class="is-dashed" style="--relation-color: #d18a36">项目实现</span>
+</div>
 
 <section aria-labelledby="knowledge-directory-title">
   <h2 id="knowledge-directory-title" style="margin-top: 2.2rem">主题目录</h2>
@@ -492,11 +535,25 @@ nav_order: 3
 
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("aria-label", `${topicNodes.length} 个主题组成的知识关系图`);
+    const defs = document.createElementNS(svgNS, "defs");
+    const arrow = document.createElementNS(svgNS, "marker");
+    const arrowPath = document.createElementNS(svgNS, "path");
+    arrow.id = "knowledge-arrow";
+    arrow.setAttribute("viewBox", "0 0 10 10");
+    arrow.setAttribute("refX", "9");
+    arrow.setAttribute("refY", "5");
+    arrow.setAttribute("markerWidth", "5");
+    arrow.setAttribute("markerHeight", "5");
+    arrow.setAttribute("orient", "auto-start-reverse");
+    arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+    arrowPath.setAttribute("fill", "context-stroke");
+    arrow.append(arrowPath);
+    defs.append(arrow);
     const viewport = document.createElementNS(svgNS, "g");
     const edgeLayer = document.createElementNS(svgNS, "g");
     const nodeLayer = document.createElementNS(svgNS, "g");
     viewport.append(edgeLayer, nodeLayer);
-    svg.append(viewport);
+    svg.append(defs, viewport);
     canvas.append(svg);
 
     const controls = document.createElement("div");
@@ -505,7 +562,7 @@ nav_order: 3
     controls.innerHTML = `
       <button type="button" data-zoom="in" aria-label="放大图谱" title="放大">＋</button>
       <button type="button" data-zoom="out" aria-label="缩小图谱" title="缩小">−</button>
-      <button type="button" data-zoom="reset" aria-label="适应画布" title="适应画布">⌂</button>`;
+      <button type="button" data-zoom="reset" aria-label="返回知识地图总览" title="返回总览">⌂</button>`;
     canvas.append(controls);
 
     const view = { x: 0, y: 0, scale: 1 };
@@ -534,15 +591,6 @@ nav_order: 3
       renderViewport();
     }
 
-    const edgeEls = links.map((link) => {
-      const line = document.createElementNS(svgNS, "line");
-      line.classList.add("knowledge-edge");
-      line.dataset.source = link.source;
-      line.dataset.target = link.target;
-      edgeLayer.append(line);
-      return { link, line };
-    });
-
     const colorFor = (node) => node.kind === "topic" ? node.color : node.kind === "project" ? "#d18a36" : "#6f8ea8";
     const kindName = { topic: "主题", post: "文章", project: "项目" };
     const relationName = {
@@ -554,6 +602,18 @@ nav_order: 3
       related_to: "相关",
       implemented_by: "由项目实现"
     };
+
+    const edgeEls = links.map((link) => {
+      const line = document.createElementNS(svgNS, "line");
+      const title = document.createElementNS(svgNS, "title");
+      line.classList.add("knowledge-edge", `is-${link.type}`);
+      line.dataset.source = link.source;
+      line.dataset.target = link.target;
+      title.textContent = relationName[link.type] || "相关";
+      line.append(title);
+      edgeLayer.append(line);
+      return { link, line };
+    });
 
     const nodeEls = nodes.map((node) => {
       const group = document.createElementNS(svgNS, "g");
@@ -662,12 +722,14 @@ nav_order: 3
         </ul>`;
       panel.querySelectorAll("[data-node-id]").forEach((button) => button.addEventListener("click", () => selectNode(button.dataset.nodeId)));
       applyVisibility();
+      requestAnimationFrame(() => layout());
     }
 
-    function clearSelection() {
+    function clearSelection({ relayout = true } = {}) {
       selectedId = null;
       panel.innerHTML = '<div class="knowledge-panel-kicker">使用提示</div><h2>从一个节点开始</h2><p>点击节点查看它的说明、连接和访问入口。拖动节点可以调整局部布局。</p>';
       applyVisibility();
+      if (relayout) requestAnimationFrame(() => layout());
     }
 
     function applyVisibility() {
@@ -682,7 +744,7 @@ nav_order: 3
         const visible = (inOverview ? node.kind === "topic" : (!focus || focus.has(node.id)) && (!term || searchContext.has(node.id)));
         if (visible) visibleCount += 1;
         group.classList.toggle("is-hidden", !visible);
-        group.classList.toggle("show-label", node.kind === "topic" || node.id === selectedId || node.id === hoveredId || (term && matches.has(node.id)));
+        group.classList.toggle("show-label", node.kind === "topic" || node.id === selectedId || node.id === hoveredId || (visible && Boolean(focus)) || (term && matches.has(node.id)));
         group.classList.toggle("is-selected", node.id === selectedId);
       });
       edgeEls.forEach(({ link, line }) => {
@@ -699,36 +761,49 @@ nav_order: 3
       else status.textContent = "选择一个主题展开内容";
     }
 
+    function visibleNodes() {
+      return nodeEls.filter(({ group }) => !group.classList.contains("is-hidden")).map(({ node }) => node);
+    }
+
     function escapeHtml(value) {
       const span = document.createElement("span");
       span.textContent = value;
       return span.innerHTML;
     }
 
-    function initializePositions() {
+    function initializePositions(layoutNodes) {
       const cx = width / 2;
       const cy = height / 2;
-      const topicRadiusX = Math.max(110, width * 0.34);
-      const topicRadiusY = Math.max(150, height * 0.34);
-      topicNodes.forEach((topic, index) => {
-        const node = nodeById.get(topic.id);
-        const angle = (Math.PI * 2 * index) / topicNodes.length - Math.PI / 2;
-        node.x = cx + Math.cos(angle) * topicRadiusX;
-        node.y = cy + Math.sin(angle) * topicRadiusY;
+      const focusId = activeTopic || selectedId;
+      const focusNode = focusId && layoutNodes.find((node) => node.id === focusId);
+      const ordered = [...layoutNodes].sort((a, b) => a.id.localeCompare(b.id));
+
+      if (focusNode) {
+        focusNode.x = cx;
+        focusNode.y = cy;
+        focusNode.anchorX = cx;
+        focusNode.anchorY = cy;
+        focusNode.fixed = true;
+        const satellites = ordered.filter((node) => node.id !== focusId);
+        const ringRadius = Math.min(width * 0.3, height * 0.34, 210);
+        satellites.forEach((node, index) => {
+          const angle = (Math.PI * 2 * index) / Math.max(satellites.length, 1) - Math.PI / 2;
+          node.x = cx + Math.cos(angle) * ringRadius;
+          node.y = cy + Math.sin(angle) * ringRadius;
+          node.anchorX = node.x;
+          node.anchorY = node.y;
+        });
+        return;
+      }
+
+      const radiusX = Math.min(width * 0.34, 300);
+      const radiusY = Math.min(height * 0.31, 205);
+      ordered.forEach((node, index) => {
+        const angle = (Math.PI * 2 * index) / Math.max(ordered.length, 1) - Math.PI / 2;
+        node.x = cx + Math.cos(angle) * radiusX;
+        node.y = cy + Math.sin(angle) * radiusY;
         node.anchorX = node.x;
         node.anchorY = node.y;
-      });
-
-      const clusterSizes = new Map();
-      nodes.filter((node) => node.kind !== "topic").forEach((node) => {
-        const parentId = [...neighbors.get(node.id)].find((id) => id.startsWith("topic:"));
-        const parent = nodeById.get(parentId) || { x: cx, y: cy };
-        const index = clusterSizes.get(parentId) || 0;
-        clusterSizes.set(parentId, index + 1);
-        const angle = index * 2.39996 + Math.atan2(parent.y - cy, parent.x - cx);
-        const distance = 58 + Math.floor(index / 5) * 34 + (index % 5) * 5;
-        node.x = parent.x + Math.cos(angle) * distance;
-        node.y = parent.y + Math.sin(angle) * distance;
       });
     }
 
@@ -741,21 +816,30 @@ nav_order: 3
       };
     }
 
-    function keepInside(node) {
+    function boundaryForce(node) {
       const leftExtent = node.radius + 8;
       const rightExtent = node.radius + 9 + node.labelWidth;
-      node.x = Math.max(leftExtent, Math.min(Math.max(leftExtent, width - rightExtent), node.x));
-      node.y = Math.max(node.radius + 12, Math.min(height - node.radius - 12, node.y));
+      const topExtent = node.radius + 12;
+      const bottomExtent = node.radius + 12;
+      let fx = 0;
+      let fy = 0;
+      if (node.x < leftExtent) fx += (leftExtent - node.x) * 0.12;
+      if (node.x > width - rightExtent) fx -= (node.x - (width - rightExtent)) * 0.12;
+      if (node.y < topExtent) fy += (topExtent - node.y) * 0.12;
+      if (node.y > height - bottomExtent) fy -= (node.y - (height - bottomExtent)) * 0.12;
+      return { fx, fy };
     }
 
-    function settle() {
-      for (let iteration = 0; iteration < 240; iteration += 1) {
-        nodes.forEach((a, i) => {
+    function settle(layoutNodes) {
+      const layoutIds = new Set(layoutNodes.map((node) => node.id));
+      const layoutLinks = links.filter((link) => layoutIds.has(link.source) && layoutIds.has(link.target));
+      for (let iteration = 0; iteration < 140; iteration += 1) {
+        layoutNodes.forEach((a, i) => {
           if (a.fixed) return;
           let fx = 0;
           let fy = 0;
-          for (let j = i + 1; j < nodes.length; j += 1) {
-            const b = nodes[j];
+          for (let j = i + 1; j < layoutNodes.length; j += 1) {
+            const b = layoutNodes[j];
             const dx = a.x - b.x || 0.1;
             const dy = a.y - b.y || 0.1;
             const distance2 = Math.max(dx * dx + dy * dy, 100);
@@ -785,7 +869,7 @@ nav_order: 3
               }
             }
           }
-          links.forEach((link) => {
+          layoutLinks.forEach((link) => {
             let other;
             if (link.source === a.id) other = nodeById.get(link.target);
             if (link.target === a.id) other = nodeById.get(link.source);
@@ -798,20 +882,33 @@ nav_order: 3
             fx += (dx / distance) * pull;
             fy += (dy / distance) * pull;
           });
-          if (a.kind === "topic") {
-            fx += (a.anchorX - a.x) * 0.018;
-            fy += (a.anchorY - a.y) * 0.018;
-          } else {
-            fx += (width / 2 - a.x) * 0.0008;
-            fy += (height / 2 - a.y) * 0.0008;
-          }
-          a.x += fx;
-          a.y += fy;
-          keepInside(a);
+          fx += (a.anchorX - a.x) * 0.035;
+          fy += (a.anchorY - a.y) * 0.035;
+          const boundary = boundaryForce(a);
+          fx += boundary.fx;
+          fy += boundary.fy;
+          const maxStep = 7;
+          a.x += Math.max(-maxStep, Math.min(maxStep, fx));
+          a.y += Math.max(-maxStep, Math.min(maxStep, fy));
         });
       }
-      nodes.forEach(keepInside);
       draw();
+    }
+
+    function fitViewport(layoutNodes) {
+      if (!layoutNodes.length) return resetViewport();
+      const bounds = layoutNodes.map(labelBounds);
+      const left = Math.min(...bounds.map((box) => box.left));
+      const right = Math.max(...bounds.map((box) => box.right));
+      const top = Math.min(...bounds.map((box) => box.top));
+      const bottom = Math.max(...bounds.map((box) => box.bottom));
+      const padding = 38;
+      const contentWidth = Math.max(1, right - left);
+      const contentHeight = Math.max(1, bottom - top);
+      view.scale = Math.max(0.65, Math.min(1.35, (width - padding * 2) / contentWidth, (height - padding * 2) / contentHeight));
+      view.x = width / 2 - ((left + right) / 2) * view.scale;
+      view.y = height / 2 - ((top + bottom) / 2) * view.scale;
+      renderViewport();
     }
 
     function draw() {
@@ -829,17 +926,39 @@ nav_order: 3
       });
     }
 
-    function layout() {
+    function layout({ fit = true } = {}) {
       const bounds = canvas.getBoundingClientRect();
       width = Math.max(320, Math.round(bounds.width));
       height = Math.round(svg.getBoundingClientRect().height) || 544;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       nodes.forEach((node) => { node.fixed = false; });
-      initializePositions();
-      settle();
+      const layoutNodes = visibleNodes();
+      initializePositions(layoutNodes);
+      // A focused view represents one-hop adjacency, not relationship weight.
+      // Keep every neighbor on the same ring so line length cannot imply
+      // stronger or weaker relationships.
+      if (activeTopic || selectedId) draw();
+      else settle(layoutNodes);
+      if (fit) fitViewport(layoutNodes);
     }
 
-    search.addEventListener("input", applyVisibility);
+    let searchTimer = 0;
+    search.addEventListener("input", () => {
+      applyVisibility();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(layout, 80);
+    });
+
+    function resetKnowledgeView() {
+      search.value = "";
+      activeTopic = null;
+      selectedId = null;
+      filters.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", "false"));
+      clearSelection({ relayout: false });
+      resetViewport();
+      layout();
+    }
+
     svg.addEventListener("wheel", (event) => {
       event.preventDefault();
       zoomAt(event.deltaY < 0 ? 1.12 : 1 / 1.12, event.clientX, event.clientY);
@@ -863,16 +982,9 @@ nav_order: 3
       const action = event.target.closest("button")?.dataset.zoom;
       if (action === "in") zoomAt(1.2);
       if (action === "out") zoomAt(1 / 1.2);
-      if (action === "reset") resetViewport();
     });
-    reset.addEventListener("click", () => {
-      search.value = "";
-      activeTopic = null;
-      filters.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", "false"));
-      clearSelection();
-      resetViewport();
-      layout();
-    });
+    controls.querySelector('[data-zoom="reset"]').addEventListener("click", resetKnowledgeView);
+    reset.addEventListener("click", resetKnowledgeView);
 
     const resizeObserver = new ResizeObserver(() => {
       clearTimeout(resizeObserver.timer);
@@ -896,7 +1008,7 @@ nav_order: 3
         }
       });
     });
-    layout();
     applyVisibility();
+    layout();
   })();
 </script>
