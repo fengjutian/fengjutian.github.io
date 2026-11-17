@@ -22,6 +22,16 @@ from PIL import Image, ImageDraw, ImageFont
 W, H = 1200, 630
 M = 72
 
+# MNN cover motif: 8 columns x 6 rows graded S / A / B / hole (C)
+GRADES = [
+    [1.0, 0.6, 1.0, 0.0, 0.6, 1.0, 1.0, 0.6],
+    [0.6, 1.0, 0.6, 1.0, 0.0, 0.6, 1.0, 0.3],
+    [1.0, 1.0, 1.0, 1.0, 0.6, 0.0, 0.3, 1.0],
+    [1.0, 0.6, 0.0, 0.6, 1.0, 0.3, 0.0, 0.6],
+    [0.6, 0.0, 0.3, 0.3, 0.0, 1.0, 0.6, 0.3],
+    [0.3, 0.6, 0.3, 0.0, 0.6, 0.6, 0.3, 1.0],
+]
+
 WHITE = (238, 243, 250)
 BODY = (186, 201, 220)
 DIM = (118, 138, 164)
@@ -608,6 +618,33 @@ def motif_inverse(d, box, accent, tag):
 
 
 # ------------------------------------------------------------------ cards
+def motif_grades(d, box, accent, tag):
+    """A support matrix where a third of the cells are holes, not fills."""
+    x, y, w, h = box
+    cols, rows = 8, 6
+    gap = 10
+    cell = min((w - gap * (cols - 1)) / cols, (h - gap * (rows - 1)) / rows)
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + (h - gh) / 2
+    for r in range(rows):
+        for c in range(cols):
+            v = GRADES[r][c]
+            cx = x0 + c * (cell + gap)
+            cy = y0 + r * (cell + gap)
+            if v == 0:
+                # a hole, not a filled cell: the column decides not to support it
+                d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=4,
+                                    fill=(14, 19, 30),
+                                    outline=mix(BG_TOP, accent, 0.30), width=2)
+            else:
+                d.rounded_rectangle((cx, cy, cx + cell, cy + cell), radius=4,
+                                    fill=mix(MID, accent, v),
+                                    outline=mix(BG_TOP, accent, 0.18 + 0.5 * v), width=1)
+    d.text((x, y + h + 14), tag, font=font(17), fill=FAINT)
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -721,6 +758,16 @@ def build(slug, out_dir):
              (M, 146), 106, (M, 322), 480)
         motif_inverse(d, (600, 112, 540, 356), accent, "Command::apply → 逆命令 · 同一个 undo 栈")
 
+    elif slug == "mnn":
+        head(d, accent, "Alibaba / Apache 2.0 / MNN 3.6.2",
+             "MNN", "端侧推理引擎真正的产品，是一张敢给自己标 C 的支持矩阵",
+             (M, 150), 124, (M, 322), 470)
+        motif_grades(d, (610, 118, 500, 336), accent,
+                     "18 行（CPU 8 · GPU 4 · NPU 6）× 4 种精度，C 格是空的")
+        d.text((M, 452), "Prefill 3542.91 tok/s · Decode 111.89 → 233.98",
+               font=font(20), fill=mix(DIM, accent, 0.65))
+        d.text((M, 492), "iPhone 18 Pro 上 173 MB / 350 tok/s", font=font(20), fill=DIM)
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -756,6 +803,8 @@ CARDS = {
                  glow=(900, 300), glow_r=440, strength=0.28),
     "desigma": dict(file="desigma-command-inverse.jpg", color=(200, 106, 62),
                     glow=(900, 300), glow_r=440, strength=0.28),
+    "mnn": dict(file="mnn-backend-precision-matrix.jpg", color=(176, 138, 72),
+                glow=(900, 300), glow_r=440, strength=0.30),
 }
 
 if __name__ == "__main__":
