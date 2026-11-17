@@ -30,7 +30,7 @@ _styles: |
   .prompt-model[aria-pressed="true"] { font-weight: 700; }
   .prompt-count { margin: 0 0 0 auto; color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
   .prompt-grid { column-count: 4; column-gap: 0.35rem; }
-  .prompt-card { position: relative; display: inline-block; width: 100%; margin: 0 0 0.35rem; overflow: hidden; vertical-align: top; color: #fff; background: #17171a; border-radius: 0.28rem; break-inside: avoid; isolation: isolate; }
+  .prompt-card { position: relative; display: inline-block; width: 100%; margin: 0 0 0.35rem; overflow: hidden; vertical-align: top; color: #fff; background: #17171a; border-radius: 0.28rem; cursor: pointer; break-inside: avoid; isolation: isolate; }
   .prompt-card[hidden] { display: none; }
   .prompt-card::before { position: absolute; inset: 0; z-index: 1; content: ""; background: linear-gradient(180deg, transparent 34%, rgba(0,0,0,.08) 52%, rgba(0,0,0,.88)); pointer-events: none; }
   .prompt-card--text { min-height: 22rem; background: linear-gradient(145deg, var(--accent, #6945d2), #15131c 72%); }
@@ -51,9 +51,31 @@ _styles: |
   .prompt-copy:hover, .prompt-detail:hover { color: #fff; background: rgba(20,20,22,.88); text-decoration: none; }
   .prompt-empty { margin: 4rem 1rem; color: var(--muted); text-align: center; }
   .prompt-empty[hidden] { display: none; }
+  body.prompt-modal-open { overflow: hidden; }
+  .prompt-modal { width: min(68rem, calc(100vw - 2rem)); max-width: none; max-height: calc(100dvh - 2rem); padding: 0; overflow: hidden; color: var(--global-text-color); background: var(--global-bg-color); border: 1px solid var(--global-divider-color); border-radius: 1rem; box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34); }
+  .prompt-modal::backdrop { background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
+  .prompt-modal-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); max-height: calc(100dvh - 2rem); }
+  .prompt-modal-layout--text { grid-template-columns: 1fr; }
+  .prompt-modal-visual { min-height: 35rem; background: linear-gradient(145deg, var(--modal-accent, #6945d2), #15131c 72%); }
+  .prompt-modal-visual[hidden] { display: none; }
+  .prompt-modal-cover { width: 100%; height: 100%; max-height: calc(100dvh - 2rem); object-fit: cover; }
+  .prompt-modal-content { position: relative; display: flex; min-width: 0; flex-direction: column; padding: 2.4rem; overflow-y: auto; }
+  .prompt-modal-close { position: absolute; top: 1rem; right: 1rem; display: grid; width: 2.25rem; height: 2.25rem; padding: 0; place-items: center; color: var(--global-text-color); background: color-mix(in srgb, var(--global-text-color) 7%, transparent); border: 0; border-radius: 50%; cursor: pointer; }
+  .prompt-modal-close:hover { background: color-mix(in srgb, var(--global-text-color) 13%, transparent); }
+  .prompt-modal-category { margin: 1rem 3rem .4rem 0; color: var(--global-theme-color); font-size: .72rem; font-weight: 700; letter-spacing: .08em; }
+  .prompt-modal-title { margin: 0; font-size: clamp(1.55rem, 3vw, 2.25rem); line-height: 1.15; }
+  .prompt-modal-description { margin: .8rem 0 1.5rem; color: var(--muted); line-height: 1.65; }
+  .prompt-modal-label { margin: 0 0 .5rem; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .prompt-modal-prompt { margin: 0; padding: 1rem; overflow: auto; white-space: pre-wrap; color: var(--global-text-color); background: color-mix(in srgb, var(--global-text-color) 5%, transparent); border: 1px solid var(--global-divider-color); border-radius: .75rem; font: inherit; font-size: .86rem; line-height: 1.65; }
+  .prompt-modal-models { margin: 1.2rem 0 0; color: var(--muted); font-size: .8rem; }
+  .prompt-modal-actions { display: flex; gap: .65rem; margin-top: auto; padding-top: 1.5rem; }
+  .prompt-modal-copy, .prompt-modal-detail { padding: .65rem 1rem; border-radius: 999px; }
+  .prompt-modal-copy { color: #fff; background: var(--global-theme-color); border: 1px solid var(--global-theme-color); cursor: pointer; }
+  .prompt-modal-detail { color: var(--global-text-color); border: 1px solid var(--global-divider-color); }
+  .prompt-modal-detail:hover { color: var(--global-theme-color); text-decoration: none; }
   @media (max-width: 1280px) { .prompt-grid { column-count: 3; } }
   @media (max-width: 960px) { .prompt-library { width: 100%; margin: 0 0 2rem; } .prompt-shell { grid-template-columns: 1fr; } .prompt-sidebar { position: static; height: auto; padding: 0; border-right: 0; } .prompt-brand { display: none; } .prompt-filter-label { margin-top: 0.7rem; } .prompt-filters { display: flex; gap: 0.35rem; overflow-x: auto; } .prompt-chip { width: auto; white-space: nowrap; } .prompt-topbar { top: 3.25rem; } }
-  @media (max-width: 680px) { .prompt-grid { column-count: 2; } .prompt-count { display: none; } .prompt-card-actions { opacity: 1; transform: none; } }
+  @media (max-width: 680px) { .prompt-grid { column-count: 2; } .prompt-count { display: none; } .prompt-card-actions { opacity: 1; transform: none; } .prompt-modal { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); } .prompt-modal-layout { display: block; max-height: calc(100dvh - 1rem); overflow-y: auto; } .prompt-modal-visual { min-height: 15rem; height: 34dvh; } .prompt-modal-cover { max-height: none; } .prompt-modal-content { padding: 1.4rem; overflow: visible; } }
   @media (max-width: 430px) { .prompt-grid { column-count: 1; } }
 ---
 
@@ -86,11 +108,11 @@ _styles: |
 
       <div class="prompt-grid">
         {% for prompt in prompts %}
-          <article class="prompt-card{% unless prompt.cover %} prompt-card--text{% endunless %}" data-category="{{ prompt.category | escape }}" data-models="{{ prompt.models | join: ',' | escape }}" data-search="{{ prompt.title | append: ' ' | append: prompt.description | append: ' ' | append: prompt.prompt | append: ' ' | append: prompt.tags | downcase | escape }}">
+          <article class="prompt-card{% unless prompt.cover %} prompt-card--text{% endunless %}" data-title="{{ prompt.title | escape }}" data-description="{{ prompt.description | escape }}" data-cover="{% if prompt.cover %}{{ prompt.cover | relative_url }}{% endif %}" data-url="{{ prompt.url | relative_url }}" data-category="{{ prompt.category | escape }}" data-models="{{ prompt.models | join: ',' | escape }}" data-search="{{ prompt.title | append: ' ' | append: prompt.description | append: ' ' | append: prompt.prompt | append: ' ' | append: prompt.tags | downcase | escape }}">
             {% if prompt.cover %}<img class="prompt-cover" src="{{ prompt.cover | relative_url }}" alt="{{ prompt.title }}" loading="lazy" decoding="async" />{% endif %}
             <div class="prompt-card-body">
               <p class="prompt-category">{{ prompt.category }}</p><h2>{{ prompt.title }}</h2><p class="prompt-description">{{ prompt.description }}</p>
-              <div class="prompt-card-actions"><button class="prompt-copy" type="button" data-copy="prompt-{{ forloop.index }}"><i class="fa-regular fa-copy" aria-hidden="true"></i> 复制</button><a class="prompt-detail" href="{{ prompt.url | relative_url }}">查看详情</a></div>
+              <div class="prompt-card-actions"><button class="prompt-copy" type="button" data-copy="prompt-{{ forloop.index }}"><i class="fa-regular fa-copy" aria-hidden="true"></i> 复制</button><button class="prompt-detail" type="button" data-open-prompt aria-haspopup="dialog">查看详情</button></div>
             </div>
             <template id="prompt-{{ forloop.index }}">{{ prompt.prompt }}</template>
           </article>
@@ -102,6 +124,25 @@ _styles: |
   </div>
 </section>
 
+<dialog class="prompt-modal" aria-labelledby="prompt-modal-title">
+  <div class="prompt-modal-layout">
+    <div class="prompt-modal-visual"><img class="prompt-modal-cover" alt="" /></div>
+    <div class="prompt-modal-content">
+      <button class="prompt-modal-close" type="button" aria-label="关闭详情"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <p class="prompt-modal-category"></p>
+      <h2 class="prompt-modal-title" id="prompt-modal-title"></h2>
+      <p class="prompt-modal-description"></p>
+      <p class="prompt-modal-label">提示词</p>
+      <pre class="prompt-modal-prompt"></pre>
+      <p class="prompt-modal-models"></p>
+      <div class="prompt-modal-actions">
+        <button class="prompt-modal-copy" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i> 复制提示词</button>
+        <a class="prompt-modal-detail" href="">打开完整页面</a>
+      </div>
+    </div>
+  </div>
+</dialog>
+
 <script>
   (() => {
     const root = document.querySelector(".prompt-library");
@@ -110,7 +151,35 @@ _styles: |
     const cards = [...root.querySelectorAll(".prompt-card")];
     const count = root.querySelector("[data-prompt-count]");
     const empty = root.querySelector(".prompt-empty");
+    const modal = document.querySelector(".prompt-modal");
+    const modalLayout = modal.querySelector(".prompt-modal-layout");
+    const modalVisual = modal.querySelector(".prompt-modal-visual");
+    const modalCover = modal.querySelector(".prompt-modal-cover");
+    const modalCopy = modal.querySelector(".prompt-modal-copy");
+    let modalPrompt = "";
+    let returnFocus = null;
     const active = { category: "", model: "" };
+    function openModal(card) {
+      const template = card.querySelector("template");
+      modalPrompt = template.content.textContent.trim();
+      modal.querySelector(".prompt-modal-category").textContent = card.dataset.category;
+      modal.querySelector(".prompt-modal-title").textContent = card.dataset.title;
+      modal.querySelector(".prompt-modal-description").textContent = card.dataset.description;
+      modal.querySelector(".prompt-modal-prompt").textContent = modalPrompt;
+      modal.querySelector(".prompt-modal-models").textContent = card.dataset.models ? `适用模型：${card.dataset.models.split(",").join(" · ")}` : "";
+      modal.querySelector(".prompt-modal-detail").href = card.dataset.url;
+      modalCover.src = card.dataset.cover;
+      modalCover.alt = card.dataset.cover ? card.dataset.title : "";
+      modalVisual.hidden = !card.dataset.cover;
+      modalLayout.classList.toggle("prompt-modal-layout--text", !card.dataset.cover);
+      returnFocus = document.activeElement;
+      document.body.classList.add("prompt-modal-open");
+      modal.showModal();
+      modal.querySelector(".prompt-modal-close").focus();
+    }
+    function closeModal() {
+      modal.close();
+    }
     function update() {
       const term = query.value.trim().toLocaleLowerCase();
       let visible = 0;
@@ -133,12 +202,30 @@ _styles: |
     }));
     root.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-copy]");
-      if (!button) return;
-      const template = document.getElementById(button.dataset.copy);
-      await navigator.clipboard.writeText(template.content.textContent.trim());
-      const original = button.innerHTML;
-      button.textContent = "已复制";
-      setTimeout(() => { button.innerHTML = original; }, 1400);
+      if (button) {
+        const template = document.getElementById(button.dataset.copy);
+        await navigator.clipboard.writeText(template.content.textContent.trim());
+        const original = button.innerHTML;
+        button.textContent = "已复制";
+        setTimeout(() => { button.innerHTML = original; }, 1400);
+        return;
+      }
+      const card = event.target.closest(".prompt-card");
+      if (card) openModal(card);
+    });
+    modal.querySelector(".prompt-modal-close").addEventListener("click", closeModal);
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeModal();
+    });
+    modal.addEventListener("close", () => {
+      document.body.classList.remove("prompt-modal-open");
+      returnFocus?.focus();
+    });
+    modalCopy.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(modalPrompt);
+      const original = modalCopy.innerHTML;
+      modalCopy.textContent = "已复制";
+      setTimeout(() => { modalCopy.innerHTML = original; }, 1400);
     });
   })();
 </script>
