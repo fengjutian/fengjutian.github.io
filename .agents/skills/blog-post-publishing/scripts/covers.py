@@ -703,6 +703,47 @@ def motif_tiers(d, box, accent, tag):
     d.text((x, y + 3 * (bh + gap) + 4), tag, font=font(16), fill=FAINT)
 
 
+def motif_evidence(d, box, accent, tag):
+    """A source document with three pieces of evidence inserted into the prose."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.07),
+                        outline=mix(BG_TOP, accent, 0.34), width=2)
+    d.text((x + 24, y + 16), "被改写的那一份来源", font=font(18), fill=mix(DIM, accent, 0.5))
+    d.line((x + 24, y + 48, x + w - 24, y + 48), fill=mix(BG_TOP, accent, 0.22), width=2)
+
+    widths = [0.40, 0.24, 0.40, 0.18, 0.58]
+    chips = {0: "“据 2024 年行业报告”", 1: "62%", 2: "[来源 3]"}
+    for i, wf in enumerate(widths):
+        ly = y + 86 + i * 44
+        bar_end = x + 26 + (w - 52) * wf
+        d.rounded_rectangle((x + 26, ly, bar_end, ly + 11), radius=5,
+                            fill=(44, 56, 76))
+        if i in chips:
+            txt = chips[i]
+            f = font(17)
+            tw = d.textlength(txt, font=f)
+            d.rounded_rectangle((bar_end + 10, ly - 9, bar_end + 26 + tw, ly + 22), radius=6,
+                                fill=tint(accent, 0.45), outline=accent, width=2)
+            d.text((bar_end + 18, ly - 4), txt, font=f, fill=WHITE)
+    d.text((x, y + h + 12), tag, font=font(17), fill=FAINT)
+
+
+def band_shares(d, x0, x1, y, accent):
+    """Five sources splitting one answer; the third one grew."""
+    shares = [19.3, 19.3, 27.2, 17.1, 17.1]
+    gap = 10
+    avail = (x1 - x0) - gap * (len(shares) - 1)
+    cx = x0
+    for i, v in enumerate(shares):
+        bw = avail * v / sum(shares)
+        hot = i == 2
+        d.rounded_rectangle((cx, y, cx + bw, y + 34), radius=6,
+                            fill=tint(accent, 0.45 if hot else 0.10),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.26), width=2)
+        d.text((cx + 12, y + 6), f"{v:.1f}", font=font(18), fill=WHITE if hot else FAINT)
+        cx += bw + gap
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -838,6 +879,17 @@ def build(slug, out_dir):
              (M, 146), 112, (M, 322), 430)
         motif_tiers(d, (600, 138, 540, 386), accent, "同一份 int4 权重 · 184×")
 
+    elif slug == "geo":
+        head(d, accent, "arXiv 2311.09735 / KDD 2024",
+             "GEO", "", (M, 138), 118, (M, 300), 470)
+        d.text((M, 302), "论文里最有效的三种写法，", font=font(28), fill=BODY)
+        d.text((M, 342), "官方提示词都允许编造", font=font(28), fill=BODY)
+        motif_evidence(d, (640, 100, 488, 300), accent, "插入的不是信息，是可被指认的碎片")
+        d.text((M, 456), "一条答案的份额总和是 1.0，均分 20", font=font(20), fill=DIM)
+        d.text((W - M, 456), "引用语句 +40.9%", font=font(20),
+               fill=mix(DIM, accent, 0.7), anchor="ra")
+        band_shares(d, M, W - M, 486, accent)
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -879,6 +931,8 @@ CARDS = {
                          glow=(880, 300), glow_r=440, strength=0.28),
     "colibri": dict(file="colibri-tiered-expert-placement.jpg", color=(146, 96, 196),
                     glow=(880, 300), glow_r=440, strength=0.30),
+    "geo": dict(file="geo-generative-engine-optimization.jpg", color=(232, 190, 62),
+                glow=(900, 280), glow_r=450, strength=0.28),
 }
 
 if __name__ == "__main__":
