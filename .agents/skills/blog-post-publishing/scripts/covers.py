@@ -833,7 +833,7 @@ def build(slug, out_dir):
         motif_helix(d, (600, 120, 540, 320), accent, "账本默认关闭 · 平台截图是合成数据")
 
     elif slug == "colibri":
-        head(d, accent, "Pure C / Apache 2.0 / 13 engines",
+        head(d, accent, "Apache 2.0 / 13 engines / GLM-5.2",
              "colibri", "权重住在哪一层，只准改速度，不准改模型",
              (M, 146), 112, (M, 322), 430)
         motif_tiers(d, (600, 138, 540, 386), accent, "同一份 int4 权重 · 184×")
