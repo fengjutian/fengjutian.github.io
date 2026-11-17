@@ -1,0 +1,639 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/haru-4b-full-duplex-separated-data/"> <meta property="og:description" content="从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/haru-4b-full-duplex.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话"> <meta name="twitter:description" content="从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/haru-4b-full-duplex.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/haru-4b-full-duplex-separated-data/",
+        "@type": "BlogPosting",
+        "description": "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        "headline": "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/haru-4b-full-duplex-separated-data/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0"> <i class="fa-solid fa-hashtag fa-sm"></i> 机器学习</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E8%AE%BA%E6%96%87%E8%A7%A3%E8%AF%BB"> <i class="fa-solid fa-tag fa-sm"></i> 论文解读</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>全双工语音模型最容易被误解的一点，是它的难点看起来在架构上——让模型一边听一边说。</p> <p>真正的难点在数据上：<strong>公开可用的大规模语料里，几乎没有一份同时记录过对话双方各自的声音。</strong>一份电话录音只有一个音轨，两个人一起说话时，声音在波形上就是加在一起的一团；谁先开口、谁在附和、谁被打断，全部糊在里面。</p> <p>Haru-4B 的做法是把这件事反过来。它不假装自己有双声道数据，而是先用一个分离模型把混合录音拆成逐帧对齐的两路，再用拆出来的东西训练。官方技术博客里最诚实的一句是「Without training on any native two-channel conversations」——这句话既是这套方法的底气，也标出了它当下的软肋。</p> <ul> <li>权重：<a href="https://huggingface.co/higurashi-ai/Haru-4B" rel="external nofollow noopener" target="_blank">higurashi-ai/Haru-4B</a>（Hugging Face，主分发；<a href="https://modelscope.cn/models/higurashi-ai/Haru-4B" rel="external nofollow noopener" target="_blank">ModelScope</a> 有同名镜像）</li> <li>代码：<a href="https://github.com/higurashi-ai/Haru" rel="external nofollow noopener" target="_blank">higurashi-ai/Haru</a>（Apache 2.0，含 PyTorch / MLX / vLLM-Omni 三套实现与 Web Demo）</li> <li>技术博客：<a href="https://blog.higurashi.ai/melte/haru4b/" rel="external nofollow noopener" target="_blank">blog.higurashi.ai/melte/haru4b</a>（2026-11-13，另有<a href="https://blog.higurashi.ai/melte/haru4b-ja/" rel="external nofollow noopener" target="_blank">日文版</a>）</li> </ul> <p>本文只讲一件事：<strong>Haru-4B 怎么绕开「拿不到双声道对话」这个死结，以及绕开的代价落在了哪里。</strong>功能清单它在 README 上写得更全，我复述没意义。</p> <h2 id="一五个数字">一、五个数字</h2> <p>先看数字，它们各自对应一件事，也都不是宣传语：</p> <table> <thead> <tr> <th>数字</th> <th>是什么</th> <th>它在管什么</th> </tr> </thead> <tbody> <tr> <td>4000 万小时</td> <td>预训练语音总量</td> <td>Stage 1 的规模基准</td> </tr> <tr> <td>1300 万小时</td> <td>分离出来的双工对话</td> <td>Stage 2 全部的食材，也是最贵的一段</td> </tr> <tr> <td>160+ / 9</td> <td>覆盖语言数 / 重点语言数</td> <td>多语言能力的天花板与实测面</td> </tr> <tr> <td>60 分钟</td> <td>单条训练样本的最长对话</td> <td>长程交互能被建模到多长</td> </tr> <tr> <td>256 × B200 × 8 天</td> <td>预训练算力</td> <td>一次预训练调用了多少张卡</td> </tr> </tbody> </table> <p>第三个数字值得单独说：160 多个语言是训练数据的覆盖面，真正被当作重点调过的只有九种——英语、西班牙语、葡萄牙语、德语、法语、中文、日语、俄语、韩语。中文在列，不用猜。</p> <h2 id="二为什么全双工的数据这么难拿">二、为什么全双工的数据这么难拿</h2> <p>造全双工训练数据，目前只有三条路，代价完全不同：</p> <table> <thead> <tr> <th>做法</th> <th>拿到的</th> <th>代价</th> </tr> </thead> <tbody> <tr> <td>合成对话（脚本 + 双角色 TTS）</td> <td>完全对齐、可控、可无限扩写</td> <td>没有真实的打断、犹豫与附和，TTS 的韵律本身就干净</td> </tr> <tr> <td>原生双声道录音</td> <td>最真实</td> <td>规模小、场景窄、授权链条复杂</td> </tr> <tr> <td> <strong>分离真实混合录音</strong>（Haru）</td> <td>规模大、对话真实</td> <td>分离误差，且恰好集中在重叠语音</td> </tr> </tbody> </table> <p>Haru-4B 明确选了第三条，并且明确拒绝了第一条——博客原话是不使用 LLM 生成的对话，也不用 TTS 合成语音来构造这部分数据。这个选择很关键：<strong>全双工要学的东西（打断、抢话、附和）恰恰是合成数据最学不出来的部分，因为合成数据的「真实」本身就是被写好的。</strong></p> <p>于是问题变成：怎么把一路混合音频，变成两路时间对齐的音频。</p> <h2 id="三把一路拆成两路">三、把一路拆成两路</h2> <p><img src="/assets/img/blog/haru-4b-full-duplex/fig-01-duplex-data.png" alt="真实录音只有一路混合音轨，全双工要的是两路对齐的流"></p> <p><em>流水线是「先修再拆」：Sidon 修掉噪声与混响，FastDialogueSidon 做联合分离，输出的是同一帧号对齐的两路，而不是两段各自重采样的音频。</em></p> <p>两个组件都是他们自己做并且开源的：</p> <ul> <li> <strong>Sidon</strong> 是语音修复模型（ICASSP 2026），负责把大规模真实录音里的噪声与混响压下去。他们另外开源了 <a href="https://github.com/higurashi-ai/Sidon-Triton" rel="external nofollow noopener" target="_blank">Sidon-Triton</a>，用 Triton 加速这条预处理流水线——这暗示了规模：4000 万小时的预处理不是能慢慢跑的活。</li> <li> <strong>FastDialogueSidon</strong> 是联合的分离 + 修复模型，把混合录音变成时间对齐的双工流，同样<a href="https://github.com/higurashi-ai/FastDialogueSidon" rel="external nofollow noopener" target="_blank">单独开源</a>。</li> </ul> <p>产物是 1300 万小时、最长 60 分钟一段的「双工对话」。这里有个容易被忽略的工程点：<strong>分离必须逐帧对齐，不能是两段独立重采样。</strong>如果两路各自漂移几个毫秒，「谁在什么时候说话」这个信号就废了，而它正是全双工唯一要学的东西。</p> <p>代价也写在同一段话里：分离模型在重叠语音上最容易出错，而重叠正是全双工最想学会的那一段。所以模型学到的其实是<strong>分离器眼中的对话</strong>——它继承的是分离器的先验，不是现场的真实。</p> <h2 id="四三路信息一个位置">四、三路信息，一个位置</h2> <p>拿到双路语音之后，架构问题才登场：这三条流（用户语音、模型语音、模型文本）怎么塞进一个语言模型。</p> <p><img src="/assets/img/blog/haru-4b-full-duplex/fig-02-three-streams.png" alt="三路信息被压进同一个语言模型位置"></p> <p><em>上半是交错：一帧占三个位置，文本每 133 ms 被音频挤开一次。下半是 Haru 的做法：三路相加进一个位置。</em></p> <p>最直觉的做法是交错——每 133 ms 一帧，把用户帧、模型音频帧、文本帧排成三个连续位置。Haru 明确不这么做，它把三路各自投影到同一维度，然后<strong>逐元素相加</strong>，压进一个位置。</p> <p>博客给的理由是：与交错相比，上下文长度降到约三分之一，同时文本流不被打断。第二条比第一条重要。交错意味着文本每 133 ms 就被音频挤开一次，模型很难在文本上维持连贯的语言建模；相加则让文本流保持连续，音频只是叠加在同一位置上的另一份信息。</p> <p>顺带一提，这个「多路相加进一个位置」并非 Haru 凭空造的：博客把 Moshi 和 FLM-Audio 都列为这条线的来源（参考文献 2、3）。差异主要落在文本怎么进来——Haru 的答案是下一节的块级对齐。</p> <p>代价很实在：<strong>三路共享一个隐藏状态，谁都不能独占容量。</strong>省下三分之二的上下文，同时也意味着语言能力和声学细节要在同一个向量里抢位置。</p> <h2 id="五文本按块走音频按帧走">五、文本按块走，音频按帧走</h2> <p>官方博客里有一句很容易被跳过的细节：文本是按「块」（chunk）走的，不是逐 token。</p> <p>这句话的分量要看第三张图才明白：</p> <p><img src="/assets/img/blog/haru-4b-full-duplex/fig-03-chunk-alignment.png" alt="文本按块走，音频按帧走：两种时间尺度靠 padding 与 EOP 对齐"></p> <p><em>没有文本的帧填 padding；真正要出声的前一帧放一个 end-of-padding（EOP）token。前者是「这会儿没词」，后者是「下一帧我开口」。</em></p> <p>文本和音频的时间分辨率差得很远：一个 133 ms 的音频帧里可能半个字都没有，一段四个字的文本块却要横跨好几帧。Haru 的处理是：</p> <ul> <li>文本以块为单位写进流里，一帧放一个块（而不是一个字一个位置）；</li> <li>块与块之间、以及模型沉默的帧，一律填 padding token；</li> <li>在模型即将出声的<strong>前一帧</strong>放一个专门的 end-of-padding token。</li> </ul> <p>最后一个才是关键设计。<strong>它把「说什么」和「什么时候说」拆成了两个可以分别预测的量。</strong>文本流负责内容，EOP 负责时机；模型不必为了让文本对上音频而提前或推迟说话。</p> <p>这也解释了 prompt 的摆法：角色卡作为 system 轮给出，参考音色直接挂在<strong>模型自己的流</strong>上当音频输入。人物设定走文本流，音色走音频流，两者在同一个位置上相加——和推理时完全一致。</p> <h2 id="六一次采样出音频">六、一次采样出音频</h2> <p>音频这一侧的选择也很干脆：不要离散 token，不要多次迭代，不要额外的声学 Transformer。</p> <table> <thead> <tr> <th>项目</th> <th>配置</th> </tr> </thead> <tbody> <tr> <td>音频表示</td> <td>64 维连续 latent / 帧</td> </tr> <tr> <td>帧率</td> <td>7.5 Hz（每帧约 133 ms）</td> </tr> <tr> <td>采样率</td> <td>24 kHz，每帧 3200 个采样点</td> </tr> <tr> <td>Codec</td> <td>VibeVoice 因果声学 tokenizer</td> </tr> <tr> <td>生成头</td> <td>4 层 MLP，Flow Matching 训练 + MeanFlow 蒸馏</td> </tr> <tr> <td>采样步数</td> <td>1 步，guidance scale 1～2（默认 1.5）</td> </tr> </tbody> </table> <p>对照一下常见的做法就明白省了什么：RVQ 方案一帧要预测多个 codebook 索引，逐层解码；迭代式 flow 方案一帧要跑好几次去噪。Haru 一帧只做一次前向 + 一次采样，7.5 Hz 下每秒只要 7.5 次自回归步。</p> <p>代价是单步生成的质量上限被蒸馏约束住了，guidance scale 也成了一个必须调的旋钮：往 1 走更自然但更容易糊，往 2 走更清晰但更「用力」。</p> <h2 id="七652-ms-的账以及那-133-ms">七、65.2 ms 的账，以及那 133 ms</h2> <p><img src="/assets/img/blog/haru-4b-full-duplex/fig-04-latency-budget.png" alt="65.2 ms 是一串预算相加的结果，而分帧一抬手就是 133 ms"></p> <p><em>五段均值相加得到的是总和的均值 65.0，官方报的 65.2 是 p50；分布略偏时两者不会相等，这 0.2 是口径差，不是笔误。</em></p> <p>官方在 M1 Max 上给出了 int8 权重的分段数据（原生 Swift 应用 + 定制 Metal kernel）：</p> <table> <thead> <tr> <th>阶段</th> <th>延迟</th> </tr> </thead> <tbody> <tr> <td>麦克风 → 应用</td> <td>5.3 ± 0.0 ms</td> </tr> <tr> <td>一次模型步</td> <td>34.2 ± 0.5 ms</td> </tr> <tr> <td>socket 与数据交接</td> <td>4.1 ± 0.3 ms</td> </tr> <tr> <td>输出等待（15 ms 余量）</td> <td>13.3 ± 1.5 ms</td> </tr> <tr> <td>应用 → 耳机</td> <td>8.1 ± 0.2 ms</td> </tr> <tr> <td><strong>合计（p50）</strong></td> <td><strong>65.2 ± 1.5 ms</strong></td> </tr> </tbody> </table> <p>有一点必须连着看：<strong>65.2 ms 不包含音频分帧的延迟。</strong>7.5 Hz 的帧率意味着最多还要再加约 133 ms 的算法延迟——比整条工程链路加起来还多一倍。所以「65 ms 端到端」这句话在宣传上成立，在体感上，决定延迟的主要是帧率，而不是那五段预算。</p> <p>另外两组数字可以对一下量级：NVIDIA B300 上，音频编解码加一次语言模型推理合计约 15 ms；PyTorch 实现里用 Triton kernel + CUDA graph 把单帧编解码从 6 ms 压到约 0.7 ms（需要显式开启 <code class="language-plaintext highlighter-rouge">codec_backend="triton"</code>）。</p> <p>还有一个官博没写、但从结构上能推出来的点（<strong>以下是我的推断，不是官方说明</strong>）：Qwen3.5-4B 的 32 层不是普通的全注意力堆叠，而是 8 组「3 层 Gated DeltaNet + 1 层 Gated Attention」，也就是 24 层线性注意力 + 8 层全注意力。线性注意力层每步是常数状态，只有那 8 层全注意力的 KV 会随对话变长。<strong>这大概率才是 60 分钟长对话还能维持单步 34 ms 的结构性原因</strong>——否则一段一小时对话的 KV 早就把显存和带宽吃掉了。</p> <h2 id="八入场费在预处理不在训练">八、入场费在预处理，不在训练</h2> <p>官方公布的预训练配置是 256 张 NVIDIA B200、约 8 天，框架是 Megatron-LM。</p> <p>这个数字本身不惊人，惊人的是它旁边那句话：预处理阶段的瓶颈让他们必须自己写 Triton kernel，去加速 codec、Sidon 和 FastDialogueSidon。<strong>换句话说，这条技术路线的成本重心不在 GPU 训练那 8 天，而在一条 4000 万小时的音频处理流水线。</strong>（这一句是我的判断，依据是他们把大部分工程投入放在了预处理模型的加速上。）</p> <p>这也是我觉得这份工作最值得抄的地方：它把「数据拿不到」当成一个可以工程化解决的输入问题，而不是当成一个前提。相比之下，「等有了好数据再说」在这个方向上等于永远不做。</p> <h2 id="九局限">九、局限</h2> <p>按重要性排：</p> <ol> <li> <strong>没有任何质量指标。</strong>官方给了延迟表、给了数据规模表，却没有给一张质量表——没有 WER，没有主观 MOS，没有「打断成功率」这类真正衡量全双工行为的指标。目前判断它好不好，只能看那几段 demo 视频。</li> <li> <strong>它是预训练基座，不是助手。</strong>官方原话：不做可靠的事实来源，也不像助手那样遵循指令。当成产品来用会立刻失望。</li> <li> <strong>分离误差会被继承。</strong>重叠语音处的分离错误，正好落在全双工最想学会的地方；而这批误差在训练里会被当成「真实的对话」。</li> <li> <strong>它没见过原生双声道录音。</strong>这是官方 future work 的第一条，不是可有可无的加分项。</li> <li> <strong>硬件门槛不算低。</strong>README 写的是约 12 GB 显存（NVIDIA），BF16 权重之外还要留运行时与音频处理的余量。</li> <li> <strong>参考音色要自备，而且要有权使用。</strong>仓库不带 voice clip，只接受单说话人、3 秒到 3 分钟的干净音频；官方在 README、模型卡、博客三处都写了「只使用你有权使用的声音」。</li> <li> <strong><code class="language-plaintext highlighter-rouge">--share</code> 会把流量交给 Gradio。</strong>想给外部试用时要注意，这条路意味着演示页面与音频流都经过第三方隧道。</li> </ol> <h2 id="十我的判断">十、我的判断</h2> <p>Haru-4B 值得读的地方，不是「65 ms」也不是「4000 万小时」，而是<strong>它把全双工问题拆成了数据问题，并且真的把数据造了出来</strong>。分离器不完美，但它是可替换的零件；数据死结不解决，架构再漂亮也训不出来。</p> <p>如果要验证这条路到底成不成立，我会盯三件可以被公开检验的事：</p> <ol> <li> <strong>换用原生双声道微调之后，重叠语音段的表现能提升多少。</strong>如果提升很小，说明分离误差并没有想象中伤；如果提升很大，说明 1300 万小时里有一大块是分离器的错。</li> <li> <strong>扩到 100B+ 之后，单步延迟还能不能守住。</strong>这正是线性注意力那 24 层要承担的压力测试。</li> <li> <strong>有没有人开始报「时机指标」。</strong>EOP 这个 token 的存在本身说明时机是可预测的，但到现在没人报它的准确率与假触发率。</li> </ol> <p>第三点是我最在意的，也是它和我最近在读的那条线的接口：NNsight / pyvene 那套表征干预之所以有用，是因为它把「模型内部发生了什么」变成了可读、可改的量。全双工的对话行为同样需要一个这样的量——「它决定什么时候开口」如果只是 demo 里的一句感觉，那这个方向就还停在演示阶段；如果 EOP 的触发可以被测量、被干预、被画成曲线，全双工才真正进入可以被工程化讨论的阶段。</p> <h2 id="项目与资料">项目与资料</h2> <ul> <li>权重：<a href="https://huggingface.co/higurashi-ai/Haru-4B" rel="external nofollow noopener" target="_blank">huggingface.co/higurashi-ai/Haru-4B</a>（Apache 2.0）</li> <li>镜像：<a href="https://modelscope.cn/models/higurashi-ai/Haru-4B" rel="external nofollow noopener" target="_blank">modelscope.cn/models/higurashi-ai/Haru-4B</a> </li> <li>代码：<a href="https://github.com/higurashi-ai/Haru" rel="external nofollow noopener" target="_blank">github.com/higurashi-ai/Haru</a>（PyTorch / MLX / vLLM-Omni，三者共用同一份 checkpoint）</li> <li>技术博客：<a href="https://blog.higurashi.ai/melte/haru4b/" rel="external nofollow noopener" target="_blank">blog.higurashi.ai/melte/haru4b</a> </li> <li>关联开源：<a href="https://github.com/higurashi-ai/Sidon-Triton" rel="external nofollow noopener" target="_blank">Sidon-Triton</a>、<a href="https://github.com/higurashi-ai/FastDialogueSidon" rel="external nofollow noopener" target="_blank">FastDialogueSidon</a> </li> <li>基座模型：<a href="https://huggingface.co/Qwen/Qwen3.5-4B" rel="external nofollow noopener" target="_blank">Qwen/Qwen3.5-4B</a> </li> </ul> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/higurashi-ai/Haru <span class="o">&amp;&amp;</span> <span class="nb">cd </span>Haru
+pip <span class="nb">install</span> <span class="nt">-e</span> ./haru
+python <span class="nt">-m</span> haru.server <span class="nt">--hf-repo</span> higurashi-ai/Haru-4B   <span class="c"># 打开 http://localhost:8998</span>
+</code></pre></div></div> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">haru</span> <span class="kn">import</span> <span class="n">DuplexSession</span><span class="p">,</span> <span class="n">HaruModel</span>
+<span class="kn">from</span> <span class="n">haru.audio</span> <span class="kn">import</span> <span class="n">load_audio</span><span class="p">,</span> <span class="n">prepare_reference</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">HaruModel</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="sh">"</span><span class="s">higurashi-ai/Haru-4B</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">voice</span> <span class="o">=</span> <span class="nf">prepare_reference</span><span class="p">(</span><span class="nf">load_audio</span><span class="p">(</span><span class="sh">"</span><span class="s">voice.wav</span><span class="sh">"</span><span class="p">))</span>
+<span class="n">session</span> <span class="o">=</span> <span class="nc">DuplexSession</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">system_prompt</span><span class="o">=</span><span class="n">card</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">voice</span><span class="p">)</span>
+
+<span class="n">frame</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>                  <span class="c1"># 模型的第一帧：frame.audio / frame.text
+</span><span class="k">while</span> <span class="ow">not</span> <span class="n">frame</span><span class="p">.</span><span class="n">done</span><span class="p">:</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">step</span><span class="p">(</span><span class="n">user_audio</span><span class="p">)</span>     <span class="c1"># 进 3200 采样点，出 3200 采样点
+</span></code></pre></div></div> <p>这段 API 里藏着一个容易忽略的调度约定：<strong>模型比用户快一帧。</strong><code class="language-plaintext highlighter-rouge">start()</code> 返回第 0 帧，之后每次 <code class="language-plaintext highlighter-rouge">step()</code> 传用户第 k 帧、返回模型第 k + 1 帧。也正因为如此，<code class="language-plaintext highlighter-rouge">step()</code> 的输入必须是 24 kHz、每帧正好 3200 个采样点，而不是「一段音频」。</p> <p>数据来源与口径：延迟分段、4000 万 / 1300 万小时、160+ 语言、60 分钟样本、256 × B200 × 8 天、65 ms 与 B300 的 15 ms 均来自官方技术博客（2026-11-13）；层数 32、hidden 2560、4 层 MLP、guidance 1～2、12 GB 显存、8998 端口、<code class="language-plaintext highlighter-rouge">DuplexSession</code> 的用法与「快一帧」约定来自 README 与模型卡；Apache 2.0 许可与 9 种重点语言见模型卡；「24 层 DeltaNet + 8 层全注意力」来自 Qwen3.5-4B 模型卡的 hidden layout 表，Step 成本不随对话变长是我据此做出的推断，已在正文标注。文中「入场费在预处理」与「质量指标缺失」是我的判断，不是官方结论。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/blender-kiln-3d-asset-pipeline/">Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cinecode-film-as-pure-function/">CineCode：每一帧都是时间的纯函数，所以电影可以被检查</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/ohmygame-agent-game-studio/">OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/gpt2-forward-pass-intervention/">GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/saelens-sparse-autoencoder-instrument/">SAELens：重建得越准，特征越不一定是真的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/tokeneconomizer-experience-driven-cost-control/">TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
