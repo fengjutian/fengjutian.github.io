@@ -728,6 +728,47 @@ def motif_evidence(d, box, accent, tag):
     d.text((x, y + h + 12), tag, font=font(17), fill=FAINT)
 
 
+def motif_launcher(d, box, accent, tag):
+    """Two launchers, one covering the other: the stock window behind, Aerial in
+    front of it, with nothing but depth to say who won the foreground."""
+    x, y, w, h = box
+
+    # the stock launcher: a hero band and a recommendation grid, all grey
+    sx, sy, sw, sh = x, y, 340, 232
+    d.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=12,
+                        fill=(14, 19, 29), outline=mix(BG_TOP, accent, 0.18), width=2)
+    d.rounded_rectangle((sx + 16, sy + 18, sx + sw - 16, sy + 92), radius=8,
+                        fill=(26, 32, 45))
+    for r in range(2):
+        for c in range(3):
+            cx = sx + 16 + c * ((sw - 32) / 3)
+            cy = sy + 106 + r * 56
+            d.rounded_rectangle((cx, cy, cx + (sw - 44) / 3, cy + 44), radius=6,
+                                fill=(26, 32, 45))
+    d.text((sx + 2, sy - 28), "原厂桌面", font=font(16), fill=FAINT)
+
+    # the aerial window: clock on top, a glass shelf of five tiles below
+    fx, fy, fw, fh = x + 174, y + 136, 330, 208
+    d.rounded_rectangle((fx, fy, fx + fw, fy + fh), radius=14,
+                        fill=tint(accent, 0.16), outline=mix(BG_TOP, accent, 0.62), width=2)
+    d.text((fx + 18, fy + 12), "12:29", font=font(30, True), fill=WHITE)
+    d.text((fx + 18, fy + 52), "桌面守护已开启", font=font(15),
+           fill=mix(DIM, accent, 0.8))
+
+    sy2, sh2 = fy + fh - 66, 52
+    d.rounded_rectangle((fx + 12, sy2, fx + fw - 12, sy2 + sh2), radius=10,
+                        fill=mix(BG_TOP, accent, 0.18),
+                        outline=mix(BG_TOP, accent, 0.34), width=2)
+    for c in range(5):
+        tx = fx + 22 + c * (44 + 12)
+        hot = c == 0
+        d.rounded_rectangle((tx, sy2 + 8, tx + 44, sy2 + sh2 - 8), radius=6,
+                            fill=mix(accent, MID, 0.65) if hot else (32, 41, 56),
+                            outline=WHITE if hot else mix(BG_TOP, accent, 0.24),
+                            width=3 if hot else 1)
+    d.text((fx, fy + fh + 12), tag, font=font(16), fill=FAINT)
+
+
 def band_shares(d, x0, x1, y, accent):
     """Five sources splitting one answer; the third one grew."""
     shares = [19.3, 19.3, 27.2, 17.1, 17.1]
@@ -890,6 +931,15 @@ def build(slug, out_dir):
                fill=mix(DIM, accent, 0.7), anchor="ra")
         band_shares(d, M, W - M, 486, accent)
 
+    elif slug == "aerial":
+        head(d, accent, "Kotlin + Compose / MIT / 12k stars",
+             "Aerial", "换桌面不是画界面，是在别人的固件里抢前台",
+             (M, 146), 116, (M, 322), 440)
+        motif_launcher(d, (586, 150, 548, 344), accent, "主页键 · 前台窗口 · 守护")
+        d.text((M, 452), "89 行机型记录：56 能用 / 23 有限制 / 10 接管不了",
+               font=font(20), fill=mix(DIM, accent, 0.65))
+        d.text((M, 492), "无障碍服务 · 通知监听 · 同步适配器", font=font(20), fill=DIM)
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -933,6 +983,8 @@ CARDS = {
                     glow=(880, 300), glow_r=440, strength=0.30),
     "geo": dict(file="geo-generative-engine-optimization.jpg", color=(232, 190, 62),
                 glow=(900, 280), glow_r=450, strength=0.28),
+    "aerial": dict(file="aerial-tv-launcher-foreground-takeover.jpg", color=(96, 186, 226),
+                   glow=(880, 300), glow_r=440, strength=0.28),
 }
 
 if __name__ == "__main__":
