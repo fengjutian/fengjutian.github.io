@@ -954,6 +954,55 @@ def motif_gates(d, box, accent, tag):
     d.text((x, cy + 44), tag, font=font(16), fill=FAINT)
 
 
+def motif_pages(d, box, accent, tag=None):
+    """Three sequences paged into one block pool: the block table is the ledger."""
+    x, y, w, h = box
+    cols, rows, gap = 7, 5, 11
+    cell = min((w - gap * (cols - 1)) / cols, (h - 64 - gap * (rows - 1)) / rows)
+    gw = cell * cols + gap * (cols - 1)
+    gh = cell * rows + gap * (rows - 1)
+    x0 = x + (w - gw) / 2
+    y0 = y + 26
+
+    def center(i):
+        r, c = divmod(i, cols)
+        return (x0 + c * (cell + gap) + cell / 2, y0 + r * (cell + gap) + cell / 2)
+
+    chains = [
+        ([1, 9, 16], accent, 1.0),
+        ([3, 10, 11], (226, 150, 70), 0.92),
+        ([5, 19, 26, 32], (86, 196, 186), 0.92),
+    ]
+    # grid: every block exists, only some are owned
+    owned = {}
+    for cells, color, _k in chains:
+        for c in cells:
+            owned[c] = color
+    for i in range(cols * rows):
+        cx, cy = center(i)
+        d.rounded_rectangle((cx - cell / 2, cy - cell / 2, cx + cell / 2, cy + cell / 2),
+                            radius=4, fill=tint(accent, 0.08),
+                            outline=mix(BG_TOP, accent, 0.16), width=1)
+    # mapping lines, then the blocks on top
+    for cells, color, k in chains:
+        for a, b in zip(cells[:-1], cells[1:]):
+            pa, pb = center(a), center(b)
+            mid = (pa[0] + pb[0]) / 2
+            line = mix(BG_TOP, color, 0.85)
+            d.line((pa[0], pa[1], mid, pa[1]), fill=line, width=3)
+            d.line((mid, pa[1], mid, pb[1]), fill=line, width=3)
+            d.line((mid, pb[1], pb[0], pb[1]), fill=line, width=3)
+    for i, color in owned.items():
+        cx, cy = center(i)
+        d.rounded_rectangle((cx - cell / 2, cy - cell / 2, cx + cell / 2, cy + cell / 2),
+                            radius=4, fill=mix(BG_TOP, color, 0.78), outline=color, width=2)
+    for cells, color, _k in chains:
+        cx, cy = center(cells[0])
+        d.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=WHITE)
+    if tag:
+        d.text((x0, y0 + gh + 22), tag, font=font(19), fill=mix(DIM, accent, 0.45))
+
+
 def band_shares(d, x0, x1, y, accent):
     """Five sources splitting one answer; the third one grew."""
     shares = [19.3, 19.3, 27.2, 17.1, 17.1]
@@ -1255,6 +1304,16 @@ def build(slug, out_dir):
         d.text((M, 462), "Web · IM · Cron · CLI 共用一个 HarnessProcessor", font=font(20),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "vllm":
+        motif_pages(d, (M, 128, 470, 300), accent,
+                    "三条序列 · 一个块池 · 块表负责顺序")
+        head(d, accent, "Berkeley Sky Lab / Apache 2.0 / 97k stars",
+             "vLLM", "每一次重写，改的都是同一本显存的账",
+             (W - M, 158), 116, (W - M, 330), 470, align="right", thesis_size=26)
+        d.text((W - M, 470), "60–80%  →  不足 4%", font=font(26),
+               fill=mix(DIM, accent, 0.85), anchor="ra")
+        d.text((W - M, 508), "1 + 1 + 4 = 6 个进程", font=font(20), fill=DIM, anchor="ra")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1311,6 +1370,8 @@ CARDS = {
                            glow=(880, 250), glow_r=450, strength=0.30),
     "octop": dict(file="octop-single-process-agent-platform.jpg", color=(40, 176, 168),
                   glow=(880, 260), glow_r=460, strength=0.28),
+    "vllm": dict(file="vllm-kv-cache-ledger.jpg", color=(104, 116, 236),
+                 glow=(940, 240), glow_r=450, strength=0.30),
 }
 
 if __name__ == "__main__":
