@@ -515,6 +515,48 @@ def motif_code(d, box, accent, code, gpu_box, gpu_title, gpu_sub):
     d.text((gx + gw / 2, gy + gh * 0.72), gpu_sub, font=font(17), fill=mix(DIM, accent, 0.55), anchor="mm")
 
 
+def motif_duplex(d, box, accent, tag):
+    """One mixed track forks into two tracks that take turns."""
+    x, y, w, h = box
+    cy = y + h * 0.50
+    y1, y2 = y + h * 0.34, y + h * 0.70
+
+    # the single mixed track
+    bw, gap = 9, 7
+    for i, v in enumerate([0.34, 0.62, 0.44, 0.82, 0.52, 0.70, 0.30]):
+        bx = x + i * (bw + gap)
+        bh = v * h * 0.17
+        col = accent if i % 2 else mix(BG_TOP, accent, 0.55)
+        d.rounded_rectangle((bx, cy - bh, bx + bw, cy + bh), radius=3, fill=col)
+    d.text((x, cy + h * 0.21), "1 路混合", font=font(16), fill=DIM)
+
+    # the fork
+    fork = mix(BG_TOP, accent, 0.62)
+    d.line((x + w * 0.28, cy, x + w * 0.35, cy), fill=fork, width=4)
+    d.line((x + w * 0.35, cy, x + w * 0.44, y1), fill=fork, width=4)
+    d.line((x + w * 0.35, cy, x + w * 0.44, y2), fill=fork, width=4)
+    d.text((x + w * 0.285, cy + 24), "分离", font=font(15), fill=mix(DIM, accent, 0.6))
+
+    # two aligned tracks: whoever is not talking leaves a gap
+    user_on = [1, 1, 1, 0, 1, 1, 1, 0]
+    model_on = [0, 1, 1, 1, 0, 0, 1, 1]
+    cx0, step, bwidth = x + w * 0.46, 36, 20
+    heights = [26, 44, 30, 40, 34, 46, 24, 32]
+    for i in range(len(user_on)):
+        bx = cx0 + i * step
+        if user_on[i]:
+            d.rounded_rectangle((bx, y1 - heights[i], bx + bwidth, y1 + heights[i]),
+                                radius=3, fill=accent)
+        if model_on[i]:
+            d.rounded_rectangle((bx, y2 - heights[i], bx + bwidth, y2 + heights[i]),
+                                radius=3, fill=mix(BG_TOP, accent, 0.55))
+
+    d.text((cx0, y1 - 62), "用户流", font=font(15), fill=mix(DIM, accent, 0.55))
+    d.text((cx0, y2 + 52), "模型流", font=font(15), fill=mix(DIM, accent, 0.40))
+    d.text((cx0, y2 + 82), "同一帧号对齐 · 每格 133 ms", font=font(14), fill=FAINT)
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 def build(slug, out_dir):
     A = CARDS[slug]
@@ -617,6 +659,12 @@ def build(slug, out_dir):
         motif_boundary(d, (600, 122, 540, 340), accent, "16 个请求 · 1 个客户端 · 0600")
         d.text((M, 452), "id 1000 → socket → root", font=font(21), fill=mix(DIM, accent, 0.7))
 
+    elif slug == "haru":
+        head(d, accent, "higurashi-ai / Apache 2.0 / 40M hours",
+             "Haru-4B", "全双工的瓶颈不在架构，在没人录得下双声道对话",
+             (M, 146), 106, (M, 322), 480)
+        motif_duplex(d, (600, 112, 540, 356), accent, "13M 小时分离对话 · 7.5 Hz · 65 ms")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -648,6 +696,8 @@ CARDS = {
                 glow=(880, 300), glow_r=440, strength=0.26),
     "airgorah": dict(file="airgorah-privilege-boundary.jpg", color=(64, 152, 172),
                      glow=(880, 300), glow_r=440, strength=0.26),
+    "haru": dict(file="haru-4b-full-duplex.jpg", color=(94, 122, 236),
+                 glow=(900, 300), glow_r=440, strength=0.28),
 }
 
 if __name__ == "__main__":
