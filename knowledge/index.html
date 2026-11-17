@@ -1,0 +1,1658 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> 知识地图 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="沿着概念、文章与项目之间的关系，探索本站的知识脉络。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="website"> <meta property="og:title" content="Fengjutian · 独立开发者 | 知识地图"> <meta property="og:url" content="https://fengjutian.github.io/knowledge/"> <meta property="og:description" content="沿着概念、文章与项目之间的关系，探索本站的知识脉络。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="知识地图"> <meta name="twitter:description" content="沿着概念、文章与项目之间的关系，探索本站的知识脉络。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/og-image.png"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/knowledge/",
+        "@type": "WebSite",
+        "description": "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+        "headline": "知识地图",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/knowledge/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item "> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/knowledge/">知识地图 <span class="sr-only">(current)</span> </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">知识地图</h1> <p class="post-description">沿着概念、文章与项目之间的关系，探索本站的知识脉络。</p> </header> <article> <style>
+  .knowledge-intro {
+    max-width: 48rem;
+    margin-bottom: 1.5rem;
+    color: var(--global-text-color-light);
+    font-size: 1.05rem;
+  }
+
+  .knowledge-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 1rem;
+    align-items: center;
+    margin: -0.75rem 0 1.25rem;
+    color: var(--global-text-color-light);
+    font-size: 0.8rem;
+  }
+
+  .knowledge-meta strong {
+    color: var(--global-text-color);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .knowledge-status {
+    margin-left: auto;
+  }
+
+  .knowledge-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .knowledge-search {
+    flex: 1 1 16rem;
+    min-width: 0;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.65rem;
+    color: var(--global-text-color);
+    background: var(--global-bg-color);
+  }
+
+  .knowledge-search:focus {
+    border-color: var(--global-theme-color);
+    outline: 2px solid color-mix(in srgb, var(--global-theme-color) 24%, transparent);
+    outline-offset: 1px;
+  }
+
+  .knowledge-reset,
+  .knowledge-chip {
+    border: 1px solid var(--global-divider-color);
+    border-radius: 999px;
+    color: var(--global-text-color);
+    background: var(--global-bg-color);
+    cursor: pointer;
+  }
+
+  .knowledge-reset {
+    padding: 0.6rem 0.9rem;
+  }
+
+  .knowledge-reset:hover,
+  .knowledge-reset:focus-visible,
+  .knowledge-chip:hover,
+  .knowledge-chip:focus-visible {
+    border-color: var(--global-theme-color);
+    color: var(--global-theme-color);
+  }
+
+  .knowledge-filters {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    padding-bottom: 0.3rem;
+    scrollbar-width: thin;
+  }
+
+  .knowledge-chip {
+    flex: 0 0 auto;
+    padding: 0.38rem 0.72rem;
+    font-size: 0.86rem;
+  }
+
+  .knowledge-chip[aria-pressed="true"] {
+    border-color: var(--chip-color);
+    color: #fff;
+    background: var(--chip-color);
+  }
+
+  .knowledge-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    min-height: 34rem;
+    overflow: hidden;
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.9rem;
+    background:
+      radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--global-theme-color) 8%, transparent), transparent 35%),
+      var(--global-card-bg-color, var(--global-bg-color));
+  }
+
+  .knowledge-canvas {
+    position: relative;
+    min-height: 34rem;
+  }
+
+  .knowledge-canvas svg {
+    display: block;
+    width: 100%;
+    height: 34rem;
+    touch-action: none;
+  }
+
+  .knowledge-edge {
+    stroke: var(--global-divider-color);
+    stroke-width: 1.15;
+    transition: opacity 160ms ease, stroke 160ms ease;
+  }
+
+  .knowledge-node {
+    cursor: pointer;
+    transition: opacity 160ms ease;
+  }
+
+  .knowledge-node circle {
+    stroke: var(--global-bg-color);
+    stroke-width: 2.5;
+    transition: r 160ms ease, stroke 160ms ease;
+  }
+
+  .knowledge-node text {
+    fill: var(--global-text-color);
+    font-size: 11px;
+    font-weight: 500;
+    paint-order: stroke;
+    stroke: var(--global-bg-color);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  .knowledge-node.is-topic text {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .knowledge-node:hover circle,
+  .knowledge-node:focus circle,
+  .knowledge-node.is-selected circle {
+    stroke: var(--global-theme-color);
+    stroke-width: 3.5;
+  }
+
+  .knowledge-node:focus {
+    outline: none;
+  }
+
+  .knowledge-muted {
+    opacity: 0.12;
+  }
+
+  .knowledge-highlight {
+    stroke: var(--global-theme-color);
+    stroke-width: 2;
+  }
+
+  .knowledge-panel {
+    padding: 1.1rem;
+    border-left: 1px solid var(--global-divider-color);
+    background: color-mix(in srgb, var(--global-bg-color) 94%, transparent);
+  }
+
+  .knowledge-panel-kicker {
+    margin-bottom: 0.35rem;
+    color: var(--global-text-color-light);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .knowledge-panel h2 {
+    margin: 0 0 0.65rem;
+    font-size: 1.2rem;
+  }
+
+  .knowledge-panel p {
+    margin-bottom: 0.9rem;
+    color: var(--global-text-color-light);
+    font-size: 0.9rem;
+  }
+
+  .knowledge-panel a {
+    font-weight: 600;
+  }
+
+  .knowledge-neighbors {
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .knowledge-neighbors li {
+    padding: 0.45rem 0;
+    border-top: 1px solid var(--global-divider-color);
+    font-size: 0.85rem;
+  }
+
+  .knowledge-relation {
+    display: block;
+    margin-top: 0.08rem;
+    color: var(--global-text-color-light);
+    font-size: 0.72rem;
+  }
+
+  .knowledge-neighbors button {
+    padding: 0;
+    border: 0;
+    color: var(--global-text-color);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .knowledge-neighbors button:hover {
+    color: var(--global-theme-color);
+  }
+
+  .knowledge-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.2rem;
+    margin-top: 0.8rem;
+    color: var(--global-text-color-light);
+    font-size: 0.78rem;
+  }
+
+  .knowledge-legend span::before {
+    display: inline-block;
+    width: 0.62rem;
+    height: 0.62rem;
+    margin-right: 0.35rem;
+    border-radius: 50%;
+    background: var(--legend-color);
+    content: "";
+  }
+
+  .knowledge-directory {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+
+  .knowledge-directory article {
+    padding: 1rem;
+    border: 1px solid var(--global-divider-color);
+    border-top: 3px solid var(--topic-color);
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: border-color 160ms ease, transform 160ms ease;
+  }
+
+  .knowledge-directory article:hover {
+    border-color: var(--topic-color);
+    transform: translateY(-2px);
+  }
+
+  .knowledge-directory h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+  }
+
+  .knowledge-directory p {
+    margin: 0;
+    color: var(--global-text-color-light);
+    font-size: 0.84rem;
+  }
+
+  .knowledge-noscript {
+    padding: 1rem;
+    border: 1px solid var(--global-divider-color);
+    border-radius: 0.6rem;
+  }
+
+  @media (max-width: 760px) {
+    .knowledge-status {
+      flex-basis: 100%;
+      margin-left: 0;
+    }
+
+    .knowledge-workspace {
+      grid-template-columns: 1fr;
+    }
+
+    .knowledge-canvas,
+    .knowledge-canvas svg {
+      min-height: 29rem;
+      height: 29rem;
+    }
+
+    .knowledge-panel {
+      min-height: 11rem;
+      border-top: 1px solid var(--global-divider-color);
+      border-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .knowledge-edge,
+    .knowledge-node,
+    .knowledge-node circle {
+      transition: none;
+    }
+  }
+</style> <p class="knowledge-intro"> 这里不是标签云，而是一张内容关系图。选择一个主题，或点击任意节点，沿着概念、文章和项目之间的显式关系继续探索。 </p> <div class="knowledge-meta" aria-label="知识地图统计"> <span><strong id="knowledge-topic-count">0</strong> 个主题</span> <span><strong id="knowledge-content-count">0</strong> 篇文章与项目</span> <span><strong id="knowledge-relation-count">0</strong> 条关系</span> <span id="knowledge-status" class="knowledge-status" role="status">显示全部内容</span> </div> <div class="knowledge-toolbar"> <label class="sr-only" for="knowledge-search">搜索知识地图</label> <input id="knowledge-search" class="knowledge-search" type="search" placeholder="搜索主题、文章或项目…" autocomplete="off"> <button id="knowledge-reset" class="knowledge-reset" type="button">重置视图</button> </div> <div id="knowledge-filters" class="knowledge-filters" aria-label="按主题筛选"></div> <div class="knowledge-workspace"> <div id="knowledge-canvas" class="knowledge-canvas" role="region" aria-label="交互式知识关系图"></div> <aside id="knowledge-panel" class="knowledge-panel" aria-live="polite"> <div class="knowledge-panel-kicker">使用提示</div> <h2>从一个节点开始</h2> <p>点击节点查看它的说明、连接和访问入口。拖动节点可以调整局部布局。</p> </aside> </div> <div class="knowledge-legend" aria-label="节点图例"> <span style="--legend-color: var(--global-theme-color)">主题</span> <span style="--legend-color: #6f8ea8">文章</span> <span style="--legend-color: #d18a36">项目</span> </div> <section aria-labelledby="knowledge-directory-title"> <h2 id="knowledge-directory-title" style="margin-top: 2.2rem">主题目录</h2> <div class="knowledge-directory"> <article style="--topic-color: #7c5cff" data-topic-id="topic:model-internals" tabindex="0" role="button" aria-label="在图中查看模型内部机制"> <h3>模型内部机制</h3> <p>从权重、激活与稀疏特征理解模型内部发生了什么。</p> </article> <article style="--topic-color: #e65f8e" data-topic-id="topic:model-intervention" tabindex="0" role="button" aria-label="在图中查看模型干预"> <h3>模型干预</h3> <p>定位、修改和验证模型行为的工具与方法。</p> </article> <article style="--topic-color: #2a9d8f" data-topic-id="topic:inference-serving" tabindex="0" role="button" aria-label="在图中查看推理与服务"> <h3>推理与服务</h3> <p>模型路由、部署、缓存、量化与系统效率。</p> </article> <article style="--topic-color: #e9a23b" data-topic-id="topic:agent-systems" tabindex="0" role="button" aria-label="在图中查看Agent 系统"> <h3>Agent 系统</h3> <p>智能体运行时、协作协议与自主软件工程。</p> </article> <article style="--topic-color: #3f88c5" data-topic-id="topic:developer-tools" tabindex="0" role="button" aria-label="在图中查看开发者工具"> <h3>开发者工具</h3> <p>面向构建、调试和自动化的软件工具。</p> </article> <article style="--topic-color: #8f6f4e" data-topic-id="topic:knowledge-systems" tabindex="0" role="button" aria-label="在图中查看知识系统"> <h3>知识系统</h3> <p>笔记、检索、知识连接与个人信息基础设施。</p> </article> <article style="--topic-color: #d66b3d" data-topic-id="topic:multimodal-creation" tabindex="0" role="button" aria-label="在图中查看多模态创作"> <h3>多模态创作</h3> <p>图像、语音、视频、3D 与游戏生成工作流。</p> </article> <article style="--topic-color: #657786" data-topic-id="topic:software-architecture" tabindex="0" role="button" aria-label="在图中查看软件架构"> <h3>软件架构</h3> <p>边界、契约、可靠性与可演进系统设计。</p> </article> </div> </section> <noscript> <p class="knowledge-noscript">交互式关系图需要 JavaScript；你仍然可以通过上方主题目录了解本站的知识结构。</p> </noscript> <script>
+  (() => {
+    const topics = [{"id":"model-internals","name":"模型内部机制","description":"从权重、激活与稀疏特征理解模型内部发生了什么。","color":"#7c5cff"},{"id":"model-intervention","name":"模型干预","description":"定位、修改和验证模型行为的工具与方法。","color":"#e65f8e"},{"id":"inference-serving","name":"推理与服务","description":"模型路由、部署、缓存、量化与系统效率。","color":"#2a9d8f"},{"id":"agent-systems","name":"Agent 系统","description":"智能体运行时、协作协议与自主软件工程。","color":"#e9a23b"},{"id":"developer-tools","name":"开发者工具","description":"面向构建、调试和自动化的软件工具。","color":"#3f88c5"},{"id":"knowledge-systems","name":"知识系统","description":"笔记、检索、知识连接与个人信息基础设施。","color":"#8f6f4e"},{"id":"multimodal-creation","name":"多模态创作","description":"图像、语音、视频、3D 与游戏生成工作流。","color":"#d66b3d"},{"id":"software-architecture","name":"软件架构","description":"边界、契约、可靠性与可演进系统设计。","color":"#657786"}];
+    const relations = [{"source":"topic:model-internals","target":"post:wsr-weight-space-reading","type":"explains"},{"source":"topic:model-internals","target":"post:transformerlens-mech-interp","type":"explains"},{"source":"topic:model-internals","target":"post:saelens-sparse-autoencoder-instrument","type":"explains"},{"source":"topic:model-internals","target":"post:gpt2-forward-pass-intervention","type":"explains"},{"source":"topic:model-internals","target":"post:safetensors-weight-format","type":"grounds"},{"source":"topic:model-internals","target":"post:train-llm-from-scratch","type":"grounds"},{"source":"topic:model-intervention","target":"post:pyvene-intervention-framework","type":"explains"},{"source":"topic:model-intervention","target":"post:nnsight-deferred-intervention","type":"explains"},{"source":"topic:model-intervention","target":"post:deleting-weights-deletion-tuning","type":"explains"},{"source":"topic:model-intervention","target":"post:deepseek-v4-weight-editing","type":"applies"},{"source":"post:pyvene-intervention-framework","target":"post:nnsight-deferred-intervention","type":"compares_with"},{"source":"post:transformerlens-mech-interp","target":"post:saelens-sparse-autoencoder-instrument","type":"extends"},{"source":"topic:inference-serving","target":"post:arc-adaptive-routing-controller","type":"explains"},{"source":"topic:inference-serving","target":"post:freetoken-edge-moe-serving","type":"explains"},{"source":"topic:inference-serving","target":"post:colibri-tiered-expert-placement","type":"explains"},{"source":"topic:inference-serving","target":"post:tokeneconomizer-experience-driven-cost-control","type":"explains"},{"source":"topic:inference-serving","target":"post:sub2api-ai-api-gateway","type":"applies"},{"source":"topic:inference-serving","target":"post:magpie-quota-cache-gateway","type":"applies"},{"source":"topic:inference-serving","target":"post:mnn-backend-precision-matrix","type":"explains"},{"source":"post:arc-adaptive-routing-controller","target":"post:freetoken-edge-moe-serving","type":"related_to"},{"source":"post:freetoken-edge-moe-serving","target":"post:colibri-tiered-expert-placement","type":"extends"},{"source":"topic:agent-systems","target":"post:helixharness-harness-contracts","type":"explains"},{"source":"topic:agent-systems","target":"post:desigma-command-inverse","type":"explains"},{"source":"topic:agent-systems","target":"post:ohmygame-agent-game-studio","type":"applies"},{"source":"topic:agent-systems","target":"project:mix-knowledg","type":"implemented_by"},{"source":"topic:agent-systems","target":"project:planloop","type":"implemented_by"},{"source":"topic:developer-tools","target":"post:thin-starter-architecture","type":"explains"},{"source":"topic:developer-tools","target":"post:windows-atomic-write","type":"explains"},{"source":"topic:developer-tools","target":"post:css-minify-broke-tailwind","type":"explains"},{"source":"topic:developer-tools","target":"post:transformer-explainer","type":"applies"},{"source":"topic:developer-tools","target":"project:blade-ai-editor","type":"implemented_by"},{"source":"topic:developer-tools","target":"project:catshell","type":"implemented_by"},{"source":"topic:developer-tools","target":"project:superdba","type":"implemented_by"},{"source":"topic:knowledge-systems","target":"post:yogurt-local-meeting-notes","type":"applies"},{"source":"topic:knowledge-systems","target":"post:lapian-notes-film-breakdown","type":"applies"},{"source":"topic:knowledge-systems","target":"project:neuralnotes","type":"implemented_by"},{"source":"topic:knowledge-systems","target":"project:mix-knowledg","type":"implemented_by"},{"source":"project:neuralnotes","target":"project:mix-knowledg","type":"related_to"},{"source":"topic:multimodal-creation","target":"post:idol-image-to-3d-gaussian","type":"explains"},{"source":"topic:multimodal-creation","target":"post:blender-kiln-3d-asset-pipeline","type":"applies"},{"source":"topic:multimodal-creation","target":"post:boubou-local-voice-runtime","type":"applies"},{"source":"topic:multimodal-creation","target":"post:cinecode-film-as-pure-function","type":"applies"},{"source":"topic:multimodal-creation","target":"post:haru-4b-full-duplex-separated-data","type":"explains"},{"source":"topic:multimodal-creation","target":"project:veyra-studio","type":"implemented_by"},{"source":"topic:software-architecture","target":"post:airgorah-privilege-boundary","type":"explains"},{"source":"topic:software-architecture","target":"post:helixharness-harness-contracts","type":"explains"},{"source":"topic:software-architecture","target":"post:thin-starter-architecture","type":"explains"},{"source":"topic:software-architecture","target":"post:windows-atomic-write","type":"applies"},{"source":"topic:software-architecture","target":"post:geo-generative-engine-optimization","type":"applies"}];
+    const content = [
+      
+        {
+          id: "post:droiddeck-android-handheld-host",
+          kind: "post",
+          name: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+          description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+          url: "/blog/2026/droiddeck-android-handheld-host/"
+        },
+      
+        {
+          id: "post:magpie-quota-cache-gateway",
+          kind: "post",
+          name: "magpie：它调度的不是模型，是会过期的额度",
+          description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+          url: "/blog/2026/magpie-quota-cache-gateway/"
+        },
+      
+        {
+          id: "post:aerial-tv-launcher-foreground-takeover",
+          kind: "post",
+          name: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+          description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+          url: "/blog/2026/aerial-tv-launcher-foreground-takeover/"
+        },
+      
+        {
+          id: "post:colibri-tiered-expert-placement",
+          kind: "post",
+          name: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+          description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+          url: "/blog/2026/colibri-tiered-expert-placement/"
+        },
+      
+        {
+          id: "post:geo-generative-engine-optimization",
+          kind: "post",
+          name: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+          description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+          url: "/blog/2026/geo-generative-engine-optimization/"
+        },
+      
+        {
+          id: "post:helixharness-harness-contracts",
+          kind: "post",
+          name: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+          description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+          url: "/blog/2026/helixharness-harness-contracts/"
+        },
+      
+        {
+          id: "post:mnn-backend-precision-matrix",
+          kind: "post",
+          name: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+          description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+          url: "/blog/2026/mnn-backend-precision-matrix/"
+        },
+      
+        {
+          id: "post:desigma-command-inverse",
+          kind: "post",
+          name: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+          description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+          url: "/blog/2026/desigma-command-inverse/"
+        },
+      
+        {
+          id: "post:haru-4b-full-duplex-separated-data",
+          kind: "post",
+          name: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+          description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+          url: "/blog/2026/haru-4b-full-duplex-separated-data/"
+        },
+      
+        {
+          id: "post:lapian-notes-film-breakdown",
+          kind: "post",
+          name: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+          description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+          url: "/blog/2026/lapian-notes-film-breakdown/"
+        },
+      
+        {
+          id: "post:airgorah-privilege-boundary",
+          kind: "post",
+          name: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+          description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+          url: "/blog/2026/airgorah-privilege-boundary/"
+        },
+      
+        {
+          id: "post:wsr-weight-space-reading",
+          kind: "post",
+          name: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+          description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+          url: "/blog/2026/wsr-weight-space-reading/"
+        },
+      
+        {
+          id: "post:yogurt-local-meeting-notes",
+          kind: "post",
+          name: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+          description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+          url: "/blog/2026/yogurt-local-meeting-notes/"
+        },
+      
+        {
+          id: "post:blender-kiln-3d-asset-pipeline",
+          kind: "post",
+          name: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+          description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+          url: "/blog/2026/blender-kiln-3d-asset-pipeline/"
+        },
+      
+        {
+          id: "post:cinecode-film-as-pure-function",
+          kind: "post",
+          name: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+          description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+          url: "/blog/2026/cinecode-film-as-pure-function/"
+        },
+      
+        {
+          id: "post:ohmygame-agent-game-studio",
+          kind: "post",
+          name: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+          description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+          url: "/blog/2026/ohmygame-agent-game-studio/"
+        },
+      
+        {
+          id: "post:gpt2-forward-pass-intervention",
+          kind: "post",
+          name: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+          description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+          url: "/blog/2026/gpt2-forward-pass-intervention/"
+        },
+      
+        {
+          id: "post:saelens-sparse-autoencoder-instrument",
+          kind: "post",
+          name: "SAELens：重建得越准，特征越不一定是真的",
+          description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+          url: "/blog/2026/saelens-sparse-autoencoder-instrument/"
+        },
+      
+        {
+          id: "post:tokeneconomizer-experience-driven-cost-control",
+          kind: "post",
+          name: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+          description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+          url: "/blog/2026/tokeneconomizer-experience-driven-cost-control/"
+        },
+      
+        {
+          id: "post:transformer-explainer",
+          kind: "post",
+          name: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+          description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+          url: "/blog/2026/transformer-explainer/"
+        },
+      
+        {
+          id: "post:boubou-local-voice-runtime",
+          kind: "post",
+          name: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+          description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+          url: "/blog/2026/boubou-local-voice-runtime/"
+        },
+      
+        {
+          id: "post:hy-mt2-family-centric-post-training",
+          kind: "post",
+          name: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+          description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+          url: "/blog/2026/hy-mt2-family-centric-post-training/"
+        },
+      
+        {
+          id: "post:nnsight-deferred-intervention",
+          kind: "post",
+          name: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+          description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+          url: "/blog/2026/nnsight-deferred-intervention/"
+        },
+      
+        {
+          id: "post:safetensors-weight-format",
+          kind: "post",
+          name: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+          description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+          url: "/blog/2026/safetensors-weight-format/"
+        },
+      
+        {
+          id: "post:pyvene-intervention-framework",
+          kind: "post",
+          name: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+          description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+          url: "/blog/2026/pyvene-intervention-framework/"
+        },
+      
+        {
+          id: "post:arc-adaptive-routing-controller",
+          kind: "post",
+          name: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+          description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+          url: "/blog/2026/arc-adaptive-routing-controller/"
+        },
+      
+        {
+          id: "post:deleting-weights-deletion-tuning",
+          kind: "post",
+          name: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+          description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.0...",
+          url: "/blog/2026/deleting-weights-deletion-tuning/"
+        },
+      
+        {
+          id: "post:freetoken-edge-moe-serving",
+          kind: "post",
+          name: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+          description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+          url: "/blog/2026/freetoken-edge-moe-serving/"
+        },
+      
+        {
+          id: "post:transformerlens-mech-interp",
+          kind: "post",
+          name: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+          description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+          url: "/blog/2026/transformerlens-mech-interp/"
+        },
+      
+        {
+          id: "post:sub2api-ai-api-gateway",
+          kind: "post",
+          name: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+          description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+          url: "/blog/2026/sub2api-ai-api-gateway/"
+        },
+      
+        {
+          id: "post:train-llm-from-scratch",
+          kind: "post",
+          name: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+          description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+          url: "/blog/2026/train-llm-from-scratch/"
+        },
+      
+        {
+          id: "post:deepseek-v4-weight-editing",
+          kind: "post",
+          name: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+          description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+          url: "/blog/2026/deepseek-v4-weight-editing/"
+        },
+      
+        {
+          id: "post:idol-image-to-3d-gaussian",
+          kind: "post",
+          name: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+          description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+          url: "/blog/2026/idol-image-to-3d-gaussian/"
+        },
+      
+        {
+          id: "post:windows-atomic-write",
+          kind: "post",
+          name: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+          description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+          url: "/blog/2026/windows-atomic-write/"
+        },
+      
+        {
+          id: "post:css-minify-broke-tailwind",
+          kind: "post",
+          name: "一次 CSS 压缩把整站布局打散",
+          description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+          url: "/blog/2026/css-minify-broke-tailwind/"
+        },
+      
+        {
+          id: "post:thin-starter-architecture",
+          kind: "post",
+          name: "把个人站从「魔改模板」改成「薄启动器」",
+          description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+          url: "/blog/2026/thin-starter-architecture/"
+        },
+      
+        {
+          id: "post:hello-world",
+          kind: "post",
+          name: "从这里开始",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          url: "/blog/2026/hello-world/"
+        },
+      
+      
+        {
+          id: "project:blade-ai-editor",
+          kind: "project",
+          name: "Blade AI Editor",
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          url: "/projects/blade-ai-editor/"
+        },
+      
+        {
+          id: "project:catshell",
+          kind: "project",
+          name: "catshell",
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          url: "/projects/catshell/"
+        },
+      
+        {
+          id: "project:docuflow-ai",
+          kind: "project",
+          name: "DocuFlowAI",
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          url: "/projects/docuflow-ai/"
+        },
+      
+        {
+          id: "project:folixa",
+          kind: "project",
+          name: "Folixa",
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          url: "/projects/folixa/"
+        },
+      
+        {
+          id: "project:jiufenglanting-business",
+          kind: "project",
+          name: "九峰兰亭商业",
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          url: "/projects/jiufenglanting-business/"
+        },
+      
+        {
+          id: "project:mix-knowledg",
+          kind: "project",
+          name: "mix-knowledg",
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          url: "/projects/mix-knowledg/"
+        },
+      
+        {
+          id: "project:neuralnotes",
+          kind: "project",
+          name: "NeuralNotes",
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          url: "/projects/neuralnotes/"
+        },
+      
+        {
+          id: "project:planloop",
+          kind: "project",
+          name: "planloop",
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          url: "/projects/planloop/"
+        },
+      
+        {
+          id: "project:strata",
+          kind: "project",
+          name: "Strata",
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          url: "/projects/strata/"
+        },
+      
+        {
+          id: "project:superdba",
+          kind: "project",
+          name: "SuperDBA",
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          url: "/projects/superdba/"
+        },
+      
+        {
+          id: "project:veyra-studio",
+          kind: "project",
+          name: "Veyra Studio",
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          url: "/projects/veyra-studio/"
+        },
+      
+        {
+          id: "project:weber-code-agent",
+          kind: "project",
+          name: "weber-code-agent",
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          url: "/projects/weber-code-agent/"
+        }
+      
+    ];
+
+    const topicNodes = topics.map((topic) => ({
+      ...topic,
+      id: `topic:${topic.id}`,
+      kind: "topic",
+      radius: 12
+    }));
+    const available = new Map([...topicNodes, ...content].map((node) => [node.id, node]));
+    const links = relations.filter((link) => available.has(link.source) && available.has(link.target));
+    const usedIds = new Set(links.flatMap((link) => [link.source, link.target]));
+    const nodes = [...available.values()].filter((node) => usedIds.has(node.id)).map((node) => ({
+      ...node,
+      radius: node.radius || (node.kind === "project" ? 8 : 6)
+    }));
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const neighbors = new Map(nodes.map((node) => [node.id, new Set()]));
+    links.forEach((link) => {
+      neighbors.get(link.source).add(link.target);
+      neighbors.get(link.target).add(link.source);
+    });
+
+    const canvas = document.getElementById("knowledge-canvas");
+    const panel = document.getElementById("knowledge-panel");
+    const filters = document.getElementById("knowledge-filters");
+    const search = document.getElementById("knowledge-search");
+    const reset = document.getElementById("knowledge-reset");
+    const status = document.getElementById("knowledge-status");
+    const svgNS = "http://www.w3.org/2000/svg";
+    let selectedId = null;
+    let activeTopic = null;
+    let width = 0;
+    let height = 0;
+    let raf = 0;
+    let drag = null;
+    let hoveredId = null;
+
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("aria-label", `${topicNodes.length} 个主题组成的知识关系图`);
+    const edgeLayer = document.createElementNS(svgNS, "g");
+    const nodeLayer = document.createElementNS(svgNS, "g");
+    svg.append(edgeLayer, nodeLayer);
+    canvas.append(svg);
+
+    const edgeEls = links.map((link) => {
+      const line = document.createElementNS(svgNS, "line");
+      line.classList.add("knowledge-edge");
+      line.dataset.source = link.source;
+      line.dataset.target = link.target;
+      edgeLayer.append(line);
+      return { link, line };
+    });
+
+    const colorFor = (node) => node.kind === "topic" ? node.color : node.kind === "project" ? "#d18a36" : "#6f8ea8";
+    const kindName = { topic: "主题", post: "文章", project: "项目" };
+    const relationName = {
+      explains: "解释",
+      grounds: "提供基础",
+      applies: "应用",
+      compares_with: "对比",
+      extends: "延伸",
+      related_to: "相关",
+      implemented_by: "由项目实现"
+    };
+
+    const nodeEls = nodes.map((node) => {
+      const group = document.createElementNS(svgNS, "g");
+      const circle = document.createElementNS(svgNS, "circle");
+      const label = document.createElementNS(svgNS, "text");
+      group.classList.add("knowledge-node", `is-${node.kind}`);
+      group.setAttribute("tabindex", "0");
+      group.setAttribute("role", "button");
+      group.setAttribute("aria-label", `${kindName[node.kind]}：${node.name}`);
+      group.dataset.id = node.id;
+      circle.setAttribute("r", node.radius);
+      circle.setAttribute("fill", colorFor(node));
+      label.setAttribute("x", node.radius + 4);
+      label.setAttribute("y", "4");
+      label.textContent = node.name.length > 18 ? `${node.name.slice(0, 18)}…` : node.name;
+      group.append(circle, label);
+      group.addEventListener("click", () => selectNode(node.id));
+      group.addEventListener("pointerenter", () => {
+        hoveredId = node.id;
+        applyVisibility();
+      });
+      group.addEventListener("pointerleave", () => {
+        hoveredId = null;
+        applyVisibility();
+      });
+      group.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectNode(node.id);
+        }
+      });
+      group.addEventListener("pointerdown", (event) => {
+        drag = { node, pointerId: event.pointerId };
+        group.setPointerCapture(event.pointerId);
+      });
+      group.addEventListener("pointermove", (event) => {
+        if (!drag || drag.pointerId !== event.pointerId) return;
+        const point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        const local = point.matrixTransform(svg.getScreenCTM().inverse());
+        node.x = local.x;
+        node.y = local.y;
+        node.fixed = true;
+        draw();
+      });
+      group.addEventListener("pointerup", () => { drag = null; });
+      nodeLayer.append(group);
+      return { node, group };
+    });
+
+    topics.forEach((topic) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "knowledge-chip";
+      button.textContent = topic.name;
+      button.dataset.id = `topic:${topic.id}`;
+      button.style.setProperty("--chip-color", topic.color);
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", () => {
+        activeTopic = activeTopic === button.dataset.id ? null : button.dataset.id;
+        filters.querySelectorAll("button").forEach((item) => item.setAttribute("aria-pressed", String(item.dataset.id === activeTopic)));
+        if (activeTopic) selectNode(activeTopic);
+        else clearSelection();
+        applyVisibility();
+      });
+      filters.append(button);
+    });
+
+    function connectedSet(id) {
+      if (!id) return null;
+      return new Set([id, ...(neighbors.get(id) || [])]);
+    }
+
+    function selectNode(id) {
+      selectedId = id;
+      const node = nodeById.get(id);
+      const adjacent = [...(neighbors.get(id) || [])]
+        .map((neighborId) => {
+          const item = nodeById.get(neighborId);
+          const relation = links.find((link) => (link.source === id && link.target === neighborId) || (link.target === id && link.source === neighborId));
+          return item ? { ...item, relation: relationName[relation?.type] || "相关" } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, "zh-CN"));
+      panel.innerHTML = `
+        <div class="knowledge-panel-kicker">${kindName[node.kind]}</div>
+        <h2>${escapeHtml(node.name)}</h2>
+        <p>${escapeHtml(node.description || "这是知识地图中的一个连接点。")}</p>
+        ${node.url ? `<a href="${node.url}">打开${kindName[node.kind]} →</a>` : ""}
+        <ul class="knowledge-neighbors" aria-label="相邻节点">
+          ${adjacent.map((item) => `<li><button type="button" data-node-id="${item.id}">${escapeHtml(item.name)}<span class="knowledge-relation">${escapeHtml(item.relation)}</span></button></li>`).join("")}
+        </ul>`;
+      panel.querySelectorAll("[data-node-id]").forEach((button) => button.addEventListener("click", () => selectNode(button.dataset.nodeId)));
+      applyVisibility();
+    }
+
+    function clearSelection() {
+      selectedId = null;
+      panel.innerHTML = '<div class="knowledge-panel-kicker">使用提示</div><h2>从一个节点开始</h2><p>点击节点查看它的说明、连接和访问入口。拖动节点可以调整局部布局。</p>';
+      applyVisibility();
+    }
+
+    function applyVisibility() {
+      const term = search.value.trim().toLocaleLowerCase();
+      const focus = connectedSet(activeTopic || selectedId);
+      const matches = new Set(nodes.filter((node) => !term || `${node.name} ${node.description || ""}`.toLocaleLowerCase().includes(term)).map((node) => node.id));
+      const searchContext = new Set(matches);
+      if (term) matches.forEach((id) => (neighbors.get(id) || []).forEach((neighborId) => searchContext.add(neighborId)));
+      let visibleCount = 0;
+      nodeEls.forEach(({ node, group }) => {
+        const visible = (!focus || focus.has(node.id)) && (!term || searchContext.has(node.id));
+        if (visible) visibleCount += 1;
+        group.classList.toggle("knowledge-muted", !visible);
+        group.classList.toggle("is-selected", node.id === selectedId);
+      });
+      edgeEls.forEach(({ link, line }) => {
+        const highlighted = selectedId && (link.source === selectedId || link.target === selectedId);
+        const hovered = hoveredId && (link.source === hoveredId || link.target === hoveredId);
+        const visible = (!focus || (focus.has(link.source) && focus.has(link.target))) && (!term || (searchContext.has(link.source) && searchContext.has(link.target)));
+        line.classList.toggle("knowledge-muted", !visible);
+        line.classList.toggle("knowledge-highlight", highlighted || hovered);
+      });
+      if (term) status.textContent = `找到 ${matches.size} 个结果，显示 ${visibleCount} 个相关节点`;
+      else if (activeTopic) status.textContent = `正在查看 ${nodeById.get(activeTopic).name}`;
+      else if (selectedId) status.textContent = `正在查看 ${nodeById.get(selectedId).name} 的相邻关系`;
+      else status.textContent = "显示全部内容";
+    }
+
+    function escapeHtml(value) {
+      const span = document.createElement("span");
+      span.textContent = value;
+      return span.innerHTML;
+    }
+
+    function initializePositions() {
+      const cx = width / 2;
+      const cy = height / 2;
+      const topicRadius = Math.min(width, height) * 0.33;
+      topicNodes.forEach((topic, index) => {
+        const node = nodeById.get(topic.id);
+        const angle = (Math.PI * 2 * index) / topicNodes.length - Math.PI / 2;
+        node.x = cx + Math.cos(angle) * topicRadius;
+        node.y = cy + Math.sin(angle) * topicRadius;
+        node.anchorX = node.x;
+        node.anchorY = node.y;
+      });
+      nodes.filter((node) => node.kind !== "topic").forEach((node, index) => {
+        const parentId = [...neighbors.get(node.id)].find((id) => id.startsWith("topic:"));
+        const parent = nodeById.get(parentId) || { x: cx, y: cy };
+        const angle = index * 2.39996;
+        const distance = 42 + (index % 4) * 14;
+        node.x = parent.x + Math.cos(angle) * distance;
+        node.y = parent.y + Math.sin(angle) * distance;
+      });
+    }
+
+    function settle() {
+      for (let iteration = 0; iteration < 150; iteration += 1) {
+        nodes.forEach((a, i) => {
+          if (a.fixed) return;
+          let fx = 0;
+          let fy = 0;
+          for (let j = i + 1; j < nodes.length; j += 1) {
+            const b = nodes[j];
+            const dx = a.x - b.x || 0.1;
+            const dy = a.y - b.y || 0.1;
+            const distance2 = Math.max(dx * dx + dy * dy, 100);
+            const force = 190 / distance2;
+            fx += dx * force;
+            fy += dy * force;
+            if (!b.fixed) {
+              b.x -= dx * force;
+              b.y -= dy * force;
+            }
+          }
+          links.forEach((link) => {
+            let other;
+            if (link.source === a.id) other = nodeById.get(link.target);
+            if (link.target === a.id) other = nodeById.get(link.source);
+            if (!other) return;
+            const dx = other.x - a.x;
+            const dy = other.y - a.y;
+            const distance = Math.max(Math.hypot(dx, dy), 1);
+            const desired = a.kind === "topic" || other.kind === "topic" ? 72 : 92;
+            const pull = (distance - desired) * 0.006;
+            fx += (dx / distance) * pull;
+            fy += (dy / distance) * pull;
+          });
+          if (a.kind === "topic") {
+            fx += (a.anchorX - a.x) * 0.018;
+            fy += (a.anchorY - a.y) * 0.018;
+          } else {
+            fx += (width / 2 - a.x) * 0.0008;
+            fy += (height / 2 - a.y) * 0.0008;
+          }
+          a.x = Math.max(18, Math.min(width - 18, a.x + fx));
+          a.y = Math.max(18, Math.min(height - 18, a.y + fy));
+        });
+      }
+      draw();
+    }
+
+    function draw() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        edgeEls.forEach(({ link, line }) => {
+          const source = nodeById.get(link.source);
+          const target = nodeById.get(link.target);
+          line.setAttribute("x1", source.x);
+          line.setAttribute("y1", source.y);
+          line.setAttribute("x2", target.x);
+          line.setAttribute("y2", target.y);
+        });
+        nodeEls.forEach(({ node, group }) => group.setAttribute("transform", `translate(${node.x},${node.y})`));
+      });
+    }
+
+    function layout() {
+      const bounds = canvas.getBoundingClientRect();
+      width = Math.max(320, Math.round(bounds.width));
+      height = Math.round(svg.getBoundingClientRect().height) || 544;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      nodes.forEach((node) => { node.fixed = false; });
+      initializePositions();
+      settle();
+    }
+
+    search.addEventListener("input", applyVisibility);
+    reset.addEventListener("click", () => {
+      search.value = "";
+      activeTopic = null;
+      filters.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", "false"));
+      clearSelection();
+      layout();
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      clearTimeout(resizeObserver.timer);
+      resizeObserver.timer = setTimeout(layout, 120);
+    });
+    resizeObserver.observe(canvas);
+    document.getElementById("knowledge-topic-count").textContent = topicNodes.length;
+    document.getElementById("knowledge-content-count").textContent = nodes.filter((node) => node.kind !== "topic").length;
+    document.getElementById("knowledge-relation-count").textContent = links.length;
+    document.querySelectorAll("[data-topic-id]").forEach((card) => {
+      const activate = () => {
+        const button = filters.querySelector(`[data-id="${card.dataset.topicId}"]`);
+        button?.click();
+        canvas.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+      };
+      card.addEventListener("click", activate);
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          activate();
+        }
+      });
+    });
+    layout();
+  })();
+</script> </article> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 _data/websites.yml，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>

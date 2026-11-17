@@ -21,7 +21,7 @@
   }
 </style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/thin-starter-architecture/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
     initTheme();
-  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <style type="text/css">
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/knowledge/">知识地图 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <style type="text/css">
     #markdown-content img {
   max-width: 100%;
   height: auto;
@@ -131,7 +131,7 @@
 → 配置里的 feature flag 打开了吗？
 → 这一页的 front matter 里接入了吗？
 </code></pre></div></div> <p>第二个坑是 <code class="language-plaintext highlighter-rouge">Gemfile</code> 和 <code class="language-plaintext highlighter-rouge">_config.yml</code> 是<strong>两张必须对齐的清单</strong>。只在一边出现的插件是惰性的——加载了，但什么也不做。</p> <h2 id="代价">代价</h2> <p>不是白拿的：</p> <ul> <li>想改主题行为，得去插件仓库提 PR，本地无法「快速试一下」；</li> <li>升级从「merge 冲突」变成了「读 changelog」，但 changelog 读起来比 merge 冲突舒服得多；</li> <li>多了一层间接：出问题时得先判断问题属于内容层还是运行时层。</li> </ul> <p>对个人站来说，这笔交易是划算的。我的内容迭代频率远高于主题定制频率，把迭代快的部分留在手里、把稳定的部分交给版本化发布，是正确的方向。</p> <h2 id="怎么确认自己没越界">怎么确认自己没越界</h2> <p>仓库里有一条自动化检查（<code class="language-plaintext highlighter-rouge">npm run lint:style-contract</code>），它会直接拒绝以下路径的存在：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>_layouts/   _includes/   _sass/   _scripts/   assets/tailwind/   assets/webfonts/
-</code></pre></div></div> <p>CI 挂了就是越界了，不用靠自觉。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/airgorah-privilege-boundary/">Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/wsr-weight-space-reading/">WSR：权重确实多给了 15 个点，也让它更敢说「变了」</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/yogurt-local-meeting-notes/">Yogurt：本地优先不是一句承诺，是一组能被算出来的预算</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+</code></pre></div></div> <p>CI 挂了就是越界了，不用靠自觉。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/droiddeck-android-handheld-host/">DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/magpie-quota-cache-gateway/">magpie：它调度的不是模型，是会过期的额度</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/aerial-tv-launcher-foreground-takeover/">Aerial：换桌面不是画界面，是在别人的固件里抢前台</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/helixharness-harness-contracts/">HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-backend-precision-matrix/">MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/desigma-command-inverse/">Desigma：撤销不该靠人保证，它该由命令自己算出来</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/haru-4b-full-duplex-separated-data/">Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/lapian-notes-film-breakdown/">拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
   window.alFolio = {
     compatBootstrap: false
   };
@@ -155,6 +155,13 @@ ninja.data = [{
           section: "Navigation",
           handler: () => {
             window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
           },
         },{id: "nav-网站",
           title: "网站",
@@ -184,7 +191,40 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/news/";
           },
-        },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
         
           title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
         
