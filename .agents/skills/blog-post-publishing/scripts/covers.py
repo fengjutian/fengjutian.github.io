@@ -645,6 +645,64 @@ def motif_grades(d, box, accent, tag):
     d.text((x, y + h + 14), tag, font=font(17), fill=FAINT)
 
 
+def motif_helix(d, box, accent, tag):
+    """Two strands wound around each other — the name, drawn."""
+    x, y, w, h = box
+    cy = y + h * 0.44
+    amp = h * 0.27
+    n = 240
+    a_pts, b_pts = [], []
+    for i in range(n + 1):
+        t = i / n
+        px = x + w * t
+        phase = math.sin(2 * math.pi * (t * 1.55) - 0.4)
+        a_pts.append((px, cy - amp * phase))
+        b_pts.append((px, cy + amp * phase))
+
+    # rungs sit under the strands
+    for k in range(1, 11):
+        i = int((k / 11) * n)
+        (ax, ay), (bx, by) = a_pts[i], b_pts[i]
+        wide = abs(ay - by) > amp * 1.2
+        d.line((ax, ay, bx, by), fill=accent if wide else tint(accent, 0.45),
+               width=4 if wide else 3)
+
+    d.line(a_pts, fill=accent, width=7, joint="curve")
+    d.line(b_pts, fill=mix(BG_TOP, accent, 0.45), width=7, joint="curve")
+
+    d.text((x, y + h + 10), tag, font=font(16), fill=FAINT)
+
+
+def motif_tiers(d, box, accent, tag):
+    """Three residency tiers, each labelled with the decode speed it buys."""
+    x, y, w, h = box
+    bands = [("VRAM", "最热专家 + dense 链", "9.0–9.2", 1.0, 7),
+             ("RAM", "dense 常驻 + LRU 命中", "1.83", 0.42, 6),
+             ("NVMe", "冷专家，按需 pread", "0.05–0.1", 0.12, 13)]
+    bh, gap, bw = 104, 26, w * 0.70
+    for i, (name, what, speed, lit, cells) in enumerate(bands):
+        by = y + i * (bh + gap)
+        d.rounded_rectangle((x, by, x + bw, by + bh), radius=12,
+                            fill=tint(accent, 0.06 + 0.30 * lit) if lit > 0.2 else (12, 17, 27),
+                            outline=mix(BG_TOP, accent, 0.18 + 0.60 * lit), width=2)
+        d.text((x + 18, by + 11), name, font=font(22, True),
+               fill=WHITE if lit > 0.5 else mix(BODY, BG_TOP, 0.45))
+        d.text((x + 18, by + 43), what, font=font(15), fill=DIM)
+        cw, cgap = 17, 7
+        for c in range(cells):
+            cx = x + 18 + c * (cw + cgap)
+            if cx + cw > x + bw - 14:
+                break
+            on = (c % 2 == 0) if lit > 0.2 else (c % 4 == 0)
+            d.rounded_rectangle((cx, by + bh - 31, cx + cw, by + bh - 14), radius=3,
+                                fill=mix(accent, MID, 0.25) if on else tint(accent, 0.12))
+        d.text((x + w * 0.74, by + bh / 2), speed, font=font(24, True),
+               fill=mix(accent, WHITE, 0.2) if lit > 0.2 else FAINT, anchor="lm")
+
+    d.text((x + w * 0.74, y - 32), "tok/s", font=font(15), fill=FAINT)
+    d.text((x, y + 3 * (bh + gap) + 4), tag, font=font(16), fill=FAINT)
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -768,6 +826,18 @@ def build(slug, out_dir):
                font=font(20), fill=mix(DIM, accent, 0.65))
         d.text((M, 492), "iPhone 18 Pro 上 173 MB / 350 tok/s", font=font(20), fill=DIM)
 
+    elif slug == "helixharness":
+        head(d, accent, "didi / Apache 2.0 / 9 commands / 1.0.0",
+             "Helix\nHarness", "两份契约：读什么由 index 决定，改得对不对由冻结版本决定",
+             (M, 128), 88, (M, 358), 470)
+        motif_helix(d, (600, 120, 540, 320), accent, "账本默认关闭 · 平台截图是合成数据")
+
+    elif slug == "colibri":
+        head(d, accent, "Pure C / Apache 2.0 / 13 engines",
+             "colibri", "权重住在哪一层，只准改速度，不准改模型",
+             (M, 146), 112, (M, 322), 430)
+        motif_tiers(d, (600, 138, 540, 386), accent, "同一份 int4 权重 · 184×")
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -805,6 +875,10 @@ CARDS = {
                     glow=(900, 300), glow_r=440, strength=0.28),
     "mnn": dict(file="mnn-backend-precision-matrix.jpg", color=(176, 138, 72),
                 glow=(900, 300), glow_r=440, strength=0.30),
+    "helixharness": dict(file="helixharness-harness-contracts.jpg", color=(36, 158, 108),
+                         glow=(880, 300), glow_r=440, strength=0.28),
+    "colibri": dict(file="colibri-tiered-expert-placement.jpg", color=(146, 96, 196),
+                    glow=(880, 300), glow_r=440, strength=0.30),
 }
 
 if __name__ == "__main__":
