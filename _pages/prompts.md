@@ -53,7 +53,7 @@ _styles: |
   .prompt-empty { margin: 4rem 1rem; color: var(--muted); text-align: center; }
   .prompt-empty[hidden] { display: none; }
   body.prompt-modal-open { overflow: hidden; }
-  .prompt-modal { position: fixed; inset: 0; z-index: 1000; display: grid; padding: 1rem; place-items: center; color: var(--global-text-color); background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
+  .prompt-modal { --muted: color-mix(in srgb, var(--global-text-color) 62%, transparent); position: fixed; inset: 0; z-index: 1000; display: grid; padding: 1rem; place-items: center; color: var(--global-text-color); background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
   .prompt-modal[hidden] { display: none; }
   .prompt-modal-layout { display: grid; width: min(68rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); overflow: hidden; background: var(--global-bg-color); border: 1px solid var(--global-divider-color); border-radius: 1rem; box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34); }
   .prompt-modal-layout--text { grid-template-columns: 1fr; }
@@ -125,25 +125,6 @@ _styles: |
   </div>
 </section>
 
-<div class="prompt-modal" role="dialog" aria-modal="true" aria-labelledby="prompt-modal-title" hidden>
-  <div class="prompt-modal-layout">
-    <div class="prompt-modal-visual"><img class="prompt-modal-cover" alt="" /></div>
-    <div class="prompt-modal-content">
-      <button class="prompt-modal-close" type="button" aria-label="关闭详情"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-      <p class="prompt-modal-category"></p>
-      <h2 class="prompt-modal-title" id="prompt-modal-title"></h2>
-      <p class="prompt-modal-description"></p>
-      <p class="prompt-modal-label">提示词</p>
-      <pre class="prompt-modal-prompt"></pre>
-      <p class="prompt-modal-models"></p>
-      <div class="prompt-modal-actions">
-        <button class="prompt-modal-copy" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i> 复制提示词</button>
-        <a class="prompt-modal-detail" href="">打开完整页面</a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
   (() => {
     const root = document.querySelector(".prompt-library");
@@ -152,36 +133,77 @@ _styles: |
     const cards = [...root.querySelectorAll(".prompt-card")];
     const count = root.querySelector("[data-prompt-count]");
     const empty = root.querySelector(".prompt-empty");
-    const modal = document.querySelector(".prompt-modal");
-    const modalLayout = modal.querySelector(".prompt-modal-layout");
-    const modalVisual = modal.querySelector(".prompt-modal-visual");
-    const modalCover = modal.querySelector(".prompt-modal-cover");
-    const modalCopy = modal.querySelector(".prompt-modal-copy");
+    const active = { category: "", model: "" };
     let modalPrompt = "";
     let returnFocus = null;
-    const active = { category: "", model: "" };
+    function make(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    }
+    // The dialog is built here rather than in the page markup: the build strips empty
+    // elements, so an empty <pre> placeholder never reached the browser and the lookup
+    // below threw before the modal could be shown.
+    const modal = make("div", "prompt-modal");
+    modal.hidden = true;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "prompt-modal-title");
+    const layout = make("div", "prompt-modal-layout");
+    const visual = make("div", "prompt-modal-visual");
+    const cover = make("img", "prompt-modal-cover");
+    cover.alt = "";
+    visual.append(cover);
+    const content = make("div", "prompt-modal-content");
+    const closeButton = make("button", "prompt-modal-close");
+    closeButton.type = "button";
+    closeButton.setAttribute("aria-label", "关闭详情");
+    closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    const modalCategory = make("p", "prompt-modal-category");
+    const modalTitle = make("h2", "prompt-modal-title");
+    modalTitle.id = "prompt-modal-title";
+    const modalDescription = make("p", "prompt-modal-description");
+    const modalLabel = make("p", "prompt-modal-label", "提示词");
+    const modalPromptBox = make("pre", "prompt-modal-prompt");
+    const modalModels = make("p", "prompt-modal-models");
+    const actions = make("div", "prompt-modal-actions");
+    const copyButton = make("button", "prompt-modal-copy");
+    copyButton.type = "button";
+    copyButton.innerHTML = '<i class="fa-regular fa-copy" aria-hidden="true"></i> 复制提示词';
+    const detailLink = make("a", "prompt-modal-detail", "打开完整页面");
+    actions.append(copyButton, detailLink);
+    content.append(closeButton, modalCategory, modalTitle, modalDescription, modalLabel, modalPromptBox, modalModels, actions);
+    layout.append(visual, content);
+    modal.append(layout);
+    document.body.append(modal);
     function openModal(card) {
       const template = card.querySelector("template");
-      modalPrompt = template.content.textContent.trim();
-      modal.querySelector(".prompt-modal-category").textContent = card.dataset.category;
-      modal.querySelector(".prompt-modal-title").textContent = card.dataset.title;
-      modal.querySelector(".prompt-modal-description").textContent = card.dataset.description;
-      modal.querySelector(".prompt-modal-prompt").textContent = modalPrompt;
-      modal.querySelector(".prompt-modal-models").textContent = card.dataset.models ? `适用模型：${card.dataset.models.split(",").join(" · ")}` : "";
-      modal.querySelector(".prompt-modal-detail").href = card.dataset.url;
-      modalCover.src = card.dataset.cover;
-      modalCover.alt = card.dataset.cover ? card.dataset.title : "";
-      modalVisual.hidden = !card.dataset.cover;
-      modalLayout.classList.toggle("prompt-modal-layout--text", !card.dataset.cover);
+      modalPrompt = template ? template.content.textContent.trim() : "";
+      modalCategory.textContent = card.dataset.category || "";
+      modalTitle.textContent = card.dataset.title || "";
+      modalDescription.textContent = card.dataset.description || "";
+      modalPromptBox.textContent = modalPrompt;
+      modalModels.textContent = card.dataset.models ? `适用模型：${card.dataset.models.split(",").join(" · ")}` : "";
+      detailLink.href = card.dataset.url || "#";
+      if (card.dataset.cover) {
+        cover.src = card.dataset.cover;
+        cover.alt = card.dataset.title || "";
+      } else {
+        cover.removeAttribute("src");
+        cover.alt = "";
+      }
+      visual.hidden = !card.dataset.cover;
+      layout.classList.toggle("prompt-modal-layout--text", !card.dataset.cover);
       returnFocus = document.activeElement;
-      document.body.classList.add("prompt-modal-open");
       modal.hidden = false;
-      modal.querySelector(".prompt-modal-close").focus();
+      document.body.classList.add("prompt-modal-open");
+      closeButton.focus();
     }
     function closeModal() {
       modal.hidden = true;
       document.body.classList.remove("prompt-modal-open");
-      returnFocus?.focus();
+      if (returnFocus) returnFocus.focus();
     }
     function update() {
       const term = query.value.trim().toLocaleLowerCase();
@@ -216,18 +238,22 @@ _styles: |
       const card = event.target.closest(".prompt-card");
       if (card) openModal(card);
     });
-    modal.querySelector(".prompt-modal-close").addEventListener("click", closeModal);
+    closeButton.addEventListener("click", closeModal);
     modal.addEventListener("click", (event) => {
       if (event.target === modal) closeModal();
     });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !modal.hidden) closeModal();
     });
-    modalCopy.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(modalPrompt);
-      const original = modalCopy.innerHTML;
-      modalCopy.textContent = "已复制";
-      setTimeout(() => { modalCopy.innerHTML = original; }, 1400);
+    copyButton.addEventListener("click", async () => {
+      const original = copyButton.innerHTML;
+      try {
+        await navigator.clipboard.writeText(modalPrompt);
+        copyButton.textContent = "已复制";
+      } catch (error) {
+        copyButton.textContent = "复制失败";
+      }
+      setTimeout(() => { copyButton.innerHTML = original; }, 1400);
     });
   })();
 </script>
