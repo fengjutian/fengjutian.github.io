@@ -1195,6 +1195,37 @@ def motif_verdict(d, box, accent, tag):
     d.text((x + 54, y + h - 59), tag, font=font(17, True), fill=(226, 128, 104), anchor="lm")
 
 
+def motif_narrow(d, box, accent, tag):
+    """A broad grey distribution and the narrow spike the same preference
+    optimization leaves behind."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+    base = y + h - 88
+    left, right = x + 30, x + w - 30
+    d.line((left, base, right, base), fill=mix(BG_TOP, accent, 0.28), width=2)
+
+    def curve(cx, sg, height, col, width, power=2, fill=None):
+        pts = []
+        px = left
+        while px <= right:
+            v = math.exp(-((abs(px - cx) / sg) ** power))
+            pts.append((px, base - height * v))
+            px += 2
+        if fill:
+            d.polygon(pts + [(right, base), (left, base)], fill=fill)
+        for a, b in zip(pts[:-1], pts[1:]):
+            d.line((a[0], a[1], b[0], b[1]), fill=col, width=width)
+
+    peak = x + w * 0.62
+    curve(peak, 26, 196, accent, 4, fill=tint(accent, 0.20))
+    curve(x + w * 0.46, 118, 84, (152, 160, 174), 3, power=4)
+
+    d.line((peak, base, peak, base - 58), fill=mix(accent, MID, 0.5), width=2)
+    d.text((x + 24, y + 26), "分布越训越窄", font=font(19), fill=mix(DIM, accent, 0.55))
+    d.text((x + 24, y + h - 30), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1440,6 +1471,14 @@ def build(slug, out_dir):
         d.text((M, 466), "…然后把它们全部判成「更慢」", font=font(19),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "sft-rlhf":
+        head(d, accent, "后训练 / 两个阶段 / 一个共同动作",
+             "SFT 与\nRLHF", "教接口，选口味，然后把分布收窄",
+             (M, 128), 76, (M, 330), 520, thesis_size=26)
+        motif_narrow(d, (640, 112, 500, 356), accent, "1,000 条示范 · 一个标量奖励")
+        d.text((M, 424), "SFT 学格式，RLHF 学偏好", font=font(21), fill=DIM)
+        d.text((M, 462), "泛化变好，代价是多样性", font=font(19), fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1502,6 +1541,8 @@ CARDS = {
                           color=(108, 164, 132), glow=(880, 292), glow_r=470, strength=0.30),
     "mainline": dict(file="mainline-git-native-intent-memory.jpg",
                      color=(78, 116, 178), glow=(890, 286), glow_r=460, strength=0.30),
+    "sft-rlhf": dict(file="sft-rlhf-narrowing.jpg",
+                      color=(152, 52, 74), glow=(880, 286), glow_r=470, strength=0.30),
     "rust-anything": dict(file="rust-anything-behavioral-port.jpg",
                           color=(198, 96, 38), glow=(880, 280), glow_r=470, strength=0.30),
 }
