@@ -695,6 +695,68 @@ def motif_nibbles(d, box, accent, tag):
     d.multiline_text((x + 26, y + h - 70), tag, font=font(16), fill=FAINT, spacing=6)
 
 
+
+
+def motif_words(d, box, accent, tag):
+    """A script line of word chips, one span selected, a ruler whose ticks are
+    computed rather than authored, and three variants off the same ruler."""
+    x, y, w, h = box
+
+    # --- word band: the editable unit is a word, not a second
+    words = ["Bro", "more", "hair", "gel", "than", "trophies"]
+    wy, wh, gap = y + 16, 40, 7
+    wx = x + 2
+    spans = []
+    for name in words:
+        cw = int(d.textlength(name, font=font(16))) + 24
+        spans.append((wx, wx + cw))
+        d.rounded_rectangle((wx, wy, wx + cw, wy + wh), radius=6,
+                            fill=mix(BG_TOP, DIM, 0.16),
+                            outline=mix(BG_TOP, DIM, 0.40), width=2)
+        d.text((wx + cw / 2, wy + wh / 2), name, font=font(16),
+               fill=mix(DIM, WHITE, 0.55), anchor="mm")
+        wx += cw + gap
+
+    # one span lifted into the accent: this is what later references point at
+    a, b = spans[1][0], spans[5][1]
+    br = wy + wh + 18
+    d.rounded_rectangle((a - 7, wy - 7, b + 7, wy + wh + 5), radius=9,
+                        outline=accent, width=3)
+    d.line((a, br, b, br), fill=accent, width=2)
+    for sx in (a, b):
+        d.line((sx, wy + wh + 7, sx, br + 6), fill=accent, width=2)
+    d.text((a, br + 10), "@{span} \u2192 story.selection", font=font(15),
+           fill=mix(DIM, accent, 0.75))
+
+    # --- the ruler: ticks come from measurement, so they are not evenly spaced
+    ry = y + 168
+    d.line((x + 2, ry, x + w - 4, ry), fill=accent, width=4)
+    for t, big in ((0.01, True), (0.16, False), (0.33, True), (0.47, False),
+                   (0.63, False), (0.79, True), (0.97, True)):
+        tx = x + w * t
+        d.line((tx, ry - (17 if big else 10), tx, ry + (17 if big else 10)),
+               fill=accent if big else mix(BG_TOP, accent, 0.55), width=3 if big else 2)
+    d.text((x + 2, ry + 28), "no authored seconds \u2014 measured extents", font=font(15),
+           fill=mix(DIM, accent, 0.5))
+
+    # --- variants: same ruler, three different fills
+    vy, vh = y + 226, 156
+    vw = (w - 2 * 14) / 3
+    for i in range(3):
+        vx = x + i * (vw + 14)
+        hot = i == 1
+        d.rounded_rectangle((vx, vy, vx + vw, vy + vh), radius=9,
+                            fill=tint(accent, 0.5 if hot else 0.10),
+                            outline=accent if hot else mix(BG_TOP, accent, 0.32), width=3 if hot else 2)
+        for j, frac in enumerate((0.74, 0.52, 0.64, 0.40)):
+            d.rounded_rectangle((vx + 14, vy + 20 + j * 30,
+                                 vx + 14 + (vw - 28) * frac, vy + 20 + j * 30 + 11),
+                                radius=4,
+                                fill=mix(accent, WHITE, 0.55) if hot else mix(BG_TOP, DIM, 0.34))
+
+    d.text((x, y + h + 14), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -1666,6 +1728,14 @@ def build(slug, out_dir):
         d.text((M, 462), "容量是共享的，两个任务在同一个秩里抢位置", font=font(17),
                fill=mix(DIM, accent, 0.7))
 
+    elif slug == "hypit":
+        head(d, accent, "hypit-ai / TypeScript / 30.5k stars",
+             "Hypit", "你编辑的是词，秒是编译出来的",
+             (M, 132), 100, (M, 320), 486, thesis_size=27)
+        motif_words(d, (636, 108, 508, 404), accent, "1 个模板 · N 份 .svrun · 0 个手写秒数")
+        d.text((M, 424), "SVML → Compiler → Plan → Build → Result", font=font(20), fill=DIM)
+        d.text((M, 462), "20 秒片子 $1.15 · 64 个 Chromium 并发渲染", font=font(20),
+               fill=mix(DIM, accent, 0.65))
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1742,6 +1812,8 @@ CARDS = {
                              color=(122, 62, 132), glow=(884, 288), glow_r=470, strength=0.30),
     "jina-ocr": dict(file="jina-ocr-output-length.jpg",
                      color=(72, 88, 160), glow=(886, 290), glow_r=470, strength=0.30),
+    "hypit": dict(file="hypit-video-compiler-timeline.jpg",
+                  color=(206, 70, 120), glow=(884, 288), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
