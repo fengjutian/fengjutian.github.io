@@ -53,7 +53,7 @@ _styles: |
   .prompt-empty { margin: 4rem 1rem; color: var(--muted); text-align: center; }
   .prompt-empty[hidden] { display: none; }
   body.prompt-modal-open { overflow: hidden; }
-  .prompt-modal { --muted: color-mix(in srgb, var(--global-text-color) 62%, transparent); position: fixed; inset: 0; z-index: 1000; display: grid; padding: 1rem; place-items: center; color: var(--global-text-color); background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
+  .prompt-modal { --muted: color-mix(in srgb, var(--global-text-color) 62%, transparent); position: fixed; inset: 0; z-index: 1060; display: grid; padding: 1rem; place-items: center; color: var(--global-text-color); background: rgba(8,8,12,.72); backdrop-filter: blur(5px); }
   .prompt-modal[hidden] { display: none; }
   .prompt-modal-layout { display: grid; width: min(68rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); overflow: hidden; background: var(--global-bg-color); border: 1px solid var(--global-divider-color); border-radius: 1rem; box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34); }
   .prompt-modal-layout--text { grid-template-columns: 1fr; }
