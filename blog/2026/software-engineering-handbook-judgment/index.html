@@ -1,0 +1,951 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> The Software Engineering Handbook：把工程判断写成一份自由度账本 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从三种「没写下来」、两本账、五步链和证据的三个旋钮，拆解 James C. Davis 这本手册为什么把工程判断变成了可审查的东西，以及它对 Agent 平台最有用的一章到底在讲什么。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | The Software Engineering Handbook：把工程判断写成一份自由度账本"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/software-engineering-handbook-judgment/"> <meta property="og:description" content="从三种「没写下来」、两本账、五步链和证据的三个旋钮，拆解 James C. Davis 这本手册为什么把工程判断变成了可审查的东西，以及它对 Agent 平台最有用的一章到底在讲什么。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/software-engineering-handbook-judgment.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="The Software Engineering Handbook：把工程判断写成一份自由度账本"> <meta name="twitter:description" content="从三种「没写下来」、两本账、五步链和证据的三个旋钮，拆解 James C. Davis 这本手册为什么把工程判断变成了可审查的东西，以及它对 Agent 平台最有用的一章到底在讲什么。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/software-engineering-handbook-judgment.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/software-engineering-handbook-judgment/",
+        "@type": "BlogPosting",
+        "description": "从三种「没写下来」、两本账、五步链和证据的三个旋钮，拆解 James C. Davis 这本手册为什么把工程判断变成了可审查的东西，以及它对 Agent 平台最有用的一章到底在讲什么。",
+        "headline": "The Software Engineering Handbook：把工程判断写成一份自由度账本",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/software-engineering-handbook-judgment/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/knowledge/">知识地图 </a> </li> <li class="nav-item "> <a class="nav-link" href="/prompts/">提示词 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">The Software Engineering Handbook：把工程判断写成一份自由度账本</h1> <p class="post-meta"> Created on November 18, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p><strong>11</strong>。<strong>0</strong>。<strong>1</strong>。</p> <p>11 章，0 个算法，1 条五步链。</p> <p>James C. Davis 在导言里把话说得很死：这本书<strong>不给做这些决定的算法</strong>。有后果的决定总是牵涉互相冲突的考虑、不完整的知识、不完美的测量和不确定性——正因如此才需要判断，也正因如此没法写成算法。</p> <p>它给的是每个章节都要重走一遍的一条链：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Model → Property → Observation → Evidence → Judgment
+</code></pre></div></div> <p><a href="https://davisjam.github.io/model-based-agentic-software-engineering/book/se-handbook/index.html" rel="external nofollow noopener" target="_blank">The Software Engineering Handbook</a> 副标题是 A Judgment and Decision-Making Approach。作者是 Purdue ECE 的助理教授，Edition 1 于 2026-09-12 首发，仓库最近一次提交是 2026-11-17。全书 11 章，另有一篇导言和一个结论；仓库 MIT 许可，目前 54 star、3 fork——这个数字说明它还没被当成“必读”，但它值得。</p> <p>我的判断是：</p> <p><strong>这本书最有用的地方，不是它讲了受控变化，而是它把“工程判断”拆成了两样可以写下来、也可以被别人审查的东西：你钉死了哪些自由度，以及你凭什么证据敢交付。</strong></p> <p>下面按这两条线读。</p> <h2 id="一目录本身就是论点">一、目录本身就是论点</h2> <p>第 10 章是研究与开发（R&amp;D）。按常规教材的顺序，它该排在前面——先做研究，再做需求、架构、实现。</p> <p>作者把它挪到了最后，并在导言里解释了原因：R&amp;D 要求工程师判断有限的精力该往哪投、眼前的障碍是不是真的需要新想法、什么样的证据才算一次推进——<strong>这些决定，没有工程经验的人很难体会</strong>。所以他让读者先走完前十章。</p> <p>这个安排本身就是书的论点：判断力不是读出来的，是把前面的决定一个个做过之后长出来的。这一点会在第七节重新出现，因为 AI 恰好把“做那些决定”的机会接走了。</p> <p><img src="/assets/img/blog/software-engineering-handbook-judgment/fig-03-five-step-chain.png" alt="五步链：Model、Property、Observation、Evidence、Judgment，以及度量本身也是一个模型"></p> <p><em>每一章的结构都是同一件事：先建模型，再问这个模型蕴含哪些属性，然后去真实系统里观察，判断这些观察够不够，最后结合后果做决定。</em></p> <p>第 9 章把这条链写得更细一点：<code class="language-plaintext highlighter-rouge">Property → Metric → Measurement → Evidence → Judgment</code>。多出来的两个词是这本书的一个暗线——<strong>度量本身也是一个模型</strong>。它把“你关心的属性”换成了“你能观测的东西”，这个替换必然漏掉一些东西；一旦被当成目标，被优化的就会是指标本身。作者点名了 Goodhart。</p> <p>所以这本书对“用什么指标”这件事的态度是：几乎没有一个有后果的工程决定，可以被负责任地压成单个指标。</p> <h2 id="二第一章软件是媒介不是代码">二、第一章：软件是媒介，不是代码</h2> <p>第一章的标题就是全书的地基：Software Engineering: The Engineering Discipline of Controlled Change。</p> <p>书里先把工程定义了一遍（引自配套的 MAGE）：</p> <blockquote> <p>工程是<strong>对重大系统行使有根据的控制、并为结果负责</strong>的学科。工程师不必亲自完成实现一个系统所需的每一个动作；但他必须保有足够的主导权，去理解并指挥这项工作、评估关于其关键属性的证据、识别假设何时失效、并在必要时介入。</p> </blockquote> <p>然后把软件当作一种<strong>媒介</strong>来描述，和混凝土、钢材并列：可改变、可复制、可迁移、可更新。四条属性各自都很普通，合起来产生的东西不普通——<strong>一次决定可以被复制到百万台设备上</strong>。同一套机制既能把修复送到每个已部署实例，也能把缺陷、漏洞和错误假设一起送过去。</p> <p>这就是“受控变化”：不是阻止变化，而是在允许变化的同时，保住那些必须为真的属性。</p> <p>这里有个细节值得单独拎出来。书对“软件”的定义是：<strong>行为被表示为可由机器执行的媒介，既包括传统的指令式计算，也包括机器推理</strong>。紧接着它举的例子是 coding agent——agent 的软件提供工具、上下文、约束和一个目标，由 agent 自己推理该采取哪些动作。</p> <p>也就是说，在这本书的框架里，<strong>Agent 不是软件工程的例外，而是软件的一种新写法</strong>。它的行为同样被表示为可执行的媒介，因此同样落在“受控变化”的问题域里。</p> <h2 id="三两本账怎么排工作和要多少证据">三、两本账：怎么排工作，和要多少证据</h2> <p>第二章是我认为最容易被误读的一章。</p> <p>书里给了三个维度来判断该用什么样的流程：</p> <ul> <li> <strong>Certainty</strong>：动手之前，能知道多少？</li> <li> <strong>Changeability</strong>：改主意有多贵？</li> <li> <strong>Decomposability</strong>：能不能只做一部分就有用？</li> </ul> <p>多数解读会在这里补一句“模块边界清晰就可以并行开发”。这是把 decomposability 读成了“能不能拆给多个 agent 并行”。书里的定义更窄也更工程化：它问的是<strong>部分系统能不能被验证</strong>、以及<strong>部分系统能不能独立产生价值</strong>——两个不同的门槛。能验证但还不能用，增量依然有价值，因为验证本身产出信息。</p> <p>然后是这一章真正的设计：<strong>失败的后果，被刻意排除在这三个维度之外。</strong></p> <p>作者的论证是干净的：后果大不大，不告诉你需求能不能提前知道，不告诉你决定好不好改，也不告诉你部分系统能不能被验证。一个高后果的系统可以落在这三个维度的任何位置。后果回答的是另一个问题：<strong>交付之前要多少证据。</strong></p> <p>于是有了两本账：三维决定“工作怎么排”，后果决定“要多少证据”。混在一起，就会得出“高风险必须瀑布、迭代等于不严谨”这种结论，而书里明确说这两件事不是一回事。</p> <p><img src="/assets/img/blog/software-engineering-handbook-judgment/fig-02-two-ledgers.png" alt="两本账：三个维度决定工作怎么排，后果只决定要多少证据"></p> <p><em>书里点名的两种误判：为无关紧要的不确定性做过量工程；以及把高后果误读成必须按阶段走。</em></p> <p>这一章还有一个我很喜欢的转向：三个维度不是地形，是<strong>可以改造的地形</strong>。不确定太多，就投资确定性（原型、访谈、实验）；决定太难改，就投资可改性（模块化、接口、自动化测试）；分不出可验证的部分，就投资可分解性（垂直切片、接口先行）。当然，改造本身也是决定，也有成本——模块化更易改但更难懂，独立部署需要基础设施，原型要花时间。</p> <h2 id="四没写下来不等于自由">四、没写下来，不等于自由</h2> <p>第六章是我认为全书最可操作的一章。</p> <p>规格说明要回答三个判断：力气该花在哪（有后果又没搞清的地方）、责任归谁（机器可以假设环境什么、必须自己保证什么）、以及<strong>卡多紧</strong>。</p> <p>第三个判断的关键，是区分三种“没写下来”：</p> <ul> <li> <strong>unknown</strong>：后果还没搞清楚，现在决定等于瞎猜；</li> <li> <strong>tacit</strong>：边界其实存在，只是没人写下来；</li> <li> <strong>free</strong>：几种做法都行，差异不构成后果。</li> </ul> <p>只有第三种才是真正的自由度。前两种看起来都“没约束”，但一个是欠学习，一个是欠显式化。</p> <p><img src="/assets/img/blog/software-engineering-handbook-judgment/fig-01-three-kinds-of-unspecified.png" alt="没写下来的选择有三种含义：未知、默会、真正的自由，各自对应不同的动作"></p> <p><em>把「没约束」当成「自由」，是规格说明里最贵的一类错误。</em></p> <p>书里还给了一个几乎可以当工具用的检测器：<strong>「不是这样」。</strong></p> <p>如果一份实现完全符合写下来的规格，但相关的人一看就否决——「不是那么晚」「不是给他看」「不是那么多」——那说明有一条有后果的边界从来没被写进规格。这个否决不是需求变更，是<strong>证据</strong>：它证明一个看起来自由的选择其实不自由。</p> <p>对应的三个动作就是 Constrain / Leave open / Learn more。这套三分法对写 Agent 约束的人尤其直接：你的 prompt 里那些没写的东西，是未知、是默会，还是真的自由？如果是默会，Agent 会替你做出决定，而且是在你最不希望它做决定的地方。</p> <h2 id="五每往下走一步空间就收窄一次">五、每往下走一步，空间就收窄一次</h2> <p>第六章还有一句话，把整条需求到实现的链路串起来了。借用 Zave 和 Jackson（1997）的写法：给定环境假设 E 和机器规格 S，需求 R 必须能推出来。规格说明的工作，就是决定 E 和 S 各承担多少。</p> <p>这句话不是形式化的装饰，它有一个很实际的推论：<strong>自动化绝大多数时候不是在加功能，而是在把责任从环境搬到机器里。</strong>「操作员会保证输入合法」变成「系统应该检测并修复非法输入」；「只在公司内网运行」变成「还要支持公网访问」。功能列表上看是多了一条，工程上看是机器多背了一份责任，而那份责任的证据要求也跟着搬过来了。</p> <p><img src="/assets/img/blog/software-engineering-handbook-judgment/fig-04-realization-space.png" alt="实现空间逐级收窄：需求、规格、架构、设计，每个框里只有一部分实现是可接受的"></p> <p><em>规格圈出一片可接受的实现；每加一条约束，就花掉一份自由。</em></p> <p>书里的原图只画了「可接受区域」和几个点，我把它按章节顺序叠成了四层。要提醒的是：每加一条约束都在消耗自由——留得太少，把本来便宜的未来决定换成现在很贵的承诺；留得太多，有后果的差异就被推迟到实现里，由代码随手决定。</p> <h2 id="六证据交付是一次判断不是一次检查">六、证据：交付是一次判断，不是一次检查</h2> <p>第九章是全书的高潮，也是最该给 Agent 平台开发者读的一章。</p> <p>它的前提是：验证不是测试。测试只是获取证据的一种方式，工程问题在前面——<strong>在愿意交付之前，我们必须知道什么？</strong></p> <p>顺着这个问题，书里做了一件很利落的事：把「证据强度」拆成几个可以分别判定的维度。</p> <table> <thead> <tr> <th>维度</th> <th>问的是什么</th> </tr> </thead> <tbody> <tr> <td>覆盖</td> <td>证据走到了哪里</td> </tr> <tr> <td>检出能力</td> <td>走到那里时，它能认出错误吗</td> </tr> <tr> <td>代表性</td> <td>观察的条件和真实运行条件像不像</td> </tr> <tr> <td>作用域</td> <td>证据是在属性真正存在的层级上取的吗</td> </tr> <tr> <td>独立性</td> <td>多个证据会不会被同一个错误一起打败</td> </tr> <tr> <td>假设</td> <td>这堆证据共同依赖哪些前提</td> </tr> </tbody> </table> <p>书里用一个极简的模型说明了为什么“测试数量”本身不是证据：若某缺陷被单次测试检出的概率是 p，那么 n 次独立测试全部漏掉它的概率是 (1−p)^n。5 次是 0.951，5,000 次是 1.5×10⁻²²。但 p 又被拆成两项——<strong>碰到相关行为的概率 × 认出它是错误的概率</strong>。任意一项是零，再多的测试也是零。这正是“生成 5,000 个通过测试”最危险的地方：如果实现和测试来自同一个对需求的解释，它们共享同一个错误的判据。</p> <p>对残余不确定性，书里给了三个不同性质的应对：</p> <p><strong>margin</strong>（余量）：量化属性的观察值离不可接受边界还有多远。420 ms 和 499 ms 都满足 500 ms 的规格，但处境完全不同——而且真正该关心的是扣掉工作负载、环境和测量波动之后还剩多少余量。</p> <p><strong>containment</strong>（围堵）：软件的离散性让“接近正确”没有意义——一个执行要么越权了要么没有，不存在“几乎越权”。所以对没被证据覆盖到的行为，靠架构去限制它能影响的范围：接口、隔离、权限、事务、超时、灰度、回滚。书里把 Meyer 的 modular continuity / protection 延伸了一步：连续性约束变化的传播，保护性约束失败的传播，围堵约束“证据没发现的东西”的后果。</p> <p><strong>reversibility</strong>（可逆性）：发现错了之后还能做什么。</p> <p>最后，交付决定不是二元的，书里列了五种结局：交付、继续取证、改系统、回头改上游决定、拒绝。最后一种需要专门的说明——客户的接受不构成工程师的证据；工程师可以拒绝在一份自己站不住的判断上签字。</p> <p>这一章还有一个我认为最适合被 agent 平台抄走的句子：<strong>证据变了，决定就必须更新。</strong>一次在不确定下交付，是把不确定性称过重量之后做的决定；但在“部署中的行为正在造成实质伤害”的证据积累起来之后继续同样的行为，是<strong>用一份已经不存在的知识状态里的理由，为现在的决定辩护</strong>。</p> <h2 id="七ai变便宜的是实现换位置的是稀缺项">七、AI：变便宜的是实现，换位置的是稀缺项</h2> <p>书的第三章（团队协作）里有一段对 AI 的讨论，比大多数“AI 会取代工程师”的论述都克制。</p> <p>它先把人不可替换这件事说清楚：两个同级别的工程师能力可以差很远，分配工作会改变他们各自长成什么样，把活一直给最快的那个人，短期最优、长期会让组织更依赖这一个人。然后它指出生成式 AI 的特别之处：<strong>AI 是可替换的</strong>。能力可以按需购买、并行复制、换一个模型顶上；组织不需要招聘、培养、挽留每一个模型实例。</p> <p>于是分配问题变了形状：当一种智能变成商品，它的<strong>互补品</strong>才是稀缺的——决定做什么、提供组织与领域上下文、识别有后果的权衡、评估证据、行使权威、承担责任。</p> <p>配套的 MAGE 把这件事写成第 6 条主张：工程工作会围绕仍然稀缺的东西重组——表征、证据、治理、协调、判断。</p> <p><img src="/assets/img/blog/software-engineering-handbook-judgment/fig-05-scarcity-moves.png" alt="稀缺项换位置：实现从昂贵变成便宜，表征、证据、治理、协调、判断变得相对稀缺"></p> <p><em>上图是按 MAGE 的说法画的示意，不是书里的实测数据；下图是这一章真正的问题。</em></p> <p>然后是 entry-rung problem。传统上，初级工程师是通过实现工作变成资深工程师的：实现、撞上不熟悉的系统、犯错、被 review、debug、慢慢积累上下文和判断。如果 AI 把这些工作接走，组织以后从哪儿长出资深工程师？</p> <p>书里最锋利的处理，是把它写成一个<strong>具体的分配决策</strong>，而不是一个教育议题：Agent 独自做，当期效率最高；新人独自做，产出慢但长经验；新人和 Agent 一起做，可能同时加速产出和学习，也可能只是把推理藏了起来。这三种分配不能只比当期成本，因为它们留给组织的状态不同。</p> <p>它还给了同一件事的两种结局：一个把任务交出去、接受产物、留在推理之外的工程师，几乎不会从这次工作里长出能力；一个先形成假设、用 agent 去实现或检验、再看证据、诊断失败、修正路径的工程师，学习循环可能比过去快得多——<strong>委派可以把工程师踢出学习回路，也可以加速这个回路。</strong></p> <h2 id="八这本书不给你什么">八、这本书不给你什么</h2> <p>按重要性排：</p> <ol> <li> <strong>不是教程。</strong> 没有代码，没有可运行的例子，没有 checklist。作者自己在导言里说得很清楚：不给算法。想要“照着做”的人会失望。</li> <li> <strong>例子偏温和。</strong> 睡眠顾问、支付服务、TODO 应用、医疗设备、A-7E 的飞机规格——例子是对的，但都是二手叙述，没有一手数据。工业案例被放在了配套的 MAGE 那本里（Cloudflare、Spotify、Shopify、Uber、Amazon、GitLab）。</li> <li> <strong>对 Agent 工程只到原则层。</strong> 约束、传感器、闸门（MAGE 的 constraints / sensors / gates）在手册里只是判断的框架，不涉及具体怎么实现。想拿它直接设计一个 agent 平台，还得自己补一层。</li> <li> <strong>规范性文本，不是实证研究。</strong> 它说的是“应该怎样判断”，不是“这样判断的公司表现更好”。这个定位本身没问题，但别把它当成效果证据。</li> <li> <strong>英文，且没有中文版。</strong> 术语密度不低，尤其是 coordination / specification / validation 三章的词汇表是自建的。</li> <li> <strong>第 10 章放最后是有代价的。</strong> 作者自己承认：没有工程经验很难体会 R&amp;D 里的判断。反过来说，完全没做过生产系统的人读到第十章会很空。</li> </ol> <p>页数这件事我没能核实：站点没有标注，PDF 我也读不了（这次只读了网页版各章）。所以本文不引用任何“xx 页”的说法。</p> <h2 id="九我的判断">九、我的判断</h2> <p>如果只从这本书里拿三样东西，我会拿这三样。</p> <p><strong>第一样：三种“没写下来”。</strong> 未知、默会、真自由——这个三分法可以直接搬进任何一份 agent 的约束设计里。它把“要不要写得更细”这个模糊问题，换成了“这是哪一种没写”。而「不是这样」这个检测器，可以变成一个真实的采样来源：凡是实现通过了规格却被否决的 case，都是规格漏掉的那条边界。</p> <p><strong>第二样：两本账。</strong> 把“工作怎么排”和“要多少证据”分开，是这本书最结构性的一步。它顺手解决了两个常见的滑坡：高风险不等于重流程，迭代也不等于低保证。</p> <p><strong>第三样：证据的三个旋钮。</strong> 余量、围堵、可逆性。这三个词比“测试覆盖率”有用得多，因为它们分别对应三种不同的不确定性，而且都能落到具体设计上——余量是阈值和容量规划，围堵是隔离与权限，可逆性是灰度与回滚。</p> <p>这和我一直关心的那类工作其实是同一件事：把“最终产物对不对”这个没法直接回答的问题，拆成一组可寻址的中间量，然后在中间量上做观测和干预。这本书的版本是把它拆成 model / property / observation / evidence / judgment 五步；而它最有价值的一句提醒，是那个容易被忽略的括号——<strong>度量和模型一样，也是你选的，不是世界给的。</strong></p> <h2 id="项目与资料">项目与资料</h2> <ul> <li>全书在线版：<a href="https://davisjam.github.io/model-based-agentic-software-engineering/book/se-handbook/index.html" rel="external nofollow noopener" target="_blank">The Software Engineering Handbook</a>（含 PDF / ePub）</li> <li>配套理论：<a href="https://davisjam.github.io/model-based-agentic-software-engineering/" rel="external nofollow noopener" target="_blank">Model-Based Agentic Engineering（MAGE）</a> </li> <li>仓库：<a href="https://github.com/davisjam/model-based-agentic-software-engineering" rel="external nofollow noopener" target="_blank">davisjam/model-based-agentic-software-engineering</a>（MIT）</li> </ul> <p>数据来源：章节结构与定义取自书籍网页版的导言、第 1、2、3、6、9 章原文；Edition 1 首发日期与更新日期取自站点页脚与仓库 <code class="language-plaintext highlighter-rouge">pushed_at</code>；star / fork 取自 GitHub REST API（2026-11-18）。图 5 上半部分是依据 MAGE 第 6 条主张绘制的示意，不是实测数据。本文为技术解读，不是翻译。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hypit-video-compiler-timeline/">Hypit：你编辑的是词，秒是编译出来的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-lora-shared-capacity/">Omni LoRA：一个 671 MB 的修正，要背两个任务</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-quantized-runtime-contracts/">Omni-Quantized：12 个构建，两套布局，省的是显存不是时间</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/video-shotcraft-shot-names/">video-shotcraft：150 个镜头名，就是 Agent 的接口</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/jina-ocr-output-length/">Jina-OCR-v1：赢在少写，不在写快</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mnn-pocket-on-device-budget/">MNN-Pocket-0.3B：不是把大模型缩小，是从两个预算反推形状</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/rust-anything-behavioral-port/">rust-anything：语言迁移不是翻译，是一场可以判负的比较</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/sft-rlhf-narrowing/">SFT 与 RLHF：教接口，选口味，然后收窄</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mainline-git-native-intent-memory/">Mainline：工程判断该住在 Git 里，不该住在数据库里</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/intent-system-intent-driven-development/">Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 18, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
+          },
+        },{id: "nav-提示词",
+          title: "提示词",
+          description: "经过整理、可以直接复用和继续修改的提示词。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/prompts/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-the-software-engineering-handbook-把工程判断写成一份自由度账本",
+        
+          title: "The Software Engineering Handbook：把工程判断写成一份自由度账本",
+        
+        description: "从三种「没写下来」、两本账、五步链和证据的三个旋钮，拆解 James C. Davis 这本手册为什么把工程判断变成了可审查的东西，以及它对 Agent 平台最有用的一章到底在讲什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/software-engineering-handbook-judgment/";
+          
+        },
+      },{id: "post-hypit-你编辑的是词-秒是编译出来的",
+        
+          title: "Hypit：你编辑的是词，秒是编译出来的",
+        
+        description: "从 23 行 import、词级 selection、Projection 和显式复用的 Build 图，拆解 Hypit 为什么把时间轴从作者写的事实降级成编译产物——以及“一条命令 100 个变体”在代码里到底成立到什么程度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hypit-video-compiler-timeline/";
+          
+        },
+      },{id: "post-omni-lora-一个-671-mb-的修正-要背两个任务",
+        
+          title: "Omni LoRA：一个 671 MB 的修正，要背两个任务",
+        
+        description: "从 LoRA 的低秩几何、224 个模块与 448 个张量，到 32k 检查点「遵循 +2.3、通用 −4.0」的实测，拆解「一个 adapter 干两件事」到底共享了什么、又在哪里互相挤占。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/omni-lora-shared-capacity/";
+          
+        },
+      },{id: "post-omni-quantized-12-个构建-两套布局-省的是显存不是时间",
+        
+          title: "Omni-Quantized：12 个构建，两套布局，省的是显存不是时间",
+        
+        description: "同一个 7B 图像模型被切成 12 个量化构建，297 与 265 两套张量布局不通用；从显存与耗时的实测、三行评测的读法，到负向提示词一个空格这种暗坑，拆解「把 14.23GB 压到 3.67GB」背后的运行时契约。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/omni-quantized-runtime-contracts/";
+          
+        },
+      },{id: "post-video-shotcraft-150-个镜头名-就是-agent-的接口",
+        
+          title: "video-shotcraft：150 个镜头名，就是 Agent 的接口",
+        
+        description: "从 124 张配方卡、150 个镜头、三层表示（文本→组件→轨道），到预览与渲染的帧级一致、剪映草稿导出和三层授权，拆解这个 2.1 万星的项目为什么把「可命名的镜头」当成 Agent 的核心接口。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/video-shotcraft-shot-names/";
+          
+        },
+      },{id: "post-jina-ocr-v1-赢在少写-不在写快",
+        
+          title: "Jina-OCR-v1：赢在少写，不在写快",
+        
+        description: "从 4,096 个 patch 压成 256 个视觉 token、3B MoE 只激活 570M、一个 draft block 递归猜三步，到 1,085 token/页带来的 2.57 页/秒，拆开 Jina-OCR-v1 的三层成本账，以及它藏在模型卡里的三个部署坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/jina-ocr-output-length/";
+          
+        },
+      },{id: "post-mnn-pocket-0-3b-不是把大模型缩小-是从两个预算反推形状",
+        
+          title: "MNN-Pocket-0.3B：不是把大模型缩小，是从两个预算反推形状",
+        
+        description: "从 300 MB 峰值内存与 200 tok/s 两条硬约束，到 151K 词表砍成 64K、4.1 万亿 token 分四段、QAT 自蒸馏对齐 BF16，拆开阿里 MNN 团队的 0.3B 端侧模型，以及 173 MB 之外那笔 448 MiB 的账。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-pocket-on-device-budget/";
+          
+        },
+      },{id: "post-rust-anything-语言迁移不是翻译-是一场可以判负的比较",
+        
+          title: "rust-anything：语言迁移不是翻译，是一场可以判负的比较",
+        
+        description: "从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/rust-anything-behavioral-port/";
+          
+        },
+      },{id: "post-sft-与-rlhf-教接口-选口味-然后收窄",
+        
+          title: "SFT 与 RLHF：教接口，选口味，然后收窄",
+        
+        description: "从 SFT 的掩码交叉熵、奖励模型的 Bradley-Terry 排序、PPO 的 KL 约束到 DPO 的闭式解，拆开两个后训练阶段各自在改什么，以及为什么“选择”这个动作本身就会让不同模型的回答越来越像。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sft-rlhf-narrowing/";
+          
+        },
+      },{id: "post-mainline-工程判断该住在-git-里-不该住在数据库里",
+        
+          title: "Mainline：工程判断该住在 Git 里，不该住在数据库里",
+        
+        description: "从 refs 里的追加式事件流、notes 上的意图挂载、squash 之后的三级 pin 级联，到提交覆盖率与 guard 治理，拆解 Mainline 为什么把 Agent 的记忆搬进 Git，以及这个选择到底换来了什么、又付出了什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mainline-git-native-intent-memory/";
+          
+        },
+      },{id: "post-intent-system-它不信任-ai-所以把流程搬出-ai-的上下文",
+        
+          title: "Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文",
+        
+        description: "从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/intent-system-intent-driven-development/";
+          
+        },
+      },{id: "post-vllm-每次重写-改的都是同一本显存账",
+        
+          title: "vLLM：每次重写，改的都是同一本显存账",
+        
+        description: "从 60%–80% 的 KV Cache 浪费到不足 4%，从 V0 的两段式调度到 V1 的统一 token 预算、实测分配和抢占即重算，拆开 vLLM 这本显存账：谁记账、记什么，以及 2 + N 个进程这笔账。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/vllm-kv-cache-ledger/";
+          
+        },
+      },{id: "post-diagram-design-50-种图表是目录-能拒绝你的检查才是产品",
+        
+          title: "Diagram Design：50 种图表是目录，能拒绝你的检查才是产品",
+        
+        description: "67,720 星的 Agent Skill：50 份图表参考合计 481 KB，画一张流程图却只读 1,079 字节；拆解它把审美写成 4px 网格、9 个节点上限、六条连线规则和一组会失败的检查。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/diagram-design-agent-skill-lint/";
+          
+        },
+      },{id: "post-gpu-unlock-geforce-的半速矩阵算力-写死在八个-4-位字段里",
+        
+          title: "gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里",
+        
+        description: "NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpu-unlock-geforce-tensor-half-rate/";
+          
+        },
+      },{id: "post-octop-单进程是它的地基-也是它的天花板",
+        
+          title: "Octop：单进程是它的地基，也是它的天花板",
+        
+        description: "从 ADR 001 的单进程取舍、deepagents 底座、主持人派工的团队模型，到只取 atom 的记忆召回和 PII 脱敏的真实范围，拆开腾讯云开源的 Octop，看这条 pip install 撑起整个平台的路，在哪三处变成天花板。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/octop-single-process-agent-platform/";
+          
+        },
+      },{id: "post-voicestudio-把-elevenlabs-搬回本地之后-账单换成了许可证",
+        
+          title: "VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证",
+        
+        description: "11 万星的本地语音工作站：45 个 router、18 个引擎适配器、646 种语言背后只占 3.4% 的语料长尾，以及那份 73 条记录里 0 条标了可商用的模型许可证清单。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/voicestudio-local-voice-workstation/";
+          
+        },
+      },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-everything-project-50-个应用-0-个前端框架-它在重写-一个软件该有多大",
+        
+          title: "Everything Project：50 个应用、0 个前端框架，它在重写「一个软件该有多大」",
+        
+        description: "51 个目录、50 个应用、0 个 UI 框架、15 个 AGPL：拆开 HeyPuter 的 monorepo，看它怎么把 Excel、Photoshop、AutoCAD 各压成能单独 npm run dev 的目录，以及这份压缩的代价落在哪里。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/everything-monorepo-fifty-apps/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{id: "prompts-agent-任务契约",
+          title: 'Agent 任务契约',
+          description: "为编码或研究 Agent 明确目标、范围、约束、验证和完成条件。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/agent-task-contract/";
+            },},{id: "prompts-面向风险的代码审查",
+          title: '面向风险的代码审查',
+          description: "先找真实缺陷和回归风险，再讨论风格与可维护性。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/code-review/";
+            },},{id: "prompts-数据分析问题定义",
+          title: '数据分析问题定义',
+          description: "在计算指标之前明确口径、假设、异常值和可回答范围。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/data-analysis/";
+            },},{id: "prompts-图像生成艺术指导",
+          title: '图像生成艺术指导',
+          description: "用主体、构图、光线、材质和约束组织可迭代的图像提示词。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/image-direction/";
+            },},{id: "prompts-月夜泛舟",
+          title: '月夜泛舟',
+          description: "用极简构图、冷蓝月光和一盏暖灯，写出一幅静谧的东方夜湖行舟图。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/moonlit-lake-boat/";
+            },},{id: "prompts-开源项目深度研究",
+          title: '开源项目深度研究',
+          description: "从证据、架构、实现路径与限制出发分析一个开源项目。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/project-research/";
+            },},{id: "prompts-技术文章论点编辑",
+          title: '技术文章论点编辑',
+          description: "把资料整理成有中心论点的技术文章，而不是功能说明书。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/technical-writing/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
