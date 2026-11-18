@@ -30,7 +30,7 @@
 然后说明核心架构、关键执行流程、重要设计取舍、已知限制和适用边界。
 每个关键结论都要指向对应证据；不要用功能列表代替分析，也不要补写资料中不存在的事实。
 
-</code></pre></div></div> <h2 id="使用方法">使用方法</h2> <p>优先提供官方文档、源代码、论文和发布记录。问题越具体，输出越容易形成明确结论。</p> </article> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 17, 2026. </div> </footer> <script>
+</code></pre></div></div> <h2 id="使用方法">使用方法</h2> <p>优先提供官方文档、源代码、论文和发布记录。问题越具体，输出越容易形成明确结论。</p> </article> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 18, 2026. </div> </footer> <script>
   window.alFolio = {
     compatBootstrap: false
   };
@@ -97,7 +97,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/news/";
           },
-        },{id: "post-vllm-每次重写-改的都是同一本显存账",
+        },{id: "post-intent-system-它不信任-ai-所以把流程搬出-ai-的上下文",
+        
+          title: "Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文",
+        
+        description: "从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/intent-system-intent-driven-development/";
+          
+        },
+      },{id: "post-vllm-每次重写-改的都是同一本显存账",
         
           title: "vLLM：每次重写，改的都是同一本显存账",
         

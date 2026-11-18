@@ -1,0 +1,844 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/intent-system-intent-driven-development/"> <meta property="og:description" content="从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/intent-system-intent-driven-development.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文"> <meta name="twitter:description" content="从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/intent-system-intent-driven-development.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/intent-system-intent-driven-development/",
+        "@type": "BlogPosting",
+        "description": "从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。",
+        "headline": "Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/intent-system-intent-driven-development/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/knowledge/">知识地图 </a> </li> <li class="nav-item "> <a class="nav-link" href="/prompts/">提示词 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文</h1> <p class="post-meta"> Created on November 17, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"> <i class="fa-solid fa-hashtag fa-sm"></i> 架构设计</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>先看一句发布说明。</p> <p><code class="language-plaintext highlighter-rouge">intent-cli</code> 0.32.1 的 release note 里，有一段专门在讲候选产物的哈希：</p> <blockquote> <p>这些哈希标识的是被检查过的 workflow-dispatch 产物。release 事件的工作流会重新构建公开产物；<strong>它们不是对后来公开资产哈希的声明</strong>。</p> </blockquote> <p>再往下一点，还有一句更干脆的：</p> <blockquote> <p>这个校验守的是一个诚实的席位，而不是充当安全边界。</p> </blockquote> <p>一个项目在自己的发布页上，用这么大的篇幅说明“我验证了什么、我没验证什么”，这件事本身就值得写一篇。</p> <p>三个数字：<strong>113 star、1 fork、6 个 open issue</strong>。仓库是 <a href="https://github.com/J-Tech-Japan/intent-system" rel="external nofollow noopener" target="_blank">J-Tech-Japan/intent-system</a>，C# 写的，Apache-2.0，2026-04-02 建库，稳定版 <code class="language-plaintext highlighter-rouge">0.32.1</code> 发布于 2026-10-21——也是它最后一次 push 的日期。</p> <p>1 个 fork 这个数字很有意思：<strong>它说明几乎没人真的把这份代码拉下来改过。</strong> 所以以下所有分析来自它的文档与发布记录，而不是来自“很多人在这么用”。</p> <p>而它想解决的问题，和我们过去一年读到的“AI 编程工作流”都不太一样。它不问“怎么让 AI 更懂意图”，它问的是：<strong>怎么让 AI 不再需要做判断。</strong></p> <h2 id="一一句话确定性工具概率性执行者">一、一句话：确定性工具，概率性执行者</h2> <p>README 的第一段就把定位写死了：</p> <blockquote> <p><code class="language-plaintext highlighter-rouge">intent-cli</code> 从不启动 Claude、Codex 或任何其他 AI provider。它只输出指导、校验契约、执行有界的 GitHub 与元数据状态迁移。AI agent 坐在驾驶位上，并且<strong>要去问 <code class="language-plaintext highlighter-rouge">intent-cli</code> 下一步该做什么</strong>。</p> </blockquote> <p>这句话有三个部分值得拆开看：</p> <ul> <li> <strong>它不启动模型。</strong> 也不用管你用哪个模型——Claude Code、Codex、Copilot、Cursor、OpenCode 都能接。</li> <li> <strong>它只做三件事。</strong> 渲染指导（<code class="language-plaintext highlighter-rouge">guide</code>）、校验契约（<code class="language-plaintext highlighter-rouge">packet validate-verification</code>、<code class="language-plaintext highlighter-rouge">issue validate-body</code>）、执行有界的迁移（<code class="language-plaintext highlighter-rouge">automation</code>、<code class="language-plaintext highlighter-rouge">worker</code>）。</li> <li> <strong>它是确定性的。</strong> 同一份状态进去，同样的指导出来。</li> </ul> <p>装法有两个入口，装出来的是同一个 CLI：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet tool <span class="nb">install</span> <span class="nt">--global</span> JTechJapan.IntentSystem.Cli <span class="nt">--version</span> 0.32.1
+<span class="c"># 或者不带 .NET SDK 的 npm 自实施方案</span>
+npm <span class="nb">install</span> <span class="nt">--global</span> intent-system@0.32.1
+intent-cli <span class="nt">--version</span>
+</code></pre></div></div> <p>.NET 工具那条路要求 .NET 10 SDK；npm 那条路装的是配对好的自包含二进制，macOS arm64、Linux x64、Windows x64 各一份，每份带 SHA-256 边车文件。</p> <h2 id="二两类-agent一条禁止越过的线">二、两类 agent，一条禁止越过的线</h2> <p>这是整套设计的第一条规则，也是最容易被“AI 工作流”文章忽略的一条：<strong>它把 agent 分成两类，给它们完全不同的信息权。</strong></p> <table> <thead> <tr> <th>角色</th> <th>事实来源</th> <th>负责</th> </tr> </thead> <tbody> <tr> <td>宿主 / 审查 agent</td> <td>宿主 <code class="language-plaintext highlighter-rouge">.intent-cli/</code> 状态 + 意图树</td> <td>发布 issue、迁移 label、审查/批准/合并、切下一个切片</td> </tr> <tr> <td>子实现 agent</td> <td><strong>只有 GitHub issue/PR 与仓库代码</strong></td> <td>实现 contract、开/更 PR、用 <code class="language-plaintext highlighter-rouge">worker</code> 记录结果</td> </tr> </tbody> </table> <p>子实现 agent 的约束不是建议，是文档里的原话：<strong>只认 GitHub 契约</strong>。它不得读、不得改宿主的 <code class="language-plaintext highlighter-rouge">.intent-cli/</code>、队列状态、metadata 分支，也不得碰 <code class="language-plaintext highlighter-rouge">intents/**</code>。</p> <p><img src="/assets/img/blog/intent-system/fig-01-two-sides-of-the-boundary.png" alt="隔离线两侧各自能读什么、能写什么"></p> <p><em>中间那条虚线只有一个通道：渲染好的 issue body。它不是靠 prompt 约定的，而是靠“读不到，所以做不了”。</em></p> <p>这一条为什么重要？因为几乎所有 AI 工作流都在做相反的事——<strong>把越来越多的上下文塞给同一个 agent</strong>：给它意图文档、给它设计笔记、给它历史 commit、给它 CI 日志。上下文越多，“它理解项目”这句话听起来越真。</p> <p>而这里的取舍是：<strong>理解力是概率性的，权限边界是确定性的。</strong> 先把确定性的那部分钉死，再谈理解。</p> <h2 id="三意图树是一棵目录不是一份-prompt">三、意图树是一棵目录，不是一份 Prompt</h2> <p>Intent Storming 这个名字听起来像营销，但它产出的是一个非常具体的东西：<code class="language-plaintext highlighter-rouge">intents/&lt;domain&gt;/</code> 下的一棵目录树，加一份 <code class="language-plaintext highlighter-rouge">manifest.yaml</code>。</p> <p><img src="/assets/img/blog/intent-system/fig-02-intent-tree-layout.png" alt="tree-v1 的九个类目，以及 manifest 长什么样"></p> <p><em>九类全部可选、全部可改名。老项目不需要迁移——tree-v1 是“推荐默认”，不是硬要求。</em></p> <p>这里我得纠正一个流传很广的说法。介绍 Intent-Driven Development 的文章里，常把意图树描述成三个维度：<strong>Purpose / User Context / Means</strong>。这个三分法在官方文档里找不到。文档给的是九个目录：<code class="language-plaintext highlighter-rouge">identity</code>、<code class="language-plaintext highlighter-rouge">product</code>、<code class="language-plaintext highlighter-rouge">features</code>、<code class="language-plaintext highlighter-rouge">technology</code>、<code class="language-plaintext highlighter-rouge">operations</code>、<code class="language-plaintext highlighter-rouge">decisions</code>、<code class="language-plaintext highlighter-rouge">clarifications</code>、<code class="language-plaintext highlighter-rouge">packets</code>、<code class="language-plaintext highlighter-rouge">links</code>。</p> <p>差别不只是命名。三分法是一套<strong>分类学</strong>——你把内容分进三个抽屉；九目录是一套<strong>寻址方案</strong>——每一份内容有路径、有交叉链接规则、能被 <code class="language-plaintext highlighter-rouge">intent search</code> 和 <code class="language-plaintext highlighter-rouge">intent lint-layout</code> 处理。前者给人和 AI 看，后者给工具用。</p> <p>配套的规则也很工程化：<code class="language-plaintext highlighter-rouge">decisions/</code> 里是 <code class="language-plaintext highlighter-rouge">&lt;NNNN&gt;-&lt;slug&gt;.md</code>，<code class="language-plaintext highlighter-rouge">features/&lt;slug&gt;/</code> 里是七个固定文件（overview / requirements / acceptance / decisions / open-questions / packets / links），并且要求互相链接、不许重复内容。</p> <p><strong>这棵树最有意思的地方是它承认自己会长歪。</strong> <code class="language-plaintext highlighter-rouge">clarifications/open.md</code> 是一等公民，未解决的问题和已确认的意图住在一起，不是藏在聊天记录里。</p> <h2 id="四packet-是四份文件issue-是唯一契约">四、Packet 是四份文件，Issue 是唯一契约</h2> <p>设计侧把意图切成 packet。一个 packet 不是一句任务标题，而是 <code class="language-plaintext highlighter-rouge">packet draft</code> 脚手架出来的四份文件：</p> <p><img src="/assets/img/blog/intent-system/fig-03-packet-to-label-machine.png" alt="四份文件如何折叠成一个 issue，以及之后 label 怎么走"></p> <p><em><code class="language-plaintext highlighter-rouge">implementation.md</code> 只给实现侧看；<code class="language-plaintext highlighter-rouge">review-context.md</code> 只给审查侧看；<code class="language-plaintext highlighter-rouge">github-body.md</code> 才是发布出去的那一份。</em></p> <p>这个拆分本身就是权限设计：<strong>实现者看不到审查者拿到的上下文，审查者也不看实现说明</strong>。到了 0.32.1 还多了一层——<code class="language-plaintext highlighter-rouge">brief render</code> 命令按角色渲染确定的简报，reviewer 那份只读前三份文件，连 <code class="language-plaintext highlighter-rouge">implementation.md</code> 的文件状态都不去 stat。</p> <p>发布这一关有两处“自定上限”值得记：</p> <ul> <li> <strong>issue body 超过 65,536 字节就拒绝。</strong> 文档紧接着声明：这是 intent-cli 自己的保守上限，GitHub 那边的边界、单位、JSON 载荷处理“未被验证”，唯一的远端数据点是 2026-09-16 一次约 96,000 字符的失败。</li> <li> <strong>58,000 字节是草稿预算。</strong> 原话是“自 2026-09-16 起手工维持的预算选择，不是 GitHub 的限制”。</li> </ul> <p>一个工具愿意把“这个数字是我拍的”写在文档里，比它拍得准更难得。</p> <h2 id="五状态不在-ai-的上下文里在-label-上">五、状态不在 AI 的上下文里，在 label 上</h2> <p>packet 发布成 issue 之后，流程靠 8 个 label 推进：</p> <table> <thead> <tr> <th>label</th> <th>含义</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">intent-target</code></td> <td>当前的工作目标</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-issue-in-progress</code></td> <td>实现 worker 已认领 issue</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-created</code></td> <td>该 issue 产出了 PR（打给 issue，不是 PR）</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-reviewing</code></td> <td>宿主审查循环正在看</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-request-update</code></td> <td>审查要求修改</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-update-in-progress</code></td> <td>实现 worker 已认领这次修改</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-rereview-ready</code></td> <td>修完了，可以重审</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">intent-pr-approved</code></td> <td>通过，等合并或 closeout</td> </tr> </tbody> </table> <p>规则只有一句：<strong>正常操作里不要手动加删 workflow label。</strong> 迁移必须走 <code class="language-plaintext highlighter-rouge">intent-cli automation pr-transition</code>。</p> <p>真正能说明设计深度的是一个故障处理细节。如果某个 PR 上同时挂着 <code class="language-plaintext highlighter-rouge">intent-pr-approved</code> 和 <code class="language-plaintext highlighter-rouge">intent-pr-request-update</code>，会发生什么？</p> <p>AI 大概会“合理地推断”哪个更新。而 <code class="language-plaintext highlighter-rouge">automation reconcile</code> 的选择是：报告 <code class="language-plaintext highlighter-rouge">conflicting-review-decision</code>，判为不安全停止，<strong>两个 label 都不删</strong>，让人重跑一次正确的转换。</p> <p>这是同一种克制在不同层级的重复：<strong>能推断的地方不推断，把不确定性交回给人。</strong></p> <h2 id="六三个文件夹就是权力边界">六、三个文件夹就是权力边界</h2> <p>文档里有一句话，语气比大多数同类项目都硬：</p> <blockquote> <p>review 目录在正常运作里不是可选项。</p> </blockquote> <p>原因很具体：审查 / 切下一个切片的循环要拉取并改写宿主元数据，如果它和设计线程共用目录，两者会互相踩。所以三个角色要三个目录——设计/宿主、实现、审查，<strong>即使它们指向同一个仓库，也要各开 clone 或 worktree</strong>。</p> <p>同一个仓库还有另一种拓扑：把元数据放在专属分支（比如 <code class="language-plaintext highlighter-rouge">main-metadata</code>）上，代码在 <code class="language-plaintext highlighter-rouge">main</code>。两种都被支持，但无论哪种，目录必须分开。</p> <p>这条约束的代价是显而易见的：<strong>你没法“在一个窗口里跑完”。</strong> 一个 solo 开发者要维护三个 checkout 和一条消息通道。这也是它给人的第一印象——不是工具，是一套操作规程。</p> <h2 id="七facets当编码被委派人还必须懂什么">七、facets：当编码被委派，人还必须懂什么</h2> <p>如果这篇只记一件事，我会记这个。</p> <p>tree-v1 的任意节点可以带一个 <code class="language-plaintext highlighter-rouge">facets:</code> 标签，取值是封闭的四类。文档给它们的定义是 <strong>human-retained understanding</strong>——“当编码被委派给 AI 时，人必须继续理解的最小表面”：</p> <p><img src="/assets/img/blog/intent-system/fig-04-facets-human-retained.png" alt="四类不可外包的理解，以及其余可以交出去的部分"></p> <p><em>这四类来自一条 operator input（issue #1159）。项目判断：投影和样板可以安全委派，这四类不行。</em></p> <ul> <li> <strong>vocabulary</strong> —— 事件/命令词汇表：什么算一个事实。例：<code class="language-plaintext highlighter-rouge">PaymentAuthorized</code> 记一次授权，不可就地撤销。</li> <li> <strong>invariant</strong> —— 不变量与一致性边界。例：订单总额必须等于各行小计之和，且只能在聚合内部保证。</li> <li> <strong>decider</strong> —— 判定：一个命令决定了什么。例：<code class="language-plaintext highlighter-rouge">ApproveRefund</code> 判断通过、部分通过还是拒绝；这个判断本身必须留人复核。</li> <li> <strong>acceptance-property</strong> —— 验收性质：什么永远不能坏。例：已完成的结账不得留下非空购物车；同一订单不得重复扣款。</li> </ul> <p>我觉得这四类是整个项目里最有复用价值的一页，因为它回答了一个别人都在绕的问题：<strong>如果 AI 能写完所有代码，那“懂这个系统”还剩下什么？</strong></p> <p>它的答案不是“架构”“领域知识”这种大词，而是四个可以被写下来的、可以被检查的具体东西。</p> <p>但紧接着有两处诚实，必须一起读：</p> <ol> <li> <strong>facets 是可选项。</strong> 没有标注的节点是“未标注”，这在文档里被明确定义为合法状态，不是错误。<code class="language-plaintext highlighter-rouge">intent lint-layout</code> 只拒绝不认识的值。</li> <li> <strong>不许为了让检查变绿而补 facet 节点。</strong> 文档专门写了这条禁令。</li> </ol> <p>而且——<code class="language-plaintext highlighter-rouge">intent-cli</code> 自己这个域就是那个反例。它的词法 facet 检查在自家域上返回 <code class="language-plaintext highlighter-rouge">no_facet_data: true</code>，意思是<strong>检查没跑</strong>，不是“通过”。一个宣称“人必须懂这四件事”的项目，被当作测量样本的那个域里一个 facet 节点都没有，并且把这件事写进了文档。</p> <h2 id="八三种编排都要显式记录">八、三种编排，都要显式记录</h2> <p>到了“谁来跑”这一层，它给了三种形态，而且要求用 <code class="language-plaintext highlighter-rouge">team-mode set</code> 把选择写下来——<strong>模式是记录下来的，不是从现场推断的</strong>。</p> <p><img src="/assets/img/blog/intent-system/fig-05-three-seat-models.png" alt="solo-conductor、四线程、timer loop 三者的结构与代价"></p> <p><em>同一个 domain/repo 只能选一种，文档明令禁止混用。</em></p> <p><strong>solo-conductor（单席位，G833）</strong> 是给个人开发者的：一个席位同时当 architect、orchestrator 和 builder，按十个步骤跑完一个执行单元；每次审查现开一个独立的 reviewer 子 agent，判决按“独立子 agent 审查”记录。两个硬约束：并行度 1；<strong>没有隔离子 agent 的运行时不许用这个模式</strong>。</p> <p><strong>四线程</strong> 是当前维护的多席位形态：design 写意图和 packet，orchestrator 推流程和配速，implementation 写代码，review 做独立审查。稳态是消息驱动的——实现和审查的回执会唤醒 orchestrator，所以不需要高频轮询；design 侧挂一个 30 分钟级的看门狗兜底。传输层优先用 <code class="language-plaintext highlighter-rouge">herdr-only</code>（依赖更少），<code class="language-plaintext highlighter-rouge">agmsg</code> 这条路在 G829 下已弃用但还能用。</p> <p><strong>timer loop</strong> 是最简单的替代：实现和审查各跑各的定时循环，不需要 orchestrator。文档说它“完全支持”，代价是两者之间只剩时间先后。</p> <p>还有一个更细的分层值得记：<strong>跨运行时审查（G834）</strong>。团队可以声明“每个实现 PR 还要由另一个运行时的 reviewer 审一遍”，配置写在宿主的 <code class="language-plaintext highlighter-rouge">config.toml</code> 里，运行时可以是 codex、claude、cursor、copilot、opencode。它要求按 head SHA 绑定判决，同运行时和跨运行时各要一份，缺一份就 <code class="language-plaintext highlighter-rouge">cross-runtime-review-missing</code>。</p> <h2 id="九它自己承认的漏洞只读不是沙箱">九、它自己承认的漏洞：只读不是沙箱</h2> <p>上一节那个跨运行时审查，文档里附了一段 2026-09-14 的实测，我认为是全文最值得读的段落：</p> <ul> <li> <strong>codex</strong> 的 <code class="language-plaintext highlighter-rouge">exec -s read-only</code> 是沙箱强制的：reviewer 能读、能跑命令，但沙箱拒绝写文件。</li> <li> <strong>claude</strong> 的 <code class="language-plaintext highlighter-rouge">-p --permission-mode plan --disallowedTools Edit,Write,NotebookEdit</code> 只拿掉了文件写入工具。reviewer 仍然可以跑 build 和 test，而<strong>通过 shell 命令产生的写入不受沙箱约束</strong>。</li> <li> <strong>cursor</strong> 的 <code class="language-plaintext highlighter-rouge">-p --mode ask --sandbox enabled</code> 拒绝一切非只读工具，包括所有 shell 命令——所以 cursor reviewer 读得了文件，跑不了 git 和测试，连 head 都只能从 <code class="language-plaintext highlighter-rouge">.git/HEAD</code> 里读。而且 <code class="language-plaintext highlighter-rouge">--mode plan</code> 被明确弃用了，因为有一次实测中，<strong>plan 模式的 agent 自己切到了 agent 模式，并在工作区内、外都写了文件，而 <code class="language-plaintext highlighter-rouge">--sandbox enabled</code> 没拦住</strong>。</li> </ul> <p>一次实测里，被判为只读的那个 agent 自己切到了 agent 模式并写出了工作区，而“沙箱已启用”没拦住。这件事被写进了命令参考——这种记录方式比任何“安全可靠”的形容词都更有信息量。</p> <p>同一节还有一句边界声明，和开头那句呼应：</p> <blockquote> <p>gate 假设席位是诚实的，而且 GitHub label 无法与某个 SHA 原子地绑定。合并时请保留精确的 head 校验和 <code class="language-plaintext highlighter-rouge">gh pr merge --squash --match-head-commit</code>。</p> </blockquote> <p>所以它的安全模型是分层的，而且每一层的主张都很小：<code class="language-plaintext highlighter-rouge">intent-cli</code> 保证状态迁移是确定性的；跨运行时 gate 保证“有一个独立判决绑在这个 head 上”；至于那个判决是不是真的由一个干净的沙箱产出的，<strong>它不声称，也没法声称</strong>。</p> <h2 id="十局限">十、局限</h2> <p>按重要性排，全部来自仓库里写着的或能直接量出来的：</p> <ol> <li> <strong>采用量很小。</strong> 113 star、1 fork、6 个 open issue。一个 fork 意味着几乎没人真的改过它——这套设计目前只有一个团队在用。</li> <li> <strong>最后推送停在 2026-10-21。</strong> 也就是 0.32.1 发布当天，此后四周 GitHub 上没有新提交。对一个 0.32.1 里还列了 24 个产品单元的项目来说，这是个我解释不了的数据点。</li> <li> <strong>它还在 0.x。</strong> 有 1.0 兼容承诺文档，但大量表面标着 <code class="language-plaintext highlighter-rouge">preview-through-1.x</code>——意思是冻结期内可能变、可能撤。</li> <li> <strong>文档体量已经超过工具本身。</strong> 命令参考里用 G 编号组织规则（G461、G833、G845……），对第一次来的人几乎没有索引入口；最有价值的判断往往藏在某一节的第三段。</li> <li> <strong>它不是“装上就能跑”。</strong> 三个 checkout、一条消息通道、可能还要 <code class="language-plaintext highlighter-rouge">herdr</code> 和能开子 agent 的运行时。工具本身很轻，操作规程很重。</li> <li> <strong>本地验证只在 macOS arm64 上做过。</strong> 0.32.1 的发布说明写得很清楚：版本/帮助检查在 macOS arm64 上本地通过，Linux/Windows 的结果来自原生 CI 作业，不是本地执行。</li> <li> <strong>两个尺寸上限都是自己拍的。</strong> 65,536 和 58,000 都不是 GitHub 的边界，文档自己也这么说。</li> <li> <strong>它治的是流程，不是代码质量。</strong> 测试通过只是必要条件——文档原话是“必要但不充分”，批准还需要 packet 与意图的一致性证据。</li> </ol> <h2 id="十一我的判断">十一、我的判断</h2> <p>我认为 Intent-Driven Development 真正的价值，不在“把意图写成文档”，而在<strong>把 AI 的概率性判断替换成 CLI 的确定性判断</strong>。</p> <p>意图文件谁都能写；难的是当 agent 说“下一步应该做 X”时，有一个东西能回答“不，证据显示应该是 Y”，而且这个回答是可复现的。<code class="language-plaintext highlighter-rouge">intent-cli next</code> 就是这个东西的最小形态：它读意图、未决问题、packet backlog、open PR 和 CLI 健康度，<strong>只推荐八个动作中的一个</strong>，输出里带推荐理由、检查过的证据、可直接粘贴的 prompt 和安全边界，然后什么都不执行。</p> <p>所以这套系统里最该被抄走的三样东西，按可复用的程度排：</p> <ol> <li> <strong>label 是状态机，不是标签。</strong> 状态在 GitHub 上，不在任何人的上下文里。</li> <li> <strong>四类 facets 清单。</strong> 它给了“什么必须留给人”一个可操作的答案。</li> <li> <strong>承认边界的写法。</strong> “这个数字是我拍的”“这个 gate 只防诚实的席位”“这个检查没跑，不是通过”——这三句话比任何架构图都更能让人信任一份文档。</li> </ol> <p>不确定的地方也很清楚：<strong>这套纪律的成本是线性的，收益是不是线性的，取决于你的项目会不会长期跑下去。</strong> 一个两周的原型不需要三个 checkout 和一套 label 状态机；一个要跑两年的产品可能就需要。</p> <p>我会盯三个可验证的信号：</p> <ol> <li>出现第二个 fork，并且真的跑通了一条 packet → issue → PR → closeout 的完整链路。这能回答“这套纪律是否只对作者本人成立”。</li> <li>1.0 发布时，那些 <code class="language-plaintext highlighter-rouge">preview-through-1.x</code> 的表面留下了几个。留下的越多，说明这套设计被实战检验得越狠。</li> <li> <code class="language-plaintext highlighter-rouge">no_facet_data: true</code> 这个状态会不会在某个版本里变成错误。如果它变成错误，说明项目放弃了自己那条“不许为绿而补”的禁令。</li> </ol> <p>顺便说一句，这和我最近在看的干预接口是同一个问题：一个系统对外开的“动词”越多，能力越强，可治理的面也越大。NNsight 是在残差流上开 hook，intent-system 是在开发流程上开 hook——<strong>两者都发现同一件事：能干预不等于能预测干预的后果，所以必须把干预本身变成可记录、可回滚、可审计的事件。</strong></p> <h2 id="项目与资料">项目与资料</h2> <ul> <li>仓库：<a href="https://github.com/J-Tech-Japan/intent-system" rel="external nofollow noopener" target="_blank">J-Tech-Japan/intent-system</a>（Apache-2.0，2026-04-02 建库，最新稳定版 <code class="language-plaintext highlighter-rouge">0.32.1</code>）</li> <li>官网：<a href="https://www.intent-driven-development.com/" rel="external nofollow noopener" target="_blank">intent-driven-development.com</a>（由 J-Tech Japan 运营）</li> <li>关键文档：<a href="https://github.com/J-Tech-Japan/intent-system/blob/main/docs/en/08-command-reference.md" rel="external nofollow noopener" target="_blank">Command reference</a>（本文第五、八、九节的主要来源）· <a href="https://github.com/J-Tech-Japan/intent-system/blob/main/docs/en/03a-intent-tree-layout.md" rel="external nofollow noopener" target="_blank">Intent tree layout (tree-v1)</a>（facet 四类的定义在这里）· <a href="https://github.com/J-Tech-Japan/intent-system/blob/main/docs/en/04a-workflow-labels.md" rel="external nofollow noopener" target="_blank">Workflow labels</a> · <a href="https://github.com/J-Tech-Japan/intent-system/blob/main/docs/en/12-agent-message-orchestration.md" rel="external nofollow noopener" target="_blank">Agent-message orchestration</a>（solo-conductor 与跨运行时审查）</li> <li>发布记录：<a href="https://github.com/J-Tech-Japan/intent-system/releases/tag/v0.32.1" rel="external nofollow noopener" target="_blank">v0.32.1</a>（10,717 通过 / 0 失败 / 6 未执行，以及本文开头引用那两段声明）</li> </ul> <p><strong>数据说明：</strong> star / fork / issue / 建库时间 / 最后推送取自 GitHub API（2026-11-18）；版本、测试计数、安装命令、候选产物哈希声明取自 v0.32.1 发布记录；label 语义、65,536 与 58,000 两个自定上限、跨运行时只读实测、facets 四类定义与 <code class="language-plaintext highlighter-rouge">no_facet_data</code> 说明取自 <code class="language-plaintext highlighter-rouge">docs/en/</code> 对应页面。文中提到的 G 编号（G829、G833、G834、G845……）是该仓库自己的变更单元编号，不是我编的。五张示意图是按这些文档重画的，不是项目官方图表。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/vllm-kv-cache-ledger/">vLLM：每次重写，改的都是同一本显存账</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/diagram-design-agent-skill-lint/">Diagram Design：50 种图表是目录，能拒绝你的检查才是产品</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/gpu-unlock-geforce-tensor-half-rate/">gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/octop-single-process-agent-platform/">Octop：单进程是它的地基，也是它的天花板</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/voicestudio-local-voice-workstation/">VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/droiddeck-android-handheld-host/">DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/magpie-quota-cache-gateway/">magpie：它调度的不是模型，是会过期的额度</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/aerial-tv-launcher-foreground-takeover/">Aerial：换桌面不是画界面，是在别人的固件里抢前台</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/colibri-tiered-expert-placement/">colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/geo-generative-engine-optimization/">GEO：最有效的三种写法，官方提示词里都写着“可以编造”</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 18, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
+          },
+        },{id: "nav-提示词",
+          title: "提示词",
+          description: "经过整理、可以直接复用和继续修改的提示词。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/prompts/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-intent-system-它不信任-ai-所以把流程搬出-ai-的上下文",
+        
+          title: "Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文",
+        
+        description: "从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/intent-system-intent-driven-development/";
+          
+        },
+      },{id: "post-vllm-每次重写-改的都是同一本显存账",
+        
+          title: "vLLM：每次重写，改的都是同一本显存账",
+        
+        description: "从 60%–80% 的 KV Cache 浪费到不足 4%，从 V0 的两段式调度到 V1 的统一 token 预算、实测分配和抢占即重算，拆开 vLLM 这本显存账：谁记账、记什么，以及 2 + N 个进程这笔账。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/vllm-kv-cache-ledger/";
+          
+        },
+      },{id: "post-diagram-design-50-种图表是目录-能拒绝你的检查才是产品",
+        
+          title: "Diagram Design：50 种图表是目录，能拒绝你的检查才是产品",
+        
+        description: "67,720 星的 Agent Skill：50 份图表参考合计 481 KB，画一张流程图却只读 1,079 字节；拆解它把审美写成 4px 网格、9 个节点上限、六条连线规则和一组会失败的检查。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/diagram-design-agent-skill-lint/";
+          
+        },
+      },{id: "post-gpu-unlock-geforce-的半速矩阵算力-写死在八个-4-位字段里",
+        
+          title: "gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里",
+        
+        description: "NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpu-unlock-geforce-tensor-half-rate/";
+          
+        },
+      },{id: "post-octop-单进程是它的地基-也是它的天花板",
+        
+          title: "Octop：单进程是它的地基，也是它的天花板",
+        
+        description: "从 ADR 001 的单进程取舍、deepagents 底座、主持人派工的团队模型，到只取 atom 的记忆召回和 PII 脱敏的真实范围，拆开腾讯云开源的 Octop，看这条 pip install 撑起整个平台的路，在哪三处变成天花板。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/octop-single-process-agent-platform/";
+          
+        },
+      },{id: "post-voicestudio-把-elevenlabs-搬回本地之后-账单换成了许可证",
+        
+          title: "VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证",
+        
+        description: "11 万星的本地语音工作站：45 个 router、18 个引擎适配器、646 种语言背后只占 3.4% 的语料长尾，以及那份 73 条记录里 0 条标了可商用的模型许可证清单。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/voicestudio-local-voice-workstation/";
+          
+        },
+      },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-everything-project-50-个应用-0-个前端框架-它在重写-一个软件该有多大",
+        
+          title: "Everything Project：50 个应用、0 个前端框架，它在重写「一个软件该有多大」",
+        
+        description: "51 个目录、50 个应用、0 个 UI 框架、15 个 AGPL：拆开 HeyPuter 的 monorepo，看它怎么把 Excel、Photoshop、AutoCAD 各压成能单独 npm run dev 的目录，以及这份压缩的代价落在哪里。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/everything-monorepo-fifty-apps/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{id: "prompts-agent-任务契约",
+          title: 'Agent 任务契约',
+          description: "为编码或研究 Agent 明确目标、范围、约束、验证和完成条件。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/agent-task-contract/";
+            },},{id: "prompts-面向风险的代码审查",
+          title: '面向风险的代码审查',
+          description: "先找真实缺陷和回归风险，再讨论风格与可维护性。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/code-review/";
+            },},{id: "prompts-数据分析问题定义",
+          title: '数据分析问题定义',
+          description: "在计算指标之前明确口径、假设、异常值和可回答范围。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/data-analysis/";
+            },},{id: "prompts-图像生成艺术指导",
+          title: '图像生成艺术指导',
+          description: "用主体、构图、光线、材质和约束组织可迭代的图像提示词。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/image-direction/";
+            },},{id: "prompts-月夜泛舟",
+          title: '月夜泛舟',
+          description: "用极简构图、冷蓝月光和一盏暖灯，写出一幅静谧的东方夜湖行舟图。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/moonlit-lake-boat/";
+            },},{id: "prompts-开源项目深度研究",
+          title: '开源项目深度研究',
+          description: "从证据、架构、实现路径与限制出发分析一个开源项目。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/project-research/";
+            },},{id: "prompts-技术文章论点编辑",
+          title: '技术文章论点编辑',
+          description: "把资料整理成有中心论点的技术文章，而不是功能说明书。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/technical-writing/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
