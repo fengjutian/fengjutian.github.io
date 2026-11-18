@@ -193,7 +193,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/news/";
           },
-        },{id: "post-rust-anything-语言迁移不是翻译-是一场可以判负的比较",
+        },{id: "post-mnn-pocket-0-3b-不是把大模型缩小-是从两个预算反推形状",
+        
+          title: "MNN-Pocket-0.3B：不是把大模型缩小，是从两个预算反推形状",
+        
+        description: "从 300 MB 峰值内存与 200 tok/s 两条硬约束，到 151K 词表砍成 64K、4.1 万亿 token 分四段、QAT 自蒸馏对齐 BF16，拆开阿里 MNN 团队的 0.3B 端侧模型，以及 173 MB 之外那笔 448 MiB 的账。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-pocket-on-device-budget/";
+          
+        },
+      },{id: "post-rust-anything-语言迁移不是翻译-是一场可以判负的比较",
         
           title: "rust-anything：语言迁移不是翻译，是一场可以判负的比较",
         
@@ -202,6 +213,17 @@ ninja.data = [{
         handler: () => {
           
             window.location.href = "/blog/2026/rust-anything-behavioral-port/";
+          
+        },
+      },{id: "post-sft-与-rlhf-教接口-选口味-然后收窄",
+        
+          title: "SFT 与 RLHF：教接口，选口味，然后收窄",
+        
+        description: "从 SFT 的掩码交叉熵、奖励模型的 Bradley-Terry 排序、PPO 的 KL 约束到 DPO 的闭式解，拆开两个后训练阶段各自在改什么，以及为什么“选择”这个动作本身就会让不同模型的回答越来越像。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sft-rlhf-narrowing/";
           
         },
       },{id: "post-mainline-工程判断该住在-git-里-不该住在数据库里",
