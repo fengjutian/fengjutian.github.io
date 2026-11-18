@@ -1127,6 +1127,40 @@ def motif_funnel(d, box, accent, tag=None):
            fill=FAINT, anchor="lm")
 
 
+def motif_refs(d, box, accent, tag):
+    """Two histories in one repo: a commit spine, a ledger of intent events,
+    and the single note that crosses between them."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.06),
+                        outline=mix(BG_TOP, accent, 0.34), width=2)
+
+    sx = x + 58
+    top, bot = y + 40, y + h - 84
+    d.line((sx, top, sx, bot), fill=mix(DIM, accent, 0.28), width=4)
+    dots = [top + (bot - top) * i / 4 for i in range(5)]
+    for i, cy in enumerate(dots):
+        on = i == 2
+        d.ellipse((sx - 7, cy - 7, sx + 7, cy + 7),
+                  fill=mix(accent, WHITE, 0.55) if on else mix(accent, BG_TOP, 0.25))
+
+    cy = dots[2]
+    d.line((sx + 9, cy, sx + 74, cy), fill=accent, width=3)
+    d.rounded_rectangle((sx + 74, cy - 19, sx + 74 + 112, cy + 19), radius=9,
+                        fill=accent, outline=accent, width=2)
+    d.text((sx + 74 + 52, cy), "note", font=font(18, True), fill=(16, 20, 28), anchor="mm")
+
+    lx = x + w - 132
+    for i in range(9):
+        ry = y + 42 + i * 22
+        bw = 92 + (i * 37) % 30
+        d.rounded_rectangle((lx, ry, lx + bw, ry + 11), radius=5,
+                            fill=tint(accent, 0.72 if i % 3 == 1 else 0.4))
+    d.text((lx + 4, y + h - 74), "intent events", font=font(15),
+           fill=mix(DIM, accent, 0.45), anchor="lm")
+
+    d.text((x + 24, y + h - 34), tag, font=font(18), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1354,6 +1388,15 @@ def build(slug, out_dir):
         d.text((M, 478), "确定性 CLI + GitHub label 状态机 + 四类 facets", font=font(20),
                fill=mix(DIM, accent, 0.7))
 
+    elif slug == "mainline":
+        head(d, accent, "mainline-org / Go / 205 stars",
+             "Mainline", "代码记 what，它把 why 也塞进 Git",
+             (M, 152), 104, (M, 306), 476, thesis_size=28)
+        motif_refs(d, (630, 112, 500, 356), accent, "两条历史，一个交点")
+        d.text((M, 424), "v0.5.1 · Apache-2.0 / 商业分层", font=font(21), fill=DIM)
+        d.text((M, 462), "refs 存事件流 · notes 把意图钉在 commit 上", font=font(19),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1414,6 +1457,8 @@ CARDS = {
                  glow=(940, 240), glow_r=450, strength=0.30),
     "intent-system": dict(file="intent-system-intent-driven-development.jpg",
                           color=(108, 164, 132), glow=(880, 292), glow_r=470, strength=0.30),
+    "mainline": dict(file="mainline-git-native-intent-memory.jpg",
+                     color=(78, 116, 178), glow=(890, 286), glow_r=460, strength=0.30),
 }
 
 if __name__ == "__main__":
