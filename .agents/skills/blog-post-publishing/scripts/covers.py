@@ -1342,6 +1342,32 @@ def motif_quant_tiers(d, box, accent, tag):
     d.text((x + 30, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_lora(d, box, accent, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+
+    # frozen W
+    d.rounded_rectangle((x + 44, y + 40, x + 236, y + 250), radius=10,
+                        fill=tint(accent, 0.10), outline=mix(BG_TOP, accent, 0.45), width=2)
+    d.text((x + 140, y + 128), "W", font=font(40, True), fill=mix(DIM, WHITE, 0.35), anchor="mm")
+    d.text((x + 140, y + 178), "冻结", font=font(15), fill=mix(DIM, WHITE, 0.3), anchor="mm")
+
+    d.text((x + 256, y + 140), "+", font=font(30, True), fill=mix(DIM, WHITE, 0.4), anchor="mm")
+
+    # B slab
+    d.rounded_rectangle((x + 292, y + 40, x + 334, y + 250), radius=8,
+                        fill=tint(accent, 0.45), outline=accent, width=2)
+    d.text((x + 313, y + 262), "B", font=font(16, True), fill=mix(DIM, accent, 0.7), anchor="ma")
+    # A slab
+    d.rounded_rectangle((x + 348, y + 196, x + 500, y + 250), radius=8,
+                        fill=tint(accent, 0.45), outline=accent, width=2)
+    d.text((x + 424, y + 262), "A", font=font(16, True), fill=mix(DIM, accent, 0.7), anchor="ma")
+
+    d.text((x + 44, y + 282), "671 MB 只训练 A 与 B，W 不动", font=font(15), fill=mix(DIM, WHITE, 0.42))
+    d.text((x + 44, y + h - 34), tag, font=font(16), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1631,6 +1657,15 @@ def build(slug, out_dir):
         d.text((M, 462), "最小的那个，只在 Diffusers 那条路上成立", font=font(17),
                fill=mix(DIM, accent, 0.7))
 
+    elif slug == "omni-lora":
+        head(d, accent, "ChatR Labs / rank 128 / BF16",
+             "Omni\nLoRA", "一个 671 MB 的修正，要背两个任务",
+             (M, 132), 76, (M, 330), 500, thesis_size=26)
+        motif_lora(d, (640, 112, 500, 356), accent, "占底座 4.7% · 224 个模块 · 448 个张量")
+        d.text((M, 424), "32k 检查点：遵循 +2.3，通用 −4.0", font=font(19), fill=DIM)
+        d.text((M, 462), "容量是共享的，两个任务在同一个秩里抢位置", font=font(17),
+               fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1701,6 +1736,8 @@ CARDS = {
                        color=(22, 118, 108), glow=(880, 288), glow_r=470, strength=0.30),
     "video-shotcraft": dict(file="video-shotcraft-shot-names.jpg",
                             color=(198, 140, 56), glow=(884, 288), glow_r=470, strength=0.30),
+    "omni-lora": dict(file="omni-lora-shared-capacity.jpg",
+                        color=(18, 96, 120), glow=(884, 288), glow_r=470, strength=0.30),
     "omni-quantized": dict(file="omni-quantized-runtime-contracts.jpg",
                              color=(122, 62, 132), glow=(884, 288), glow_r=470, strength=0.30),
     "jina-ocr": dict(file="jina-ocr-output-length.jpg",
