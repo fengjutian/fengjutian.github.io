@@ -1226,6 +1226,32 @@ def motif_narrow(d, box, accent, tag):
     d.text((x + 24, y + h - 30), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_budget(d, box, accent, tag):
+    """Two hard constraints — a peak-memory ceiling and a decode floor —
+    meeting at the corner where the model size gets chosen."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+
+    cx, cy = x + w * 0.60, y + h - 104
+    d.rectangle((x + 24, y + 30, cx, cy), fill=mix(BG_TOP, accent, 0.22),
+                outline=mix(BG_TOP, accent, 0.45), width=2)
+
+    d.line((x + 24, cy, x + w - 30, cy), fill=mix(accent, WHITE, 0.35), width=3)
+    for gx in range(int(x + 24), int(x + w - 30), 14):
+        d.line((gx, cy, gx, cy + 8), fill=mix(accent, WHITE, 0.25), width=2)
+    d.line((cx, y + 30, cx, cy), fill=mix(accent, WHITE, 0.35), width=3)
+
+    d.ellipse((cx - 12, cy - 12, cx + 12, cy + 12), fill=accent)
+    d.text((cx + 22, cy - 30), "0.3B", font=font(24, True), fill=WHITE, anchor="lm")
+
+    d.text((x + 24, cy + 26), "参数量 →", font=font(16), fill=mix(DIM, WHITE, 0.35))
+    d.text((x + 40, y + 44), "可行区", font=font(17, True), fill=mix(WHITE, accent, 0.5))
+    d.text((cx + 16, y + 44), "Decode", font=font(16), fill=mix(DIM, WHITE, 0.35))
+    d.text((cx + 16, y + 68), "≥ 200 tok/s", font=font(16), fill=mix(DIM, WHITE, 0.35))
+    d.text((x + 24, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1479,6 +1505,15 @@ def build(slug, out_dir):
         d.text((M, 424), "SFT 学格式，RLHF 学偏好", font=font(21), fill=DIM)
         d.text((M, 462), "泛化变好，代价是多样性", font=font(19), fill=mix(DIM, accent, 0.65))
 
+    elif slug == "mnn-pocket":
+        head(d, accent, "MNN Team / Apache 2.0 / 300M",
+             "MNN-\nPocket", "先定 300 MB 和 200 tok/s，再挑模型",
+             (M, 126), 78, (M, 330), 512, thesis_size=26)
+        motif_budget(d, (640, 112, 500, 356), accent, "173 MB · 32K · 466 tok/s")
+        d.text((M, 424), "词表 151K → 64K，等于还回 77M 参数", font=font(21), fill=DIM)
+        d.text((M, 462), "INT4 掉了 0.41 分，KV cache 涨回 448 MiB", font=font(19),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1545,6 +1580,8 @@ CARDS = {
                       color=(152, 52, 74), glow=(880, 286), glow_r=470, strength=0.30),
     "rust-anything": dict(file="rust-anything-behavioral-port.jpg",
                           color=(198, 96, 38), glow=(880, 280), glow_r=470, strength=0.30),
+    "mnn-pocket": dict(file="mnn-pocket-on-device-budget.jpg",
+                       color=(22, 118, 108), glow=(880, 288), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":

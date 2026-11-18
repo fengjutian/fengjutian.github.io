@@ -1,7 +1,7 @@
 ---
 layout: post
 title: SFT 与 RLHF：教接口，选口味，然后收窄
-date: 2026-11-18 09:30:00 +0800
+date: 2026-11-18 08:55:00 +0800
 thumbnail: assets/img/blog/sft-rlhf-narrowing.jpg
 description: 从 SFT 的掩码交叉熵、奖励模型的 Bradley-Terry 排序、PPO 的 KL 约束到 DPO 的闭式解，拆开两个后训练阶段各自在改什么，以及为什么“选择”这个动作本身就会让不同模型的回答越来越像。
 tags: [AI, 机器学习]
