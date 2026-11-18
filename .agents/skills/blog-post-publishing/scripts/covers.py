@@ -1288,6 +1288,39 @@ def motif_compress(d, box, accent, tag):
 
     d.text((x + 34, y + h - 30), tag, font=font(17), fill=mix(DIM, accent, 0.6), anchor="lm")
 
+
+def motif_cards(d, box, accent, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+
+    d.text((x + 26, y + 24), "124 张卡 · 150 个镜头", font=font(17), fill=mix(DIM, accent, 0.5))
+
+    cw, gap = 96, 18
+    total = 4 * cw + 3 * gap
+    x0 = x + (w - total) / 2
+    cy = y + 74
+    for i in range(4):
+        cx = x0 + i * (cw + gap)
+        hot = i == 1
+        d.rounded_rectangle((cx, cy, cx + cw, cy + 150), radius=10,
+                            fill=tint(accent, 0.55) if hot else tint(accent, 0.12),
+                            outline=mix(BG_TOP, accent, 0.55), width=2)
+        d.line((cx + 14, cy + 26, cx + cw - 14, cy + 26), fill=mix(DIM, WHITE, 0.35), width=3)
+        d.line((cx + 14, cy + 46, cx + cw - 34, cy + 46), fill=mix(DIM, WHITE, 0.35), width=3)
+        d.line((cx + 14, cy + 66, cx + cw - 24, cy + 66), fill=mix(DIM, WHITE, 0.25), width=3)
+        if hot:
+            d.rounded_rectangle((cx + 14, cy + 100, cx + cw - 14, cy + 128), radius=6,
+                                fill=accent)
+            d.text((cx + cw / 2, cy + 114), "shot", font=font(14, True), fill=(26, 20, 12),
+                   anchor="mm")
+        else:
+            d.line((cx + 14, cy + 108, cx + cw - 40, cy + 108), fill=mix(DIM, WHITE, 0.22), width=3)
+
+    d.text((x + 26, y + h - 62), "点名字就够：deck-deal-flyin", font=font(16), fill=mix(DIM, accent, 0.6))
+    d.text((x + 26, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1559,6 +1592,15 @@ def build(slug, out_dir):
         d.text((M, 462), "3,568 tok/page 的方案，吞吐只有 1.05 页/秒", font=font(17),
                fill=mix(DIM, accent, 0.7))
 
+    elif slug == "video-shotcraft":
+        head(d, accent, "Vincentwei1021 / Apache-2.0 / 21k stars",
+             "video-\nshotcraft", "视频不是生成的，是点名字点出来的",
+             (M, 118), 70, (M, 330), 496, thesis_size=25)
+        motif_cards(d, (640, 112, 500, 356), accent, "逐帧渲染 · 帧级可编辑")
+        d.text((M, 424), "124 张配方卡，150 个镜头，0 个生成模型", font=font(19), fill=DIM)
+        d.text((M, 462), "预设与预览帧级一致，改一个镜头不用重做整片", font=font(17),
+               fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1627,6 +1669,8 @@ CARDS = {
                           color=(198, 96, 38), glow=(880, 280), glow_r=470, strength=0.30),
     "mnn-pocket": dict(file="mnn-pocket-on-device-budget.jpg",
                        color=(22, 118, 108), glow=(880, 288), glow_r=470, strength=0.30),
+    "video-shotcraft": dict(file="video-shotcraft-shot-names.jpg",
+                            color=(198, 140, 56), glow=(884, 288), glow_r=470, strength=0.30),
     "jina-ocr": dict(file="jina-ocr-output-length.jpg",
                      color=(72, 88, 160), glow=(886, 290), glow_r=470, strength=0.30),
 }

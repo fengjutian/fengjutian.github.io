@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Jina-OCR-v1：赢在少写，不在写快
-date: 2026-11-18 09:35:00 +0800
+date: 2026-11-18 09:20:00 +0800
 thumbnail: assets/img/blog/jina-ocr-output-length.jpg
 description: 从 4,096 个 patch 压成 256 个视觉 token、3B MoE 只激活 570M、一个 draft block 递归猜三步，到 1,085 token/页带来的 2.57 页/秒，拆开 Jina-OCR-v1 的三层成本账，以及它藏在模型卡里的三个部署坑。
 tags: [AI, 机器学习]
