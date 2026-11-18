@@ -1,5 +1,6 @@
 # source / target use the form "topic:<id>", "post:<slug>", or "project:<slug>".
 # Keep relations intentional: an edge should explain why two pieces of content belong together.
+
 - source: topic:model-internals
   target: post:wsr-weight-space-reading
   type: explains
@@ -18,6 +19,9 @@
 - source: topic:model-internals
   target: post:train-llm-from-scratch
   type: grounds
+- source: post:transformerlens-mech-interp
+  target: post:saelens-sparse-autoencoder-instrument
+  type: extends
 
 - source: topic:model-intervention
   target: post:pyvene-intervention-framework
@@ -34,8 +38,24 @@
 - source: post:pyvene-intervention-framework
   target: post:nnsight-deferred-intervention
   type: compares_with
-- source: post:transformerlens-mech-interp
-  target: post:saelens-sparse-autoencoder-instrument
+
+- source: topic:training-compression
+  target: post:sft-rlhf-narrowing
+  type: explains
+- source: topic:training-compression
+  target: post:omni-lora-shared-capacity
+  type: explains
+- source: topic:training-compression
+  target: post:omni-quantized-runtime-contracts
+  type: explains
+- source: topic:training-compression
+  target: post:hy-mt2-family-centric-post-training
+  type: applies
+- source: post:omni-lora-shared-capacity
+  target: post:omni-quantized-runtime-contracts
+  type: related_to
+- source: post:hy-mt2-family-centric-post-training
+  target: post:sft-rlhf-narrowing
   type: extends
 
 - source: topic:inference-serving
@@ -51,19 +71,34 @@
   target: post:tokeneconomizer-experience-driven-cost-control
   type: explains
 - source: topic:inference-serving
+  target: post:vllm-kv-cache-ledger
+  type: explains
+- source: topic:inference-serving
+  target: post:mnn-backend-precision-matrix
+  type: explains
+- source: topic:inference-serving
+  target: post:mnn-pocket-on-device-budget
+  type: applies
+- source: topic:inference-serving
+  target: post:jina-ocr-output-length
+  type: applies
+- source: topic:inference-serving
+  target: post:gpu-unlock-geforce-tensor-half-rate
+  type: applies
+- source: topic:inference-serving
   target: post:sub2api-ai-api-gateway
   type: applies
 - source: topic:inference-serving
   target: post:magpie-quota-cache-gateway
   type: applies
-- source: topic:inference-serving
-  target: post:mnn-backend-precision-matrix
-  type: explains
 - source: post:arc-adaptive-routing-controller
   target: post:freetoken-edge-moe-serving
   type: related_to
 - source: post:freetoken-edge-moe-serving
   target: post:colibri-tiered-expert-placement
+  type: extends
+- source: post:mnn-pocket-on-device-budget
+  target: post:mnn-backend-precision-matrix
   type: extends
 
 - source: topic:agent-systems
@@ -76,11 +111,23 @@
   target: post:ohmygame-agent-game-studio
   type: applies
 - source: topic:agent-systems
+  target: post:octop-single-process-agent-platform
+  type: applies
+- source: topic:agent-systems
+  target: post:hello-world
+  type: related_to
+- source: topic:agent-systems
   target: project:mix-knowledg
   type: implemented_by
 - source: topic:agent-systems
   target: project:planloop
   type: implemented_by
+- source: topic:agent-systems
+  target: project:weber-code-agent
+  type: implemented_by
+- source: post:octop-single-process-agent-platform
+  target: post:helixharness-harness-contracts
+  type: related_to
 
 - source: topic:developer-tools
   target: post:thin-starter-architecture
@@ -95,6 +142,12 @@
   target: post:transformer-explainer
   type: applies
 - source: topic:developer-tools
+  target: post:diagram-design-agent-skill-lint
+  type: applies
+- source: topic:developer-tools
+  target: post:everything-monorepo-fifty-apps
+  type: applies
+- source: topic:developer-tools
   target: project:blade-ai-editor
   type: implemented_by
 - source: topic:developer-tools
@@ -103,6 +156,21 @@
 - source: topic:developer-tools
   target: project:superdba
   type: implemented_by
+- source: topic:developer-tools
+  target: project:docuflow-ai
+  type: implemented_by
+- source: topic:developer-tools
+  target: project:folixa
+  type: implemented_by
+- source: topic:developer-tools
+  target: project:strata
+  type: implemented_by
+- source: post:everything-monorepo-fifty-apps
+  target: post:thin-starter-architecture
+  type: related_to
+- source: project:docuflow-ai
+  target: project:weber-code-agent
+  type: related_to
 
 - source: topic:knowledge-systems
   target: post:yogurt-local-meeting-notes
@@ -111,11 +179,20 @@
   target: post:lapian-notes-film-breakdown
   type: applies
 - source: topic:knowledge-systems
+  target: post:mainline-git-native-intent-memory
+  type: applies
+- source: topic:knowledge-systems
+  target: post:hello-world
+  type: related_to
+- source: topic:knowledge-systems
   target: project:neuralnotes
   type: implemented_by
 - source: topic:knowledge-systems
   target: project:mix-knowledg
   type: implemented_by
+- source: topic:knowledge-systems
+  target: project:jiufenglanting-business
+  type: related_to
 - source: project:neuralnotes
   target: project:mix-knowledg
   type: related_to
@@ -123,6 +200,15 @@
 - source: topic:multimodal-creation
   target: post:idol-image-to-3d-gaussian
   type: explains
+- source: topic:multimodal-creation
+  target: post:haru-4b-full-duplex-separated-data
+  type: explains
+- source: topic:multimodal-creation
+  target: post:hypit-video-compiler-timeline
+  type: applies
+- source: topic:multimodal-creation
+  target: post:video-shotcraft-shot-names
+  type: applies
 - source: topic:multimodal-creation
   target: post:blender-kiln-3d-asset-pipeline
   type: applies
@@ -133,11 +219,17 @@
   target: post:cinecode-film-as-pure-function
   type: applies
 - source: topic:multimodal-creation
-  target: post:haru-4b-full-duplex-separated-data
-  type: explains
+  target: post:voicestudio-local-voice-workstation
+  type: applies
 - source: topic:multimodal-creation
   target: project:veyra-studio
   type: implemented_by
+- source: post:hypit-video-compiler-timeline
+  target: post:video-shotcraft-shot-names
+  type: related_to
+- source: post:voicestudio-local-voice-workstation
+  target: post:boubou-local-voice-runtime
+  type: related_to
 
 - source: topic:software-architecture
   target: post:airgorah-privilege-boundary
@@ -149,8 +241,42 @@
   target: post:thin-starter-architecture
   type: explains
 - source: topic:software-architecture
+  target: post:droiddeck-android-handheld-host
+  type: applies
+- source: topic:software-architecture
+  target: post:aerial-tv-launcher-foreground-takeover
+  type: applies
+- source: topic:software-architecture
+  target: post:everything-monorepo-fifty-apps
+  type: applies
+- source: topic:software-architecture
   target: post:windows-atomic-write
   type: applies
 - source: topic:software-architecture
   target: post:geo-generative-engine-optimization
   type: applies
+- source: post:droiddeck-android-handheld-host
+  target: post:aerial-tv-launcher-foreground-takeover
+  type: related_to
+
+- source: topic:engineering-judgment
+  target: post:software-engineering-handbook-judgment
+  type: explains
+- source: topic:engineering-judgment
+  target: post:intent-system-intent-driven-development
+  type: applies
+- source: topic:engineering-judgment
+  target: post:mainline-git-native-intent-memory
+  type: applies
+- source: topic:engineering-judgment
+  target: post:rust-anything-behavioral-port
+  type: applies
+- source: topic:engineering-judgment
+  target: post:diagram-design-agent-skill-lint
+  type: applies
+- source: post:mainline-git-native-intent-memory
+  target: post:intent-system-intent-driven-development
+  type: related_to
+- source: post:rust-anything-behavioral-port
+  target: post:software-engineering-handbook-judgment
+  type: related_to

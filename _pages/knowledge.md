@@ -347,6 +347,38 @@ nav_order: 3
     border-top-width: 3px;
   }
 
+  .knowledge-missing {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+    align-items: baseline;
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px dashed var(--global-divider-color);
+    border-radius: 0.65rem;
+    color: var(--global-text-color-light);
+    font-size: 0.82rem;
+  }
+
+  .knowledge-missing[hidden] {
+    display: none;
+  }
+
+  .knowledge-missing a {
+    color: var(--global-theme-color);
+  }
+
+  .knowledge-topic-size {
+    margin-left: 0.45rem;
+    padding: 0 0.42rem;
+    border-radius: 999px;
+    color: var(--topic-color);
+    background: color-mix(in srgb, var(--topic-color) 14%, transparent);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    vertical-align: 0.1em;
+  }
+
   .knowledge-directory {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -418,14 +450,14 @@ nav_order: 3
 </style>
 
 <p class="knowledge-intro">
-  这里不是标签云，而是一张内容关系图。选择一个主题，或点击任意节点，沿着概念、文章和项目之间的显式关系继续探索。
+  这里不是标签云，而是一张手工维护的内容关系图。每条边都说明两端为什么相关：主题可以解释一篇文章，文章可以延伸或对比另一篇，项目可以是一个主题的实现。选择一个主题、点击任意节点，或者直接搜索标题。
 </p>
 
 <div class="knowledge-meta" aria-label="知识地图统计">
   <span><strong id="knowledge-topic-count">0</strong> 个主题</span>
-  <span><strong id="knowledge-content-count">0</strong> 篇文章与项目</span>
+  <span><strong id="knowledge-content-count">0</strong>/<strong id="knowledge-content-total">0</strong> 篇文章与项目</span>
   <span><strong id="knowledge-relation-count">0</strong> 条关系</span>
-  <span id="knowledge-status" class="knowledge-status" role="status">显示全部内容</span>
+  <span id="knowledge-status" class="knowledge-status" role="status">选择一个主题展开内容</span>
 </div>
 
 <div class="knowledge-toolbar">
@@ -457,12 +489,19 @@ nav_order: 3
   <span class="is-dashed" style="--relation-color: #d18a36">项目实现</span>
 </div>
 
+<div id="knowledge-missing" class="knowledge-missing" hidden></div>
+
 <section aria-labelledby="knowledge-directory-title">
   <h2 id="knowledge-directory-title" style="margin-top: 2.2rem">主题目录</h2>
   <div class="knowledge-directory">
     {% for topic in site.data.knowledge_topics %}
+      {% assign topic_key = topic.id | prepend: "topic:" %}
+      {% assign topic_size = 0 %}
+      {% for relation in site.data.knowledge_relations %}
+        {% if relation.source == topic_key or relation.target == topic_key %} {% assign topic_size = topic_size | plus: 1 %} {% endif %}
+      {% endfor %}
       <article style="--topic-color: {{ topic.color }}" data-topic-id="topic:{{ topic.id }}" tabindex="0" role="button" aria-label="在图中查看{{ topic.name }}">
-        <h3>{{ topic.name }}</h3>
+        <h3>{{ topic.name }}<span class="knowledge-topic-size" title="指向该主题的关系数">{{ topic_size }}</span></h3>
         <p>{{ topic.description }}</p>
       </article>
     {% endfor %}
@@ -516,6 +555,13 @@ nav_order: 3
     links.forEach((link) => {
       neighbors.get(link.source).add(link.target);
       neighbors.get(link.target).add(link.source);
+    });
+    // Topics never link to each other, so the overview carries their weight in
+    // the circle instead: a bigger dot means more content hangs off it.
+    nodes.forEach((node) => {
+      if (node.kind === "topic") {
+        node.radius = 9 + Math.min(11, neighbors.get(node.id).size);
+      }
     });
 
     const canvas = document.getElementById("knowledge-canvas");
@@ -993,7 +1039,23 @@ nav_order: 3
     resizeObserver.observe(canvas);
     document.getElementById("knowledge-topic-count").textContent = topicNodes.length;
     document.getElementById("knowledge-content-count").textContent = nodes.filter((node) => node.kind !== "topic").length;
+    document.getElementById("knowledge-content-total").textContent = content.length;
     document.getElementById("knowledge-relation-count").textContent = links.length;
+
+    // A post with no relation never reaches the graph, so surface it instead of
+    // letting it disappear: a new post is visible here until it is mapped.
+    const missing = content.filter((item) => !usedIds.has(item.id));
+    const missingBox = document.getElementById("knowledge-missing");
+    if (missing.length) {
+      missingBox.hidden = false;
+      missingBox.append(document.createTextNode(`尚未纳入关系图（${missing.length}）：`));
+      missing.forEach((item) => {
+        const link = document.createElement("a");
+        link.href = item.url;
+        link.textContent = item.name;
+        missingBox.append(link);
+      });
+    }
     document.querySelectorAll("[data-topic-id]").forEach((card) => {
       const activate = () => {
         const button = filters.querySelector(`[data-id="${card.dataset.topicId}"]`);

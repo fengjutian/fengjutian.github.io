@@ -8,6 +8,11 @@
   description: 定位、修改和验证模型行为的工具与方法。
   color: "#e65f8e"
 
+- id: training-compression
+  name: 训练与压缩
+  description: 后训练、蒸馏、LoRA 与量化到底改了什么，又在哪里互相挤占。
+  color: "#a855a8"
+
 - id: inference-serving
   name: 推理与服务
   description: 模型路由、部署、缓存、量化与系统效率。
@@ -37,3 +42,8 @@
   name: 软件架构
   description: 边界、契约、可靠性与可演进系统设计。
   color: "#657786"
+
+- id: engineering-judgment
+  name: 工程判断
+  description: 决策、规格与证据：把判断写成可检查的约束。
+  color: "#7d8f42"
