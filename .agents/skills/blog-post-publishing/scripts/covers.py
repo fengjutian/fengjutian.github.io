@@ -757,6 +757,40 @@ def motif_words(d, box, accent, tag):
     d.text((x, y + h + 14), tag, font=font(16), fill=FAINT)
 
 
+def motif_nested(d, box, accent, tag):
+    """A realization space narrowing: four nested frames, three acceptable
+    points kept, one excluded, and the freedom each constraint spends."""
+    x, y, w, h = box
+
+    frames = [(0.0, 0.0, 1.0, 1.0, 0.48), (0.10, 0.09, 0.80, 0.74, 0.68),
+              (0.20, 0.18, 0.60, 0.48, 0.86), (0.30, 0.27, 0.40, 0.22, 1.0)]
+    for i, (fx, fy, fw, fh, k) in enumerate(frames):
+        x0, y0 = x + w * fx, y + h * fy
+        x1, y1 = x0 + w * fw, y0 + h * fh
+        d.rounded_rectangle((x0, y0, x1, y1), radius=14 - i * 2,
+                            fill=None if i < 4 else tint(accent, 0.30),
+                            outline=mix(BG_TOP, accent, k), width=3 if i == 0 else 4)
+
+    # three realizations inside the acceptable region, one outside it
+    a0x, a0y = x + w * 0.30, y + h * 0.27
+    for (px, py) in ((0.40, 0.40), (0.50, 0.44), (0.44, 0.46)):
+        cx, cy = x + w * px, y + h * py
+        d.ellipse((cx - 8, cy - 8, cx + 8, cy + 8), fill=mix(accent, WHITE, 0.25))
+    dx, dy = x + w * 0.86, y + h * 0.16
+    d.ellipse((dx - 8, dy - 8, dx + 8, dy + 8), fill=(198, 84, 84))
+
+    # the spent-freedom bar: one notch per constraint
+    by = y + h - 34
+    d.line((x + 8, by, x + w - 8, by), fill=mix(BG_TOP, accent, 0.35), width=2)
+    for i in range(9):
+        bx = x + 8 + (w - 16) * i / 8
+        d.line((bx, by - 5, bx, by + 5), fill=mix(BG_TOP, accent, 0.45), width=2)
+    d.text((x + 8, by - 24), "one constraint = one degree of freedom spent",
+           font=font(15), fill=mix(DIM, accent, 0.45))
+
+    d.text((x, y + h + 16), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -1736,6 +1770,16 @@ def build(slug, out_dir):
         d.text((M, 424), "SVML → Compiler → Plan → Build → Result", font=font(20), fill=DIM)
         d.text((M, 462), "20 秒片子 $1.15 · 64 个 Chromium 并发渲染", font=font(20),
                fill=mix(DIM, accent, 0.65))
+    elif slug == "se-handbook":
+        head(d, accent, "James C. Davis / Purdue / 11 chapters",
+             "SE\nHandbook", "钉死了哪些自由，凭什么证据敢交付",
+             (M, 146), 84, (M, 372), 470, thesis_size=25)
+        motif_nested(d, (648, 112, 496, 372), accent, "需求 → 规格 → 架构 → 设计：每步再收窄一次")
+        d.text((M, 470), "Model → Property → Observation → Evidence → Judgment",
+               font=font(18), fill=DIM)
+        d.text((M, 504), "受控变化：可改 · 可复制 · 可迁移 · 可更新", font=font(19),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1814,6 +1858,8 @@ CARDS = {
                      color=(72, 88, 160), glow=(886, 290), glow_r=470, strength=0.30),
     "hypit": dict(file="hypit-video-compiler-timeline.jpg",
                   color=(206, 70, 120), glow=(884, 288), glow_r=470, strength=0.30),
+    "se-handbook": dict(file="software-engineering-handbook-judgment.jpg",
+                        color=(128, 142, 60), glow=(890, 292), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
