@@ -1161,6 +1161,40 @@ def motif_refs(d, box, accent, tag):
     d.text((x + 24, y + h - 34), tag, font=font(18), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_verdict(d, box, accent, tag):
+    """Source languages on the left, a bridge in the middle, Rust on the right
+    with a tick — and a verdict chip that can still say no."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.06),
+                        outline=mix(BG_TOP, accent, 0.34), width=2)
+
+    for i, name in enumerate(["TS", "Py", "Go"]):
+        cy = y + 66 + i * 62
+        d.rounded_rectangle((x + 34, cy - 19, x + 34 + 58, cy + 19), radius=8,
+                            fill=tint(accent, 0.30), outline=mix(BG_TOP, accent, 0.5), width=2)
+        d.text((x + 34 + 29, cy), name, font=font(17, True), fill=BODY, anchor="mm")
+        d.line((x + 96, cy, x + 168, cy), fill=mix(BG_TOP, accent, 0.55), width=2)
+
+    bx = x + 176
+    d.line((bx, y + 52, bx, y + 242), fill=accent, width=3)
+    d.rounded_rectangle((bx - 6, y + 116, bx + 62, y + 178), radius=8,
+                        fill=tint(accent, 0.45), outline=accent, width=2)
+    d.text((bx + 28, y + 147), "桥", font=font(20, True), fill=WHITE, anchor="mm")
+
+    rx = x + 262
+    d.rounded_rectangle((rx, y + 58, x + w - 34, y + 236), radius=12,
+                        fill=tint(accent, 0.16), outline=accent, width=2)
+    d.text((rx + 24, y + 88), "Rust", font=font(26, True), fill=WHITE)
+    cx, cy = rx + 34, y + 158
+    d.line((cx - 10, cy, cx - 2, cy + 10), fill=WHITE, width=5)
+    d.line((cx - 2, cy + 10, cx + 14, cy - 12), fill=WHITE, width=5)
+    d.text((rx + 24, y + 200), "0 不一致", font=font(17), fill=BODY)
+
+    d.rounded_rectangle((x + 34, y + h - 84, x + w - 34, y + h - 34), radius=10,
+                        fill=(26, 18, 14), outline=(206, 108, 84), width=2)
+    d.text((x + 54, y + h - 59), tag, font=font(17, True), fill=(226, 128, 104), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1397,6 +1431,15 @@ def build(slug, out_dir):
         d.text((M, 462), "refs 存事件流 · notes 把意图钉在 commit 上", font=font(19),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "rust-anything":
+        head(d, accent, "erkamyaman / MIT / 1.3k stars",
+             "rust-\nanything", "换语言不是翻译，是一场可以判负的比较",
+             (M, 122), 78, (M, 350), 512, thesis_size=26)
+        motif_verdict(d, (640, 112, 500, 356), accent, "0.23x · 建议不要发")
+        d.text((M, 428), "29 个函数 · 7,925 个案例 · 0 不一致", font=font(21), fill=DIM)
+        d.text((M, 466), "…然后把它们全部判成「更慢」", font=font(19),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1459,6 +1502,8 @@ CARDS = {
                           color=(108, 164, 132), glow=(880, 292), glow_r=470, strength=0.30),
     "mainline": dict(file="mainline-git-native-intent-memory.jpg",
                      color=(78, 116, 178), glow=(890, 286), glow_r=460, strength=0.30),
+    "rust-anything": dict(file="rust-anything-behavioral-port.jpg",
+                          color=(198, 96, 38), glow=(880, 280), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
