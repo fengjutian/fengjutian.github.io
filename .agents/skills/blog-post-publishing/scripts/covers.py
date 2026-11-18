@@ -1252,6 +1252,42 @@ def motif_budget(d, box, accent, tag):
     d.text((x + 24, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_compress(d, box, accent, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+
+    px, py, pw, ph = x + 34, y + 42, 118, 132
+    d.rounded_rectangle((px, py, px + pw, py + ph), radius=8, fill=(206, 214, 232),
+                        outline=mix(BG_TOP, accent, 0.5), width=2)
+    for i in range(5):
+        ly = py + 20 + i * 22
+        d.rounded_rectangle((px + 14, ly, px + 14 + (70 if i % 2 else 90), ly + 6), radius=3,
+                            fill=(150, 162, 190))
+
+    cx0, cx1 = px + pw + 24, px + pw + 84
+    d.polygon([(cx0, py + 24), (cx0, py + ph - 24), (cx1, py + ph / 2 + 26), (cx1, py + ph / 2 - 26)],
+              fill=tint(accent, 0.30), outline=accent)
+
+    tx = cx1 + 28
+    for i in range(4):
+        for j in range(4):
+            d.rounded_rectangle((tx + i * 24, py + 24 + j * 24, tx + i * 24 + 16, py + 24 + j * 24 + 16),
+                                radius=4, fill=accent)
+
+    ly = py + ph + 14
+    d.text((px, ly), "1,024²", font=font(15), fill=mix(DIM, WHITE, 0.4))
+    d.text((cx0 + 6, ly), "16x", font=font(15, True), fill=mix(DIM, accent, 0.7))
+    d.text((tx, ly), "256", font=font(15, True), fill=mix(DIM, accent, 0.7))
+
+    oy = ly + 48
+    d.text((x + 34, oy - 24), "输出：一页 1,085 token", font=font(15), fill=mix(DIM, WHITE, 0.45))
+    for i in range(3):
+        d.rounded_rectangle((x + 34, oy + i * 24, x + w - 34, oy + i * 24 + 14), radius=4,
+                            fill=tint(accent, 0.45 if i == 0 else 0.25))
+
+    d.text((x + 34, y + h - 30), tag, font=font(17), fill=mix(DIM, accent, 0.6), anchor="lm")
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1514,6 +1550,15 @@ def build(slug, out_dir):
         d.text((M, 462), "INT4 掉了 0.41 分，KV cache 涨回 448 MiB", font=font(19),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "jina-ocr":
+        head(d, accent, "Jina AI / CC BY-NC 4.0 / 570M active",
+             "Jina-\nOCR", "赢在少写，不在写快",
+             (M, 126), 84, (M, 352), 486, thesis_size=26)
+        motif_compress(d, (630, 112, 500, 356), accent, "2.57 页/秒 · 一页 1,085 token")
+        d.text((M, 424), "4,096 像素压成 1 个视觉 token", font=font(20), fill=DIM)
+        d.text((M, 462), "3,568 tok/page 的方案，吞吐只有 1.05 页/秒", font=font(17),
+               fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1582,6 +1627,8 @@ CARDS = {
                           color=(198, 96, 38), glow=(880, 280), glow_r=470, strength=0.30),
     "mnn-pocket": dict(file="mnn-pocket-on-device-budget.jpg",
                        color=(22, 118, 108), glow=(880, 288), glow_r=470, strength=0.30),
+    "jina-ocr": dict(file="jina-ocr-output-length.jpg",
+                     color=(72, 88, 160), glow=(886, 290), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
