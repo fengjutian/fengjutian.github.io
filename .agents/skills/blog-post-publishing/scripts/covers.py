@@ -696,6 +696,37 @@ def motif_nibbles(d, box, accent, tag):
 
 
 # ------------------------------------------------------------------ cards
+
+def motif_slot(d, box, accent, tag):
+    """A wall with exactly one gap: everything the child agent cannot see stops
+    at the wall, and a single contract passes through it."""
+    x, y, w, h = box
+    wall_x = x + 250
+    gap_h = 88
+    cy = y + h * 0.44
+
+    d.rounded_rectangle((wall_x - 6, y, wall_x + 6, cy - gap_h / 2), radius=5, fill=accent)
+    d.rounded_rectangle((wall_x - 6, cy + gap_h / 2, wall_x + 6, y + h), radius=5, fill=accent)
+
+    blocked = ["intents/**", "packet.yaml", "queue-state", "runs.jsonl"]
+    by = y + 18
+    for name in blocked:
+        d.rounded_rectangle((x, by, x + 190, by + 52), radius=9,
+                            fill=tint(accent, 0.10), outline=mix(BG_TOP, accent, 0.30), width=2)
+        d.text((x + 16, by + 26), name, font=font(17), fill=(150, 162, 180), anchor="lm")
+        d.line((x + 198, by + 26, wall_x - 32, by + 26), fill=mix(BG_TOP, accent, 0.42), width=3)
+        d.line((wall_x - 26, by + 17, wall_x - 12, by + 35), fill=(190, 84, 74), width=4)
+        d.line((wall_x - 26, by + 35, wall_x - 12, by + 17), fill=(190, 84, 74), width=4)
+        by += 74
+
+    d.rounded_rectangle((wall_x + 24, cy - 34, wall_x + 24 + 200, cy + 34), radius=12,
+                        fill=tint(accent, 0.32), outline=accent, width=3)
+    d.text((wall_x + 124, cy), "issue body", font=font(20, True), fill=WHITE, anchor="mm")
+    arrow(d, (wall_x + 8, cy), (wall_x + 22, cy), accent, 4, 12)
+    d.text((wall_x + 24, cy + 56), "唯一通道", font=font(16), fill=mix(DIM, accent, 0.65))
+    d.text((x, y + h + 12), tag, font=font(16), fill=FAINT)
+
+
 def motif_grades(d, box, accent, tag):
     """A support matrix where a third of the cells are holes, not fills."""
     x, y, w, h = box
@@ -1314,6 +1345,15 @@ def build(slug, out_dir):
                fill=mix(DIM, accent, 0.85), anchor="ra")
         d.text((W - M, 508), "1 + 1 + 4 = 6 个进程", font=font(20), fill=DIM, anchor="ra")
 
+    elif slug == "intent-system":
+        motif_slot(d, (640, 118, 500, 350), accent, "两侧之间只有一道缝")
+        head(d, accent, "J-Tech Japan / Apache-2.0 / C# / 0.32.1",
+             "Intent\nSystem", "它不信任 AI，所以把流程搬出 AI 的上下文",
+             (M, 138), 88, (M, 366), 566, thesis_size=26)
+        d.text((M, 440), "113 star · 1 fork · 6 open issue", font=font(21), fill=DIM)
+        d.text((M, 478), "确定性 CLI + GitHub label 状态机 + 四类 facets", font=font(20),
+               fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1372,6 +1412,8 @@ CARDS = {
                   glow=(880, 260), glow_r=460, strength=0.28),
     "vllm": dict(file="vllm-kv-cache-ledger.jpg", color=(104, 116, 236),
                  glow=(940, 240), glow_r=450, strength=0.30),
+    "intent-system": dict(file="intent-system-intent-driven-development.jpg",
+                          color=(108, 164, 132), glow=(880, 292), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
