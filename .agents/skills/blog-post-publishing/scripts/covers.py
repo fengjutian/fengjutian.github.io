@@ -1321,6 +1321,27 @@ def motif_cards(d, box, accent, tag):
     d.text((x + 26, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_quant_tiers(d, box, accent, tag):
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+
+    rows = [("14.23 GB", 0.96, "BF16"), ("7.12 GB", 0.52, "FP8"), ("3.67 GB", 0.26, "NF4")]
+    for i, (label_txt, frac, name) in enumerate(rows):
+        ry = y + 54 + i * 78
+        d.text((x + 30, ry), name, font=font(15), fill=mix(DIM, WHITE, 0.4))
+        bw = (w - 200) * frac
+        d.rounded_rectangle((x + 96, ry - 4, x + 96 + bw, ry + 22), radius=6,
+                            fill=tint(accent, 0.55 if i == 2 else 0.25),
+                            outline=mix(BG_TOP, accent, 0.55), width=2)
+        d.text((x + 96 + bw + 14, ry + 9), label_txt, font=font(15, True),
+               fill=accent if i == 2 else mix(DIM, WHITE, 0.5), anchor="lm")
+
+    d.line((x + 30, y + h - 96, x + w - 30, y + h - 96), fill=mix(BG_TOP, accent, 0.35), width=2)
+    d.text((x + 30, y + h - 74), "同一份权重，12 个构建", font=font(16), fill=mix(DIM, WHITE, 0.5))
+    d.text((x + 30, y + h - 34), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1601,6 +1622,15 @@ def build(slug, out_dir):
         d.text((M, 462), "预设与预览帧级一致，改一个镜头不用重做整片", font=font(17),
                fill=mix(DIM, accent, 0.7))
 
+    elif slug == "omni-quantized":
+        head(d, accent, "ChatR Labs / Qwen Research License",
+             "Omni-\nQuantized", "省的是显存，不是时间",
+             (M, 138), 76, (M, 330), 500, thesis_size=26)
+        motif_quant_tiers(d, (640, 112, 500, 356), accent, "12 个构建 · 2 套布局 · 1 条许可")
+        d.text((M, 424), "14.23 GB → 3.67 GB，耗时几乎没变", font=font(20), fill=DIM)
+        d.text((M, 462), "最小的那个，只在 Diffusers 那条路上成立", font=font(17),
+               fill=mix(DIM, accent, 0.7))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1671,6 +1701,8 @@ CARDS = {
                        color=(22, 118, 108), glow=(880, 288), glow_r=470, strength=0.30),
     "video-shotcraft": dict(file="video-shotcraft-shot-names.jpg",
                             color=(198, 140, 56), glow=(884, 288), glow_r=470, strength=0.30),
+    "omni-quantized": dict(file="omni-quantized-runtime-contracts.jpg",
+                             color=(122, 62, 132), glow=(884, 288), glow_r=470, strength=0.30),
     "jina-ocr": dict(file="jina-ocr-output-length.jpg",
                      color=(72, 88, 160), glow=(886, 290), glow_r=470, strength=0.30),
 }
