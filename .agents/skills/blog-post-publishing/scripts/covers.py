@@ -791,6 +791,55 @@ def motif_nested(d, box, accent, tag):
     d.text((x, y + h + 16), tag, font=font(16), fill=FAINT)
 
 
+def motif_handoff(d, box, accent, tag):
+    """Three automated stages, then a dashed slot with a button in it -- the
+    click that stays human -- and one arrow looping over the auto-updating part."""
+    x, y, w, h = box
+
+    n, gap = 4, 14
+    bw = (w - gap * (n - 1)) / n
+    by, bh = y + 96, 96
+    fills = [0.18, 0.42, 0.42, 0.0]
+    for i in range(n):
+        bx = x + i * (bw + gap)
+        if fills[i]:
+            d.rounded_rectangle((bx, by, bx + bw, by + bh), radius=10,
+                                fill=tint(accent, fills[i]),
+                                outline=mix(BG_TOP, accent, 0.55), width=2)
+        else:
+            # dashed slot: the click the tool refuses to make
+            d.rounded_rectangle((bx, by, bx + bw, by + bh), radius=10, fill=(13, 18, 29))
+            for k in range(0, int(bh), 12):
+                d.line((bx, by + k, bx, by + min(k + 7, bh)), fill=accent, width=3)
+                d.line((bx + bw, by + k, bx + bw, by + min(k + 7, bh)), fill=accent, width=3)
+            for k in range(0, int(bw), 12):
+                d.line((bx + k, by, bx + min(k + 7, bw), by), fill=accent, width=3)
+                d.line((bx + k, by + bh, bx + min(k + 7, bw), by + bh), fill=accent, width=3)
+            cx, cy = bx + bw / 2, by + bh / 2
+            d.ellipse((cx - 24, cy - 24, cx + 24, cy + 24), outline=accent, width=3)
+
+    # the update loop sits over the second stage only
+    ax0 = x + (bw + gap) + bw / 2
+    pts = []
+    for t in range(0, 31):
+        t = t / 30
+        px = ax0 - 44 + 88 * t
+        py = by - 16 - 34 * math.sin(math.pi * t)
+        pts.append((px, py))
+    d.line(pts, fill=accent, width=3, joint="curve")
+    tip = pts[-1]
+    d.polygon([(tip[0], tip[1] + 14), (tip[0] - 7, tip[1] + 1), (tip[0] + 7, tip[1] + 1)], fill=accent)
+    d.text((ax0 - 44, by - 72), "chrome 自动更新", font=font(14), fill=mix(DIM, accent, 0.55))
+
+    for i, name in enumerate(("skill", "plugin", "hub")):
+        bx = x + i * (bw + gap)
+        d.text((bx + bw / 2, by + bh - 24), name, font=font(17, True),
+               fill=mix(WHITE, BG_TOP, 0.35), anchor="mm")
+
+    d.text((x, y + h - 46), "8 个出口 · 4 自动 · 4 等你点", font=font(16), fill=mix(DIM, accent, 0.45))
+    d.text((x, y + h + 14), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -1780,6 +1829,15 @@ def build(slug, out_dir):
         d.text((M, 504), "受控变化：可改 · 可复制 · 可迁移 · 可更新", font=font(19),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "maitian":
+        head(d, accent, "CzzzzzzJ / MIT / macOS / 1.1k stars",
+             "Maitian", "易碎的那一层，住在会自己更新的容器里",
+             (M, 142), 92, (M, 352), 470, thesis_size=24)
+        motif_handoff(d, (648, 122, 496, 376), accent, "平台改版：只更新插件，不更新麦田")
+        d.text((M, 442), "skill 写文案 · 插件填表单 · hub 记账", font=font(19), fill=DIM)
+        d.text((M, 478), "国内四家的最后一次点击，永远留给人", font=font(19),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1860,6 +1918,8 @@ CARDS = {
                   color=(206, 70, 120), glow=(884, 288), glow_r=470, strength=0.30),
     "se-handbook": dict(file="software-engineering-handbook-judgment.jpg",
                         color=(128, 142, 60), glow=(890, 292), glow_r=470, strength=0.30),
+    "maitian": dict(file="maitian-multi-platform-publishing.jpg",
+                    color=(132, 170, 198), glow=(890, 292), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":

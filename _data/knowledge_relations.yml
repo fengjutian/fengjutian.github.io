@@ -165,8 +165,14 @@
 - source: topic:developer-tools
   target: project:strata
   type: implemented_by
+- source: topic:developer-tools
+  target: post:maitian-multi-platform-publishing
+  type: applies
 - source: post:everything-monorepo-fifty-apps
   target: post:thin-starter-architecture
+  type: related_to
+- source: post:maitian-multi-platform-publishing
+  target: post:hypit-video-compiler-timeline
   type: related_to
 - source: project:docuflow-ai
   target: project:weber-code-agent
