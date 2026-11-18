@@ -1,0 +1,876 @@
+<!DOCTYPE html> <html lang="zh-CN"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> rust-anything：语言迁移不是翻译，是一场可以判负的比较 | Fengjutian · 独立开发者 </title> <meta name="author" content="Ju Tian Feng"> <meta name="description" content="从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。"> <meta name="keywords" content="AI, AI agent, 开发者工具, 知识管理, 大模型, 推理优化, Rust, TypeScript, Python"> <meta property="og:site_name" content="Fengjutian · 独立开发者"> <meta property="og:type" content="article"> <meta property="og:title" content="Fengjutian · 独立开发者 | rust-anything：语言迁移不是翻译，是一场可以判负的比较"> <meta property="og:url" content="https://fengjutian.github.io/blog/2026/rust-anything-behavioral-port/"> <meta property="og:description" content="从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。"> <meta property="og:image" content="https://fengjutian.github.io/assets/img/blog/rust-anything-behavioral-port.jpg"> <meta property="og:locale" content="zh-CN"> <meta name="twitter:card" content="summary"> <meta name="twitter:title" content="rust-anything：语言迁移不是翻译，是一场可以判负的比较"> <meta name="twitter:description" content="从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。"> <meta name="twitter:image" content="https://fengjutian.github.io/assets/img/blog/rust-anything-behavioral-port.jpg"> <script type="application/ld+json">
+    {
+        "author":
+        {
+            "@type": "Person",
+            "name": "Ju Tian Feng"
+        },
+        "url": "https://fengjutian.github.io/blog/2026/rust-anything-behavioral-port/",
+        "@type": "BlogPosting",
+        "description": "从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。",
+        "headline": "rust-anything：语言迁移不是翻译，是一场可以判负的比较",
+        
+        "sameAs": ["https://github.com/fengjutian"],
+        
+        "name": "Ju Tian Feng",
+        "@context": "https://schema.org"
+    }
+  </script> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 1320px;
+  }
+</style> <link rel="stylesheet" href="/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.css" integrity="sha256-zTN0r+0OKaIv2xqeNNIYxNk0pWJ6+IqPGc1iDgVzWF0=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/assets/img/favicon.svg?v=af857ae081d7a0b9718244d54bca8c6b"> <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=90f4ebea0e3f3e2552a9b0c3702b7c3b"> <link rel="stylesheet" href="/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://fengjutian.github.io/blog/2026/rust-anything-behavioral-port/"> <script src="/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> Fengjutian · 独立开发者 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">关于我 </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">博客 </a> </li> <li class="nav-item "> <a class="nav-link" href="/knowledge/">知识地图 </a> </li> <li class="nav-item "> <a class="nav-link" href="/prompts/">提示词 </a> </li> <li class="nav-item "> <a class="nav-link" href="/sites/">网站 </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">项目 </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">全部仓库 </a> </li> <li class="nav-item "> <a class="nav-link" href="/news/">动态 </a> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="row"> <div class="col-sm-9"> <style type="text/css">
+    #markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 主题的「相关文章」区块标题是英文硬编码，会被 Tocbot 收进侧边目录。
+   主题用 `#toc-sidebar .toc-link`（ID 选择器）设了 display，所以这里必须同样带上
+   ID 才压得住；:has 用来把整个列表项去掉，避免留下空行。 */
+#toc-sidebar a[href='#enjoy-reading-this-article'] {
+  display: none;
+}
+#toc-sidebar li:has(a[href='#enjoy-reading-this-article']) {
+  display: none;
+}
+
+/* 右侧目录：主题默认样式是给左栏窄目录用的，这里重做层级、间距与滚动条。
+   目录通过 `toc.sidebar: right` 放在正文之后，CSS 选择器与左右无关。 */
+#toc-sidebar {
+  max-height: calc(100vh - 7rem);
+  padding: 0.25rem 0.55rem 1rem 1.5rem;
+  border-left: 1px solid var(--global-divider-color);
+  /* 主题靠 CDN 上的 tocbot.css 提供滚动容器，而它是 defer 加载的；
+     这里显式声明，避免样式表晚到时长目录直接溢出到页脚。 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 始终预留滚动条位置，目录变长/变短时正文不会横向跳动。 */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--global-text-color-light) 24%, transparent) transparent;
+}
+/* 大屏上把目录从 25% 比例换成固定 320px：比例宽度会跟着版心一起涨，
+   目录越宽正文越窄；固定后正文把剩下的宽度全部吃掉（1320-320≈1000px）。 */
+@media (min-width: 1200px) {
+  .container > .row:has(#toc-sidebar) > .col-sm-9 {
+    flex: 0 0 auto;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  .container > .row:has(#toc-sidebar) > .col-sm-3 {
+    flex: 0 0 320px;
+    max-width: 320px;
+  }
+}
+/* 滚动条：轨道透明、滑块细圆角，悬停时换成主题色。
+   两套写法同时给出且配色一致——新版 Chrome 认 scrollbar-width，
+   旧版和 Safari 走 ::-webkit-scrollbar，避免两边观感割裂。 */
+#toc-sidebar:hover,
+#toc-sidebar:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--global-theme-color) 50%, transparent) transparent;
+}
+#toc-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+#toc-sidebar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-text-color-light) 24%, transparent);
+  border-radius: 999px;
+}
+#toc-sidebar:hover::-webkit-scrollbar-thumb,
+#toc-sidebar:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--global-theme-color) 50%, transparent);
+}
+#toc-sidebar.toc > .toc-list {
+  padding-left: 0;
+}
+#toc-sidebar .toc-list {
+  padding-left: 0.7rem;
+}
+#toc-sidebar .toc-list .toc-list {
+  margin: 0.15rem 0 0.4rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid var(--global-divider-color);
+}
+#toc-sidebar .toc-link {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.22rem 0.3rem 0.22rem 0.5rem;
+  color: var(--global-text-color-light);
+  border-radius: 4px;
+}
+#toc-sidebar .toc-link:hover {
+  color: var(--global-theme-color);
+  background: color-mix(in srgb, var(--global-theme-color) 6%, transparent);
+}
+#toc-sidebar .toc-link::before {
+  width: 2px;
+  border-radius: 999px;
+  opacity: 0;
+}
+#toc-sidebar .toc-link.is-active-link {
+  color: var(--global-theme-color);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--global-theme-color) 9%, transparent);
+}
+#toc-sidebar .toc-link.is-active-link::before {
+  opacity: 1;
+}
+#toc-sidebar .toc-list .toc-list .toc-link {
+  font-size: 0.76rem;
+  color: var(--global-text-color-light);
+}
+
+  </style> <div class="post"> <header class="post-header"> <h1 class="post-title">rust-anything：语言迁移不是翻译，是一场可以判负的比较</h1> <p class="post-meta"> Created on November 18, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/tag/ai"> <i class="fa-solid fa-hashtag fa-sm"></i> AI</a>   <a href="/blog/tag/%E5%BC%80%E6%BA%90"> <i class="fa-solid fa-hashtag fa-sm"></i> 开源</a>   <a href="/blog/tag/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7"> <i class="fa-solid fa-hashtag fa-sm"></i> 开发者工具</a>   ·   <a href="/blog/category/%E6%8A%80%E6%9C%AF%E9%9A%8F%E7%AC%94"> <i class="fa-solid fa-tag fa-sm"></i> 技术随笔</a>   <a href="/blog/category/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5"> <i class="fa-solid fa-tag fa-sm"></i> 工程实践</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <p>7,925。0。0.23x。</p> <p>第一个数字是 x18n core 的录制案例数，第二个是其中的不一致数，第三个是其中一个函数在 Rust 里的<strong>加速比</strong>——它是 0.23 倍，也就是说慢了四倍多。</p> <p>三个数字来自同一份报告，报告的最后一行是这句建议：</p> <blockquote> <p>Do not ship these ports into x18n: they are correct but slower.</p> </blockquote> <p>一个迁移工具，把自己刚做完、且全部通过校验的 29 个函数，主动判成了「不要发」。这就是我决定写它的原因。</p> <p>项目是 <a href="https://github.com/erkamyaman/rust-anything" rel="external nofollow noopener" target="_blank">erkamyaman/rust-anything</a>，作者 Erkam Yaman，Rust 写的，MIT。2026-11-16 建库，到本文写作时约 37 小时，已经有 1,314 star、85 fork、2 个 open issue。README 顶上那行字是它的全部主张：<strong>up to 20x faster · 38,251 recorded cases replayed · 0 mismatches · one command</strong>。</p> <p>这篇不写「Rust 迁移指南」，只写一件事：<strong>它把「该不该换」做成了一个可以被数据否决的判断，而这个判断的可靠性，取决于一个比测试套件更窄、也更诚实的东西——录制。</strong></p> <h2 id="一迁移真正缺的不是翻译">一、迁移真正缺的不是翻译</h2> <p>先承认一件事：把一段 TypeScript 翻译成 Rust，今天的模型已经做得不错了。翻译不是瓶颈。</p> <p>瓶颈在这个问题后面：</p> <p><strong>你怎么知道翻译对了？</strong></p> <p>旧项目跑了五年，没有完整的测试，没有接口文档，有些行为只存在于用户的实际用法里。一次性重写的风险不在写不出来，在于没人能证明新的和旧的一样。</p> <p>草稿里列的五条风险，其实都可以归到同一件事上：</p> <table> <thead> <tr> <th>风险</th> <th>表面说法</th> <th>真正的问题</th> </tr> </thead> <tbody> <tr> <td>行为不一致</td> <td>边界条件、异常、数据格式对不上</td> <td>没有可执行的「一样」的定义</td> </tr> <tr> <td>迁移风险高</td> <td>一次改太多</td> <td>没有可以中途停下的粒度</td> </tr> <tr> <td>性能不确定</td> <td>Rust 不一定更快</td> <td>没有一个统一的比较口径</td> </tr> <tr> <td>API 兼容难</td> <td>调用方要改</td> <td>没有「接口不动」的约束机制</td> </tr> <tr> <td>测试覆盖不足</td> <td>单测覆盖不到真实输入</td> <td>覆盖率的靶子本身是错的</td> </tr> </tbody> </table> <p>rust-anything 对这些问题的回答是同一条：<strong>把「原实现在某个输入下做了什么」录下来，变成可重放的案例，然后让每一次替换都去对这个录制负责。</strong></p> <p>它自己把这条边界写得很清楚（<code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 的 D1）：它是一个<strong>由 Agent 驱动的工具箱，而不是一个会自己调模型的翻译器</strong>。理由是——「校验恰恰是 Agent 做不可靠的那部分」。</p> <p>这句话是整篇文章的题眼。它解释了为什么这个工具长得不像同类产品：它不生成代码，它生成<strong>判决</strong>。</p> <h2 id="二一条流水线两条泳道">二、一条流水线，两条泳道</h2> <p><img src="/assets/img/blog/rust-anything-behavioral-port/fig-01-pipeline-lanes.png" alt="profile 到 gate 的九步，以及 port.rs 由谁写"></p> <p><em>橘色那一步是全流程里唯一由人或 Agent 写的代码；其余七步都是确定性的机械动作。</em></p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>profile ──&gt; analyze ──&gt; bridge ──&gt; record ──&gt; port.rs ──&gt; diff ──&gt; bench ──&gt; shadow ──&gt; gate
+</code></pre></div></div> <ul> <li> <strong>profile</strong>：在语言自己的 profiler 下跑真实负载（node <code class="language-plaintext highlighter-rouge">--cpu-prof</code>、cProfile、<code class="language-plaintext highlighter-rouge">go test</code> 的 pprof、JFR、Ruby 的 TracePoint），按 inclusive time 排函数，标出调用者和那个「每次调用都在变的参数」。它还会标出已经被 numba / Cython / JAX 编译过的代码——那些地方换 Rust 基本没收益。</li> <li> <strong>analyze</strong>：切出迁移单元（unit）、算出波浪顺序（wave）、给每个单元定桥接方案、列出风险（带 <code class="language-plaintext highlighter-rouge">file:line</code>）和就绪度/优先级。</li> <li> <strong>bridge</strong>：生成桥接 crate 和 <code class="language-plaintext highlighter-rouge">port.rs</code> 的桩。</li> <li> <strong>record</strong>：录原实现的行为。</li> <li> <strong>diff / bench / shadow / gate</strong>：四道判定。</li> </ul> <p>值得注意的是 <code class="language-plaintext highlighter-rouge">analyze</code> 的单元定义（D1 之外的 A1）：<strong>一个 unit 是一个目录，或者包源码根目录下的一个文件</strong>。不是函数，不是类。因为在真实的 TS 项目里，「模块」就是目录。而波浪顺序来自单元依赖图的强连通分量（A5）——叶子先搬，环必须一起搬，这样 Rust 永远不会回调 JS。</p> <p>还有一个数字能说明它为什么用 Rust 写、用 oxc 解析（D4）：x18n 27,000 行代码，分析耗时约 0.1 秒。</p> <h2 id="三record案例是生成出来的不是写出来的">三、Record：案例是生成出来的，不是写出来的</h2> <p><img src="/assets/img/blog/rust-anything-behavioral-port/fig-02-recording-sources.png" alt="三个输入来源合成 cases.jsonl，下面是八类语义陷阱"></p> <p><em>边界案例由参数类型推出来，语义陷阱按参数逐个加，真正决定成败的往往是第三类：你自己的输入。</em></p> <p>这是我认为最值得抄的一段设计。</p> <p>传统做法是「先补测试，再迁移」。问题是补测试本身就需要知道旧代码在边界上做什么——而这正是你缺的知识。</p> <p>rust-anything 换了个顺序：<strong>不知道就先跑，跑出来的就是规格。</strong></p> <p>录制有三个来源（README 的 record 一节）：</p> <ol> <li> <strong>按参数类型生成的边界案例</strong>：非 ASCII、emoji、<code class="language-plaintext highlighter-rouge">-0</code>、<code class="language-plaintext highlighter-rouge">NaN</code>、该是浮点却传了整数……</li> <li> <strong>每个参数的语义陷阱</strong>：字符串长度与大小写、有符号除法、溢出边界、浮点打印、map 与排序顺序。<code class="language-plaintext highlighter-rouge">record</code> 会给文件里每个用了正则的函数额外加一组陷阱（土耳其无点 ı、开尔文符号、长 s、阿拉伯-印度数字、行分隔符、希腊末尾 sigma）。</li> <li> <strong>你自己的输入</strong>：<code class="language-plaintext highlighter-rouge">--inputs cases.jsonl</code>，喂线上样本、bug 报告、原项目的 fixture。</li> </ol> <p>录制时会<strong>把原实现跑两次</strong>，两次之间变了的东西才被标成噪声：变化的值变成通配符，顺序变化按无序比较，行数变化变成 <code class="language-plaintext highlighter-rouge">...</code>。结果存成 <code class="language-plaintext highlighter-rouge">cases.jsonl</code>——纯文本、可读、可手改。README 甚至直说：删掉你认为不该存在的案例是允许的。</p> <p>这个设计有两个很硬的后果。</p> <p><strong>第一，录制即天花板。</strong> 没被录进来的输入，<code class="language-plaintext highlighter-rouge">diff</code> 永远不会替你发现。作者把这句话放在 README 的 What it can’t catch 第一行，没有含糊。</p> <p><strong>第二，录制会自动暴露语言之间的接缝。</strong> 比如 README 里那个最漂亮的例子：x18n 的 <code class="language-plaintext highlighter-rouge">fuzzyScore</code> 第一版按 Rust 的 <code class="language-plaintext highlighter-rouge">char</code> 索引，简单测试全过，<code class="language-plaintext highlighter-rouge">diff</code> 挂了：</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>198/200 cases match
+- fuzzyScore("b😀", "a😀b😀c"): expected {"ok":1997}, got {"ok":1998}
+</code></pre></div></div> <p>差一。因为 JS 的 <code class="language-plaintext highlighter-rouge">indexOf</code> 数的是 UTF-16 码元，一个 emoji 占两位，而 Rust 的 <code class="language-plaintext highlighter-rouge">char</code> 是码点。这种 bug 你读代码读不出来，写测试也想不起来——只有两个实现并排跑才会掉出来。</p> <h2 id="四diff-与-shadow比较的单位是调用者看到的东西">四、Diff 与 Shadow：比较的单位是调用者看到的东西</h2> <p><code class="language-plaintext highlighter-rouge">diff</code> 做的事看起来简单：把 <code class="language-plaintext highlighter-rouge">cases.jsonl</code> 里的案例逐条喂给 Rust，比对结果。</p> <p>但有两个决定让它比看上去严谨：</p> <p><strong>它走的是调用者会走的那个 wrapper。</strong> <code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 的 M3 写得很直白：diff 必须经过 cgo 包、Fiddle 文件、JNI 类、PyO3 包这些真实入口。「测试必须看到调用者看到的东西：wrapper 的 bug、类型转换、异常映射，全都算在内。」</p> <p><strong>它不比对错误信息，只比对「有没有抛」。</strong> L7：两边都抛就算一致，消息不比较。理由是错误文案几乎从来不是契约，而被强迫对齐措辞会让每一个 port 都无谓地挂掉。这条看起来很松，其实收得很准——它把「行为」定义在调用者能依赖的范围内。</p> <p><code class="language-plaintext highlighter-rouge">shadow</code> 则是把比较搬到运行期：</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">RUST_ANYTHING_MODE</span><span class="o">=</span>old      <span class="c"># 只跑原实现</span>
+<span class="nv">RUST_ANYTHING_MODE</span><span class="o">=</span>shadow   <span class="c"># 两套都跑，返回原实现的结果</span>
+<span class="nv">RUST_ANYTHING_MODE</span><span class="o">=</span>new      <span class="c"># 用 Rust</span>
+</code></pre></div></div> <p>三个细节值得注意。shadow 永远<strong>返回原实现的结果</strong>，Rust 的错误永远不上升到调用者（L9）；它<strong>先跑原实现、后跑 Rust</strong>；并且它是按语言用最小侵入的方式实现的——Go 是一个包，Ruby 是一个 <code class="language-plaintext highlighter-rouge">prepend</code> 的文件，Java 是 <code class="language-plaintext highlighter-rouge">&lt;Class&gt;Shadow</code> 类，C 是用 <code class="language-plaintext highlighter-rouge">-D</code> 重命名的文件加一个 <code class="language-plaintext highlighter-rouge">shadow</code> feature。</p> <p>这个思路作者说得很清楚（D5）：Cloudflare 当年就是把新旧实现放在同一个进程里并排跑，再逐步切流量。<strong>测试证明一个 port，生产流量确认一个 port。</strong></p> <h2 id="五gate一份不许糊弄的清单">五、Gate：一份不许糊弄的清单</h2> <p><img src="/assets/img/blog/rust-anything-behavioral-port/fig-03-gate-checklist.png" alt="gate 的九项检查与三条硬规矩"></p> <p><em>最有信息量的是中间那条：不是覆盖率，是「原实现会失败的地方，你必须有它失败的录像」。</em></p> <p><code class="language-plaintext highlighter-rouge">gate</code> 的清单不长，但每一项都在堵一个洞：<code class="language-plaintext highlighter-rouge">fmt</code>、<code class="language-plaintext highlighter-rouge">clippy -D warnings</code>、测试、<code class="language-plaintext highlighter-rouge">unsafe</code> 审计、没有未迁移的桩、不许用 <code class="language-plaintext highlighter-rouge">unwrap</code> / <code class="language-plaintext highlighter-rouge">expect</code> / <code class="language-plaintext highlighter-rouge">panic!</code>、构建通过、API 没变且行为一致。外加一条很少见的：<strong>原实现的每一条错误路径，都必须有一条录制下来的失败案例</strong>。</p> <p>这三条规矩是我认为它比大多数「质量门禁」更狠的地方：</p> <p><strong>1. <code class="language-plaintext highlighter-rouge">port.rs</code> 里的代码比原实现长 3 倍（+50 行签名余量）就算失败。</strong> 这条规则的目的不是审美，是<strong>诊断</strong>：一个 port 突然膨胀三倍，通常意味着你在手写某个 crate 已经提供的东西，或者在逐个 case 地处理本该用类型解决的问题。把「膨胀」当成信号，比事后 review 有效得多。</p> <p><strong>2. 错误路径必须有录像。</strong> 大多数迁移会漏掉 error path，因为正常路径跑通了就以为完事了。强制要求「原实现在这个输入下会失败」也有一份案例，等于把异常语义也纳入契约。</p> <p><strong>3. <code class="language-plaintext highlighter-rouge">port.rs</code> 里 <code class="language-plaintext highlighter-rouge">#![forbid(unsafe_code)]</code>。</strong> 所有 <code class="language-plaintext highlighter-rouge">unsafe</code> 都被赶进生成的 <code class="language-plaintext highlighter-rouge">lib.rs</code>，每一处都带 <code class="language-plaintext highlighter-rouge">// SAFETY:</code> 注释（M6）。结果是：<strong>你要维护的那部分代码，在整个迁移过程中始终是安全 Rust。</strong></p> <p>还有一处设计我特别喜欢：gate 明确区分了「能说什么」和「不能说什么」。它能说这一块可以换；它不能说所有输入都等价。</p> <h2 id="六bench为什么按函数搬过去会更慢">六、Bench：为什么按函数搬过去会更慢</h2> <p>这是全文最重要的一节，也是这个项目和绝大多数「用 Rust 重写」宣传最不一样的地方。</p> <p><img src="/assets/img/blog/rust-anything-behavioral-port/fig-04-percall-vs-batch.png" alt="左边是按函数迁移的加速比，右边是 batch 的加速比"></p> <p><em>同一份数据，两组方向相反的结论；左边每一个都通过了 gate，右边每一个都还没有经过同样的证明。</em></p> <p>先看事实。x18n core 里 55 个导出，29 个能不改变公开 API 地搬到 Rust，26 个必须留下（类型里含函数、generator、RegExp、<code class="language-plaintext highlighter-rouge">instanceof</code>、泛型——桥接带不过去，<code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 的 X1 记录了这个 26/55 的比例）。29 个全部 9/9 过 gate，7,925 条案例 0 不一致，外加 4,600 次 shadow 调用的 0 不一致。</p> <p>然后 bench 把它们几乎全部判成更慢：</p> <table> <thead> <tr> <th>函数</th> <th style="text-align: right">单次调用加速比</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">diffText</code></td> <td style="text-align: right">0.01x</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">splitKey</code></td> <td style="text-align: right">0.03x</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">joinKey</code></td> <td style="text-align: right">0.06x</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">fuzzyScore</code></td> <td style="text-align: right">0.23x（napi 版 0.22x）</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">hashText</code></td> <td style="text-align: right">0.82x</td> </tr> </tbody> </table> <p>少数几个在 1x 以上的（<code class="language-plaintext highlighter-rouge">applyTextEdits</code> 1.12x、<code class="language-plaintext highlighter-rouge">buildTree</code> 1.19x），作者的解释也很老实：那些函数的录制案例大多是非法的输入，<strong>JS 的时间花在建异常对象上</strong>。</p> <p>大输入同样没有翻盘：</p> <table> <thead> <tr> <th>输入</th> <th style="text-align: right">TS</th> <th style="text-align: right">Rust（wasm）</th> </tr> </thead> <tbody> <tr> <td> <code class="language-plaintext highlighter-rouge">hashText</code>，1.4 MB</td> <td style="text-align: right">2.0 ms</td> <td style="text-align: right">2.8 ms</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">diffText</code>，1.4 MB</td> <td style="text-align: right">5.2 ms</td> <td style="text-align: right">11.1 ms</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">suppressedRanges</code>，1.9 MB，2 万个标记</td> <td style="text-align: right">3.8 ms</td> <td style="text-align: right">42.5 ms</td> </tr> <tr> <td> <code class="language-plaintext highlighter-rouge">joinKey</code>，10 万次调用</td> <td style="text-align: right">6.3 ms</td> <td style="text-align: right">65.7 ms</td> </tr> </tbody> </table> <p>最刺眼的是第三行，差了 11 倍。而这个数字是可以被拆开归因的，这也是我认为这份报告最有价值的地方：</p> <ul> <li>把 1.9 MB 的字符串<strong>拷进 wasm 内存</strong>，光这一步就是 4.4 ms——比整个 TS 函数还贵；</li> <li>再把 2 万个结果对象<strong>转回 JS</strong>，大约 25 ms；</li> <li>而 V8 跑这些字符串操作时，用的是它自己的 UTF-16 字符串，根本不需要拷贝。</li> </ul> <p>所以结论不是「Rust 不行」，而是：<strong>按函数卖 Rust，卖的是桥的账。</strong> 一次跨语言调用的固定成本，被一个几微秒的函数调用放大成了灾难。</p> <p><code class="language-plaintext highlighter-rouge">bench</code> 最后会直接给判决（S4）：1.1x 以上算快，0.9x 以下算慢，并建议「发布、留下慢函数、改搬更大的单元、或者（对 C）继续优化 port」。它没有把数字丢给你自己看——<strong>它把结论也一起给了，包括对自己不利的结论。</strong></p> <h2 id="七batch赢的不是语言是边界">七、Batch：赢的不是语言，是边界</h2> <p>那什么情况下 Rust 该赢？答案是把<strong>循环</strong>搬过去，而不是把函数搬过去。</p> <div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">search</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FuzzyScoreBatch</span><span class="p">(</span><span class="nx">keys</span><span class="p">);</span> <span class="c1">// 建一次</span>
+<span class="kd">const</span> <span class="nx">order</span> <span class="o">=</span> <span class="nx">search</span><span class="p">.</span><span class="nf">rank</span><span class="p">(</span><span class="nx">query</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// 每次按键：只回索引</span>
+</code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">bridge --batch fn:param</code> 会生成一个类：item 只过一次桥，之后每次调用在 Rust 里对所有 item 跑一遍，用满所有核，结果是 typed array。索引回传而不是字符串回传，因为调用方本来就握着 key。</p> <p>在 x18n 那份搜索上（5 万个 key，逐键输入）：TS 每次 10 ms；<code class="language-plaintext highlighter-rouge">FuzzyScoreBatch</code> 默认索引 5.1 ms；加上 <code class="language-plaintext highlighter-rouge">port.rs</code> 里手写的 <code class="language-plaintext highlighter-rouge">FuzzyScoreIndex</code>（先建小写键和字符掩码表，单字母查询走一列，二次输入只重算上次命中的集合）后是 <strong>0.45–0.56 ms，18–22 倍</strong>；wasm 单线程版 0.95 ms，11.5 倍。</p> <p>其他语言是同一张图景（4 核，结果与错误都一致）：</p> <table> <thead> <tr> <th>语言</th> <th>负载</th> <th style="text-align: right">原实现</th> <th style="text-align: right">batch</th> </tr> </thead> <tbody> <tr> <td>Python</td> <td> <code class="language-plaintext highlighter-rouge">slugify</code>，2 万串</td> <td style="text-align: right">98 ms</td> <td style="text-align: right"><strong>17x</strong></td> </tr> <tr> <td>Ruby</td> <td> <code class="language-plaintext highlighter-rouge">slugify</code>，2 万串</td> <td style="text-align: right">110 ms</td> <td style="text-align: right"><strong>12.7x</strong></td> </tr> <tr> <td>Ruby</td> <td> <code class="language-plaintext highlighter-rouge">shellescape</code>（标准库），5 万个混合值</td> <td style="text-align: right">88 ms</td> <td style="text-align: right"><strong>11.8x</strong></td> </tr> <tr> <td>Go</td> <td> <code class="language-plaintext highlighter-rouge">Slugify</code>，5 万串</td> <td style="text-align: right">49 ms</td> <td style="text-align: right"><strong>4x</strong></td> </tr> <tr> <td>Java</td> <td> <code class="language-plaintext highlighter-rouge">slugify</code>，5 万串</td> <td style="text-align: right">43 ms</td> <td style="text-align: right"><strong>3x</strong></td> </tr> </tbody> </table> <p>而同一批函数如果按次调用：Go 0.93x、Java 0.68x——编译型语言的叶子函数在自己语言里本来就已经很快了。</p> <p>这里还藏了一个很工程的细节（S12）：带 batch 的 crate 全局用 <strong>mimalloc</strong>。原因不是玄学——系统分配器把线程串行化了，纯 Rust 里 4 核只有 1.6x，放进 Go 进程里甚至比单线程还慢；换 mimalloc 后是 3.2x。</p> <p>另外 S14 那条也值得记：<strong>结果字符串要成批回去</strong>。Go 分配一块总长度的缓冲，Rust 多核拷进去；Java 直接拿一个 UTF-16 的 <code class="language-plaintext highlighter-rouge">char[]</code> 加长度数组再切。把结果一条条 join 是省不下来的——Java 的 batch 从 25 ms 降到 14 ms，靠的就是这个。</p> <h2 id="八整应用回退率的下降">八、整应用：回退率的下降</h2> <p>单个模块证明完，整个应用怎么办？答案是<strong>一个会自己算「还有多少没搬」的框架</strong>。</p> <p><img src="/assets/img/blog/rust-anything-behavioral-port/fig-05-fallback-staircase.png" alt="front door 到 lift：回退率下降，通过率不动"></p> <p><em>刚生成的 front door 通过率 100%、回退率也 100%：它只是把每条命令原样转发给原程序。</em></p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rust-anything analyze <span class="nb">.</span> <span class="nt">--whole-app</span>      <span class="c"># 形态、入口、每个依赖对应的 crate、要你拍板的决策</span>
+rust-anything app record <span class="nb">.</span> <span class="nt">--</span> python3 cli.py
+rust-anything app replay <span class="nb">.</span>               <span class="c"># 原实现必须 100% 通过</span>
+rust-anything app front-door <span class="nb">.</span>           <span class="c"># rust/app：每条命令都转发给原程序</span>
+rust-anything app wire <span class="nb">.</span> textkit <span class="nt">--command</span> upper
+rust-anything app lift <span class="nb">.</span>
+</code></pre></div></div> <p>几个细节让这条链子站得住：</p> <p><strong>案例是 trycmd 文件。</strong> <code class="language-plaintext highlighter-rouge">app record</code> 从应用自己的文档里抽 <code class="language-plaintext highlighter-rouge">$ mytool ...</code> 例子、从 <code class="language-plaintext highlighter-rouge">--inputs</code> 拿输入、再按 CLI 参数生成语义陷阱；每个案例跑两次，差异变成 <code class="language-plaintext highlighter-rouge">[..]</code>。存成 <code class="language-plaintext highlighter-rouge">&lt;case&gt;.toml</code> + <code class="language-plaintext highlighter-rouge">.stdin</code> + <code class="language-plaintext highlighter-rouge">.stdout</code> + <code class="language-plaintext highlighter-rouge">.stderr</code> + <code class="language-plaintext highlighter-rouge">.in/</code> + <code class="language-plaintext highlighter-rouge">.out/</code>，人可以直接改。HTTP 服务同理：从文档里的 <code class="language-plaintext highlighter-rouge">curl</code> 行生成，案例里存状态码、关键响应头和 body。</p> <p><strong>回退率是一个算出来的数，不是一个说法。</strong> front door 把每次回退写进 <code class="language-plaintext highlighter-rouge">RUST_ANYTHING_FALLBACK_LOG</code>，<code class="language-plaintext highlighter-rouge">app replay</code> 顺便报告回退率。库模式更狠：没有进程可回放，公开 API 就是 front door，回退率 = <strong>还没被 Rust 接管的导出占比</strong>。</p> <p><strong>lift 会拒绝执行。</strong> 它的条件是回退率 0 且每个 unit 都过 gate，不满足就直接告诉你卡在哪一步。它做的还是「在副本上先做」：移除回退路径和 kill switch、把每个 unit crate 变成普通库、加上 <code class="language-plaintext highlighter-rouge">rust/app/tests/app_cases.rs</code> 让 CI 只需要 cargo，跑完整套 checklist 才写回。<strong>原程序从头到尾没被碰过。</strong></p> <p>还有一个我没想到的部分：整应用迁移真正的难点不是技术，是决策。所以 skill 里有一套 grilling 流程——Agent 分轮提问，每个问题都附上推荐答案，直到每个决策被定下来，然后写成 <code class="language-plaintext highlighter-rouge">rust/DECISIONS.md</code> 里的 ADR，配一份 <code class="language-plaintext highlighter-rouge">rust/GLOSSARY.md</code> 把原项目的术语映射到 Rust 命名。跨会话靠 <code class="language-plaintext highlighter-rouge">rust/MAP.md</code> 记录每个 unit 的状态，每个检查点留一份 <code class="language-plaintext highlighter-rouge">rust/HANDOFF.md</code>。该人做的步骤（部署、DNS、密钥）由一个生成的 <code class="language-plaintext highlighter-rouge">rust/cutover.sh</code> 交互式地带着做，每一步都留退路。</p> <p>（这套 grilling / research 的做法注明改编自 Matt Pocock 的 skills。）</p> <h2 id="九它明确说自己抓不到什么">九、它明确说自己抓不到什么</h2> <p>这一节是整个 README 里我最尊重的部分。作者用整整一节列出了「通过」到底意味着什么，而且每一条都给了具体的失败场景：</p> <ul> <li> <strong>没人录过的输入。</strong> 生成的案例、陷阱、你的 <code class="language-plaintext highlighter-rouge">--inputs</code> 就是上限。作者的原话：把生产样本、bug 报告、原项目的 fixture 加进去，因为「弄坏生产环境的那个输入，很少是生成器想得出来的」。</li> <li> <strong>正则。</strong> <code class="language-plaintext highlighter-rouge">regex</code> crate 没有 lookaround 和反向引用；就算能编译，<code class="language-plaintext highlighter-rouge">\w</code>、<code class="language-plaintext highlighter-rouge">\b</code>、<code class="language-plaintext highlighter-rouge">\d</code> 和非 ASCII 的大小写匹配也可能和 JS / Python / Java 不同。<strong>换 <code class="language-plaintext highlighter-rouge">fancy-regex</code> 或者重写 pattern，可能通过全部案例，却在土耳其无点 ı 或零宽连接符上分叉。</strong> </li> <li> <strong>两次运行之间会变的东西。</strong> 哈希序、并发——<code class="language-plaintext highlighter-rouge">record</code> 会把它们识别成「任意顺序」或 <code class="language-plaintext highlighter-rouge">...</code>，但作者提醒：这一类恰恰是 port 里最容易真的变质的。</li> <li> <strong>浮点。</strong> 数字转文本的格式在各语言之间不同（<code class="language-plaintext highlighter-rouge">1e21</code>、<code class="language-plaintext highlighter-rouge">-0</code>、位数），这些必须精确匹配；<code class="language-plaintext highlighter-rouge">--float-tolerance</code> 只原谅舍入，不原谅格式。</li> <li> <strong>输出之外的一切。</strong> 时间、内存、负载下的并发、stdout/stderr/退出码/写文件/HTTP 响应之外的副作用（网络、数据库、信号）都不比较。</li> <li> <strong>别的平台。</strong> 录制只证明「跑它的这台机器上的行为」。所以依赖类型宽度、字节序、编译器的 C，<code class="language-plaintext highlighter-rouge">analyze</code> 会建议继续用 C 写。</li> </ul> <p>最后这条在 <code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 里还有个更狠的实现细节（M5）：C 的每条案例在<strong>独立的子进程</strong>里跑，崩了就记成 <code class="language-plaintext highlighter-rouge">crash: &lt;signal&gt;</code>，并接受任何 port 行为。理由很硬——超出 C 函数契约的输入是未定义行为，真实的 glibc 在 <code class="language-plaintext highlighter-rouge">isalpha(INT_MAX)</code> 上会段错误。<strong>一个会崩的录制，不能要求 Rust 也崩得一模一样。</strong></p> <h2 id="十局限">十、局限</h2> <p>按重要性排：</p> <ol> <li> <strong>它只有 37 小时大。</strong> 1,314 star 是发布效应，不是工程成熟度。作者自己把 <code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 写成了「每条都可以被推翻」的形态，这既是诚实，也说明设计还在动。</li> <li> <strong>语言覆盖是子集，不是全集。</strong> Java 只处理 public 类的 <code class="language-plaintext highlighter-rouge">public static</code> 方法，重载、泛型、<code class="language-plaintext highlighter-rouge">char</code>、对象类型都留在 Java；Ruby 只处理模块函数，带 block 的类方法留在 Ruby；Go 的 method、泛型、变参、指针、接口、channel 都留在 Go；C 只过标量和 <code class="language-plaintext highlighter-rouge">const char *</code>。<strong>每一门语言都有一条明确的「到此为止」的线。</strong> </li> <li> <strong>桥接不是免费的，而且它自己承认。</strong> 「bridge 每次调用都拷贝字符串和结构化值；对细粒度函数，这个开销是主导的。」这条被写在 Known limits 里，没被藏起来。</li> <li> <strong>shadow 只比较同步返回值。</strong> 会修改参数对象的函数，第二次实现拿到的是已经被改过的输入。别名（Ruby 的 <code class="language-plaintext highlighter-rouge">alias</code>）也会绕过 shadow。</li> <li> <strong>bench 是单机 4 核的结果。</strong> 所有数字都在同一台机器上、4 核；跨核扩展、NUMA、容器 CPU 配额都没测。当作方向性结论看，不要当 SLA。</li> <li> <strong>C 的门槛偏高。</strong> 只用标量与 <code class="language-plaintext highlighter-rouge">const char *</code> 能过桥，输出缓冲（<code class="language-plaintext highlighter-rouge">char *out, size_t *len</code>）和状态结构体都留在 C；宏定义的函数也看不见。</li> <li> <strong>它依赖你的运行时。</strong> Node 22.6+、Python 3.9+、Go 1.21+、Ruby 3+、JDK 17+，还要各自的编译器；wasm 桥要额外装 <code class="language-plaintext highlighter-rouge">wasm-bindgen-cli</code> 并锁版本。</li> </ol> <h2 id="十一我的判断">十一、我的判断</h2> <p>回到开头那三个数字。<strong>7,925 / 0 / 0.23x</strong> 之所以有价值，不是因为它们证明了 Rust 好或不好，而是因为它们同时来自一个流程：能录、能比、能判、而且判完敢公开。</p> <p>我认为这个项目里有三样东西是可以整体搬走的，跟 Rust 无关：</p> <p><strong>第一，把「判决」做成一等产物。</strong> 大多数工具输出的是报告，人读完自己下结论。rust-anything 的 <code class="language-plaintext highlighter-rouge">analyze</code> 给就绪度和优先级，<code class="language-plaintext highlighter-rouge">bench</code> 给 ship / keep / port-bigger，<code class="language-plaintext highlighter-rouge">gate</code> 给 done，<code class="language-plaintext highlighter-rouge">lift</code> 给「卡在哪一步」。<strong>判决可以被推翻，但它必须先被给出。</strong></p> <p><strong>第二，把 benchmark 从 gate 里拆出去。</strong> 这是 <code class="language-plaintext highlighter-rouge">DECISIONS.md</code> 的 X5，理由只有一句：「速度不是正确性，但它决定一个 port 该不该发。」把「对不对」和「值不值」分成两道门，是这份设计里我最想抄的一处。合成一道门的工具，最后都会把「慢但正确」判成失败，或者把「快但可疑」放过去。</p> <p><strong>第三，录制是一种可以被生成的规格。</strong> 传统顺序是「先写测试再改」，这个顺序预设了你知道旧代码该做什么。录制把顺序反过来了：<strong>先让它跑，跑出来的就是规格</strong>。这跟上一篇写 Mainline 时的观察正好互补——Mainline 存的是 <code class="language-plaintext highlighter-rouge">why</code>（当初为什么这么做），rust-anything 证的是 <code class="language-plaintext highlighter-rouge">what</code>（现在到底做了什么）。一个给未来的 Agent 读，一个给当下的 Agent 判。</p> <p>如果要给三个可验证的下一步，我会选：</p> <ol> <li> <strong>把 <code class="language-plaintext highlighter-rouge">app replay</code> 接到 CI 的 required check 上。</strong> 回退率这个指标现在只在本地算，它天生适合当门禁——因为它是一个不会被 Agent 的措辞骗过去的数。</li> <li> <strong>把「录制覆盖率」做成可查询的。</strong> 现在 <code class="language-plaintext highlighter-rouge">cases.jsonl</code> 是一堆文本，读者只能靠眼睛判断够不够。如果能把「哪些参数类型还没有陷阱」「哪些分支从没被触发」算出来，录制才能像覆盖率一样被追责。</li> <li> <strong>把 bench 的结论接回 <code class="language-plaintext highlighter-rouge">analyze</code> 的排序。</strong> 现在 profile 找热点、bench 判值不值，但 <code class="language-plaintext highlighter-rouge">analyze</code> 的优先级仍然靠静态启发式（loops 和字符串工作量）。把实测结果回灌进排序，才算闭环。</li> </ol> <p>最后一句给这个项目：它最难得的不是支持六种语言，也不是 20 倍那个数字，而是它在一个所有人都在喊「用 Rust 重写」的年份里，写了一份 29 个函数、7,925 个案例、0 个不一致，然后建议你别用的报告。</p> <p><strong>一个工具的可信度，约等于它愿意否定自己的次数。</strong></p> <h2 id="项目与资料">项目与资料</h2> <ul> <li>GitHub：<a href="https://github.com/erkamyaman/rust-anything" rel="external nofollow noopener" target="_blank">erkamyaman/rust-anything</a> </li> <li>设计取舍与理由：<a href="https://github.com/erkamyaman/rust-anything/blob/main/DECISIONS.md" rel="external nofollow noopener" target="_blank">DECISIONS.md</a> </li> <li>x18n core 的完整迁移报告：<a href="https://github.com/erkamyaman/rust-anything/blob/main/demo/x18n-core/README.md" rel="external nofollow noopener" target="_blank">demo/x18n-core</a> </li> <li>六种语言的真实代码迁移：<a href="https://github.com/erkamyaman/rust-anything/blob/main/docs/real-world-languages.md" rel="external nofollow noopener" target="_blank">docs/real-world-languages.md</a> </li> <li>工作流 skill：<a href="https://github.com/erkamyaman/rust-anything/tree/main/skills/rust-anything" rel="external nofollow noopener" target="_blank">skills/rust-anything</a> </li> <li>安装：<code class="language-plaintext highlighter-rouge">cargo install rust-anything</code>，或 <code class="language-plaintext highlighter-rouge">npm install -g rust-anything</code>，或从 GitHub Releases 取预编译包；之后 <code class="language-plaintext highlighter-rouge">rust-anything setup</code> 注册 MCP server 与 skill（Claude Code / Codex / Cursor / Gemini CLI）</li> </ul> <p>许可证 MIT；生成的 port 和桥接代码归你所有。README 声明这是一个独立项目，与 Rust 项目、Rust 基金会无关，“Rust” 是 Rust 基金会的商标。</p> <p>本文所有命令、数字与引文均取自仓库 README、<code class="language-plaintext highlighter-rouge">DECISIONS.md</code>、<code class="language-plaintext highlighter-rouge">demo/x18n-core/README.md</code>、<code class="language-plaintext highlighter-rouge">docs/real-world-languages.md</code> 与 GitHub API（核对时间 2026-11-18）。架构示意图为根据公开文档重绘，非官方原图；图中「回退率」的下降曲线是示意，实线数值不代表某个真实项目的逐步记录。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/mainline-git-native-intent-memory/">Mainline：工程判断该住在 Git 里，不该住在数据库里</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/intent-system-intent-driven-development/">Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/vllm-kv-cache-ledger/">vLLM：每次重写，改的都是同一本显存账</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/diagram-design-agent-skill-lint/">Diagram Design：50 种图表是目录，能拒绝你的检查才是产品</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/gpu-unlock-geforce-tensor-half-rate/">gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/octop-single-process-agent-platform/">Octop：单进程是它的地基，也是它的天花板</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/voicestudio-local-voice-workstation/">VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/droiddeck-android-handheld-host/">DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/magpie-quota-cache-gateway/">magpie：它调度的不是模型，是会过期的额度</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/aerial-tv-launcher-foreground-takeover/">Aerial：换桌面不是画界面，是在别人的固件里抢前台</a> </li> </ul> </div> </div> <div class="col-sm-3"> <nav id="toc-sidebar" class="sticky-top toc toc-sidebar" aria-label="Table of contents" data-toc-collapse="auto" data-toc-collapse-depth=""></nav> </div> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 18, 2026. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=e49affc7bd2646f6acdad1dbe02c2359" type="text/javascript"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/al_math/js/mathjax-setup.js"></script> <script src="/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script defer src="https://cdn.jsdelivr.net/npm/tocbot@4.36.4/dist/tocbot.min.js" integrity="sha256-lo/r+jQ81wWrxdIiiiEEd538z4+dTJTt+leOuAS7GCw=" crossorigin="anonymous"></script> <script src="/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/al_img_tools/js/zoom.js"></script> <script defer src="/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-关于我",
+    title: "关于我",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/";
+    },
+  },{id: "nav-博客",
+          title: "博客",
+          description: "记录 AI、开发者工具、知识管理与产品实践。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/blog/";
+          },
+        },{id: "nav-知识地图",
+          title: "知识地图",
+          description: "沿着概念、文章与项目之间的关系，探索本站的知识脉络。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/knowledge/";
+          },
+        },{id: "nav-提示词",
+          title: "提示词",
+          description: "经过整理、可以直接复用和继续修改的提示词。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/prompts/";
+          },
+        },{id: "nav-网站",
+          title: "网站",
+          description: "值得反复访问的技术信源、开发工具与研究入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/sites/";
+          },
+        },{id: "nav-项目",
+          title: "项目",
+          description: "持续维护的项目，每个都有详情页与源码入口。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/projects/";
+          },
+        },{id: "nav-全部仓库",
+          title: "全部仓库",
+          description: "GitHub 上的全部公开仓库，按语言分组、按最近推送排序。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/repositories/";
+          },
+        },{id: "nav-动态",
+          title: "动态",
+          description: "项目进展、版本发布与站点更新记录。",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/news/";
+          },
+        },{id: "post-rust-anything-语言迁移不是翻译-是一场可以判负的比较",
+        
+          title: "rust-anything：语言迁移不是翻译，是一场可以判负的比较",
+        
+        description: "从生成式录制、走真实 wrapper 的 diff、十条不许糊弄的 gate，到 x18n core 那 29 个「全对但更慢」的函数，拆解 rust-anything 为什么把迁移做成一场可以判负的比较，以及这套判定到底测不到什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/rust-anything-behavioral-port/";
+          
+        },
+      },{id: "post-mainline-工程判断该住在-git-里-不该住在数据库里",
+        
+          title: "Mainline：工程判断该住在 Git 里，不该住在数据库里",
+        
+        description: "从 refs 里的追加式事件流、notes 上的意图挂载、squash 之后的三级 pin 级联，到提交覆盖率与 guard 治理，拆解 Mainline 为什么把 Agent 的记忆搬进 Git，以及这个选择到底换来了什么、又付出了什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mainline-git-native-intent-memory/";
+          
+        },
+      },{id: "post-intent-system-它不信任-ai-所以把流程搬出-ai-的上下文",
+        
+          title: "Intent-System：它不信任 AI，所以把流程搬出 AI 的上下文",
+        
+        description: "从两类 agent 的读写边界、label 的原子迁移、packet 四份文件，到四类不可外包的 facets 与三种席位编排，拆开 intent-system 这条 0.32.1 的确定性 CLI，看它把哪些判断留给了人，又在哪一处承认自己守不住。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/intent-system-intent-driven-development/";
+          
+        },
+      },{id: "post-vllm-每次重写-改的都是同一本显存账",
+        
+          title: "vLLM：每次重写，改的都是同一本显存账",
+        
+        description: "从 60%–80% 的 KV Cache 浪费到不足 4%，从 V0 的两段式调度到 V1 的统一 token 预算、实测分配和抢占即重算，拆开 vLLM 这本显存账：谁记账、记什么，以及 2 + N 个进程这笔账。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/vllm-kv-cache-ledger/";
+          
+        },
+      },{id: "post-diagram-design-50-种图表是目录-能拒绝你的检查才是产品",
+        
+          title: "Diagram Design：50 种图表是目录，能拒绝你的检查才是产品",
+        
+        description: "67,720 星的 Agent Skill：50 份图表参考合计 481 KB，画一张流程图却只读 1,079 字节；拆解它把审美写成 4px 网格、9 个节点上限、六条连线规则和一组会失败的检查。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/diagram-design-agent-skill-lint/";
+          
+        },
+      },{id: "post-gpu-unlock-geforce-的半速矩阵算力-写死在八个-4-位字段里",
+        
+          title: "gpu-unlock：GeForce 的半速矩阵算力，写死在八个 4 位字段里",
+        
+        description: "NVIDIA 把 GeForce 的 FP16/BF16 矩阵发射速率写进两个寄存器的八个 4 位字段，默认值就是半速。拆开 gpu-unlock 怎么借 SEC2 的 heavy-secure 上下文改掉它，以及为什么这件事只能在引导那一瞬间做。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpu-unlock-geforce-tensor-half-rate/";
+          
+        },
+      },{id: "post-octop-单进程是它的地基-也是它的天花板",
+        
+          title: "Octop：单进程是它的地基，也是它的天花板",
+        
+        description: "从 ADR 001 的单进程取舍、deepagents 底座、主持人派工的团队模型，到只取 atom 的记忆召回和 PII 脱敏的真实范围，拆开腾讯云开源的 Octop，看这条 pip install 撑起整个平台的路，在哪三处变成天花板。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/octop-single-process-agent-platform/";
+          
+        },
+      },{id: "post-voicestudio-把-elevenlabs-搬回本地之后-账单换成了许可证",
+        
+          title: "VoiceStudio：把 ElevenLabs 搬回本地之后，账单换成了许可证",
+        
+        description: "11 万星的本地语音工作站：45 个 router、18 个引擎适配器、646 种语言背后只占 3.4% 的语料长尾，以及那份 73 条记录里 0 条标了可商用的模型许可证清单。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/voicestudio-local-voice-workstation/";
+          
+        },
+      },{id: "post-droiddeck-手机跑-pc-游戏不难-难的是让-android-相信自己正在当主机",
+        
+          title: "DroidDeck：手机跑 PC 游戏不难，难的是让 Android 相信自己正在当主机",
+        
+        description: "两个月两万星、十九万次下载之后，DroidDeck 的发布说明里几乎没有一句在讲模拟器：全是 proot 的微秒、ntsync 的往返、双屏的焦点。拆开看它到底补了 Android 缺的哪几层。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/droiddeck-android-handheld-host/";
+          
+        },
+      },{id: "post-magpie-它调度的不是模型-是会过期的额度",
+        
+          title: "magpie：它调度的不是模型，是会过期的额度",
+        
+        description: "从九种路由模式、五种 Stays 与「宁可 503 也不发明文」的脱敏规则出发，拆解 magpie 如何把订阅额度当库存出清，又如何在八十八个 Agent 的配置文件里进得去、退得出来。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/magpie-quota-cache-gateway/";
+          
+        },
+      },{id: "post-aerial-换桌面不是画界面-是在别人的固件里抢前台",
+        
+          title: "Aerial：换桌面不是画界面，是在别人的固件里抢前台",
+        
+        description: "从 89 行机型记录出发，拆解 Aerial 怎么用无障碍服务、窗口事件和通知监听，在只认自家桌面的固件里抢回前台，顺带算一遍电视 GPU 的帧预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/aerial-tv-launcher-foreground-takeover/";
+          
+        },
+      },{id: "post-colibri-同一个引擎-184-倍的速度差-全部来自权重住在哪一层",
+        
+          title: "colibri：同一个引擎 184 倍的速度差，全部来自权重住在哪一层",
+        
+        description: "从 744B / 5.4% / 11 GB 三个量级出发，拆解 colibri 的三层专家放置、顺序读、路由预取，以及那条「放置只准改速度、不准改模型」的验证纪律。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/colibri-tiered-expert-placement/";
+          
+        },
+      },{id: "post-geo-最有效的三种写法-官方提示词里都写着-可以编造",
+        
+          title: "GEO：最有效的三种写法，官方提示词里都写着“可以编造”",
+        
+        description: "从 Table 1 的九种方法排名、份额归一的口径，到 geo_functions.py 里三行允许虚构的提示词，拆解这篇 KDD 论文真正测到的是证据痕迹，而不是可信度。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/geo-generative-engine-optimization/";
+          
+        },
+      },{id: "post-helixharness-harness-工程的两份契约-一份写成了协议-一份还没有数据",
+        
+          title: "HelixHarness：Harness 工程的两份契约，一份写成了协议，一份还没有数据",
+        
+        description: "从 24 个 reference 协议文件里，拆解 HelixHarness 如何用 index.md 决定“AI 该读什么”、用冻结版本对照决定“Harness 改得对不对”，以及后者在公开仓库里为什么还只有骨架。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/helixharness-harness-contracts/";
+          
+        },
+      },{id: "post-mnn-端侧推理引擎真正的产品-是一张敢标-c-的支持矩阵",
+        
+          title: "MNN：端侧推理引擎真正的产品，是一张敢标 C 的支持矩阵",
+        
+        description: "从 18 行 × 4 种精度的 72 格支持矩阵、Metal Tensor API 与 DFlash 权重复用，拆解 MNN 3.6.2 的三条填格路线，以及每一格背后的维护费。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mnn-backend-precision-matrix/";
+          
+        },
+      },{id: "post-everything-project-50-个应用-0-个前端框架-它在重写-一个软件该有多大",
+        
+          title: "Everything Project：50 个应用、0 个前端框架，它在重写「一个软件该有多大」",
+        
+        description: "51 个目录、50 个应用、0 个 UI 框架、15 个 AGPL：拆开 HeyPuter 的 monorepo，看它怎么把 Excel、Photoshop、AutoCAD 各压成能单独 npm run dev 的目录，以及这份压缩的代价落在哪里。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/everything-monorepo-fifty-apps/";
+          
+        },
+      },{id: "post-desigma-撤销不该靠人保证-它该由命令自己算出来",
+        
+          title: "Desigma：撤销不该靠人保证，它该由命令自己算出来",
+        
+        description: "从 Command 枚举返回自己的逆操作，到 256 px 分块缓存与逐字节可重复的 CPU 渲染，拆解 Desigma 如何把撤销做成唯一的编辑原语，并让协作与 MCP Agent 共用同一个栈。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/desigma-command-inverse/";
+          
+        },
+      },{id: "post-haru-4b-全双工的瓶颈不是架构-是你录不到双声道对话",
+        
+          title: "Haru-4B：全双工的瓶颈不是架构，是你录不到双声道对话",
+        
+        description: "从 4000 万小时真实语音、1300 万小时分离出的双声道对话，到 7.5 Hz 三路合一与 65.2 ms 延迟，拆解 Haru-4B 为什么必须先造数据，再谈全双工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/haru-4b-full-duplex-separated-data/";
+          
+        },
+      },{id: "post-拉片笔记-7200-张截图装不进上下文-它把压缩写成了契约",
+        
+          title: "拉片笔记：7200 张截图装不进上下文，它把压缩写成了契约",
+        
+        description: "从 1 秒 1 帧的 7200 张截图、15 张 4×6 拼图的 360 格，到 12–20 个曲线点，拆解拉片笔记的三级有损压缩、prompt 里那几条纪律，以及它为什么不预设 DeepSeek。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/lapian-notes-film-breakdown/";
+          
+        },
+      },{id: "post-airgorah-把-root-赶出-gui-之后-每个跨边界的参数都得重新验一遍",
+        
+          title: "Airgorah：把 root 赶出 GUI 之后，每个跨边界的参数都得重新验一遍",
+        
+        description: "从 0600 的 socket、SO_PEERCRED 的 uid 校验到 16 个 IPC 请求的参数重验，拆解 Airgorah 如何把 root 关进一个只服务单客户端的 agent。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/airgorah-privilege-boundary/";
+          
+        },
+      },{id: "post-wsr-权重确实多给了-15-个点-也让它更敢说-变了",
+        
+          title: "WSR：权重确实多给了 15 个点，也让它更敢说「变了」",
+        
+        description: "从 0.730 对 0.578、p 小于 0.01 的判据到 53–88% 的集体误报，拆解 Weight-Space Reading 如何把「AI 能不能读权重」变成一次可证伪的实验。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/wsr-weight-space-reading/";
+          
+        },
+      },{id: "post-yogurt-本地优先不是一句承诺-是一组能被算出来的预算",
+        
+          title: "Yogurt：本地优先不是一句承诺，是一组能被算出来的预算",
+        
+        description: "从实时率 0.5、推荐线 15 tok/s 到 socket 的 0o600，拆解 Yogurt 如何把两路音频转写、模型选型与 MCP 只读访问算成一组可检查的预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/yogurt-local-meeting-notes/";
+          
+        },
+      },{id: "post-blender-kiln-ai-建模缺的不是生成能力-是交付前的度量",
+        
+          title: "Blender Kiln：AI 建模缺的不是生成能力，是交付前的度量",
+        
+        description: "拆解 kiln 的 31 条铁律、九段流水线与连续两轮干净的独立审核：191,520 面的生成件怎么修到 9,000 面，形状分 0.888 / 0.948 / 0.729 怎么量出来，以及审核为什么让单件成本翻倍。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/blender-kiln-3d-asset-pipeline/";
+          
+        },
+      },{id: "post-cinecode-每一帧都是时间的纯函数-所以电影可以被检查",
+        
+          title: "CineCode：每一帧都是时间的纯函数，所以电影可以被检查",
+        
+        description: "从「900 帧都是 f(t)」这条约束出发，拆解 CineCode 如何把镜头、响度、文案和许可翻译成 agent 能跑的检查项，以及它为一个 30 秒短片付出的 100–250 步上下文预算。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/cinecode-film-as-pure-function/";
+          
+        },
+      },{id: "post-ohmygame-ai-生成游戏不难-难的是让它自己发现游戏跑不起来",
+        
+          title: "OhMyGame：AI 生成游戏不难，难的是让它自己发现游戏跑不起来",
+        
+        description: "从 30 秒超时、4 个隐藏窗口、6,000 字符截断三个数字出发，拆解 OhMyGame 如何把「试玩」做成 agent 的工具，以及它为此接受的两级信任模型、检查点与插件边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ohmygame-agent-game-studio/";
+          
+        },
+      },{id: "post-gpt-2-的一次前向-一条-768-维的向量-被改写-12-次-变成-50257-个分数",
+        
+          title: "GPT-2 的一次前向：一条 768 维的向量，被改写 12 次，变成 50257 个分数",
+        
+        description: "从分词、embedding、12 个 block 到 logits 与采样，按真实形状走一遍 GPT-2 的一次前向；再讲清库名与 torch 模块的对应关系，以及为什么「改了激活」不等于「改出了效果」。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/gpt2-forward-pass-intervention/";
+          
+        },
+      },{id: "post-saelens-重建得越准-特征越不一定是真的",
+        
+          title: "SAELens：重建得越准，特征越不一定是真的",
+        
+        description: "从 2304 维激活到 16384 个稀疏方向，拆解 SAELens 的编码解码结构、三个会让分析悄悄失真的管线默认值，以及 error term 为什么是让特征干预可证伪的那一行。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/saelens-sparse-autoencoder-instrument/";
+          
+        },
+      },{id: "post-tokeneconomizer-coding-agent-的成本按仓库累积-不按任务计价",
+        
+          title: "TokenEconomizer：Coding Agent 的成本按仓库累积，不按任务计价",
+        
+        description: "从「重复的运维动作、从未调用的工具、吃掉 32% 预算的失败任务」三个实测来源出发，拆解 micro-skills、工具裁剪与失败循环干预的证据闸门，以及论文与发布版插件之间的四处分歧。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/tokeneconomizer-experience-driven-cost-control/";
+          
+        },
+      },{id: "post-transformer-explainer-把-gpt-2-塞进浏览器-让模型边算边解释自己",
+        
+          title: "Transformer Explainer：把 GPT-2 塞进浏览器，让模型边算边解释自己",
+        
+        description: "从分词、Pre-LN Block、因果遮罩到采样旋钮，拆解 Transformer Explainer 如何用 Svelte、D3 和 ONNX Runtime Web 在浏览器里跑起一个真 GPT-2，并把中间结果变成可操作的解释。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer-explainer/";
+          
+        },
+      },{id: "post-boubou-本地语音-ai-缺的不是模型-是一层能借给全屋的运行时",
+        
+          title: "Boubou：本地语音 AI 缺的不是模型，是一层能借给全屋的运行时",
+        
+        description: "从两种语音模式、Rust 运行时、打断延迟到 serve 的证书与密钥设计，拆解 Boubou 如何把本地语音模型变成手机上扫码就能用的服务。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/boubou-local-voice-runtime/";
+          
+        },
+      },{id: "post-hy-mt2-把翻译拆成语言家族分头训练-再蒸馏回一个模型",
+        
+          title: "Hy-MT2：把翻译拆成语言家族分头训练，再蒸馏回一个模型",
+        
+        description: "从 1T tokens 的翻译中期训练、Chimera Teacher 的参考引导在线蒸馏、家族专属 GRPO，到跨家族融合与 1.25-bit 稀疏三值量化，拆解腾讯混元 Hy-MT2 的完整后训练管线。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hy-mt2-family-centric-post-training/";
+          
+        },
+      },{id: "post-nnsight-把干预写进前向传播-让同一段代码在-405b-模型上跑",
+        
+          title: "NNsight：把干预写进前向传播，让同一段代码在 405B 模型上跑",
+        
+        description: "从延迟执行、intervention graph、greenlet 交错到 NDIF 远程运行，讲清楚 NNsight 0.8 凭什么把「读一层激活」变成一行 Python，以及它那批不报错的坑。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/nnsight-deferred-intervention/";
+          
+        },
+      },{id: "post-safetensors-用-8-个字节和一段-json-重新设计大模型的权重文件",
+        
+          title: "Safetensors：用 8 个字节和一段 JSON，重新设计大模型的权重文件",
+        
+        description: "从文件布局、校验规则、mmap 零拷贝到分片加载，拆解 Safetensors 为什么能替代 pickle；并用一份 2.44 GiB 的真实 checkpoint 实测加载耗时、常驻内存，最后演示如何不加载整个模型、原地改掉一个 Attention Head 的权重。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/safetensors-weight-format/";
+          
+        },
+      },{id: "post-pyvene-深入模型内部-理解并干预神经网络行为的开源工具",
+        
+          title: "pyvene：深入模型内部，理解并干预神经网络行为的开源工具",
+        
+        description: "从 Intervention 抽象、IntervenableModel 的执行流程，到 Activation Patching、可训练干预与 ReFT，梳理 pyvene 这套内部表示干预框架能证明什么、不能证明什么，以及它和 NNsight、TransformerLens 之间的分工。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/pyvene-intervention-framework/";
+          
+        },
+      },{id: "post-arc-1-0-让-ai-agent-自己决定用哪个模型-想多深-在哪跑",
+        
+          title: "ARC 1.0：让 AI Agent 自己决定用哪个模型、想多深、在哪跑",
+        
+        description: "从成功率预测、Token 成本估算、推理强度控制到 Prefer-local，拆解 ARC 1.0 这个 0.8B 决策模型如何把模型路由变成可训练、可评估的决策问题，以及它的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/arc-adaptive-routing-controller/";
+          
+        },
+      },{id: "post-删掉-0-05-的权重-就能追上全量微调-deletion-tuning-与一种只做减法的后训练",
+        
+          title: "删掉 0.05% 的权重，就能追上全量微调：Deletion Tuning 与一种只做减法的后训练",
+        
+        description: "从可学习二值掩码、Wanda 初始化与掩码锐化，到 GRPO、SFT、SDFT 上的实测结果，拆解 NeurIPS 2026 论文《The Surprising Effectiveness of Deleting Weights in LLM Post-Training》：为什么把不到 0.05% 的权重置零，可以替代“写入新值”的微调。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deleting-weights-deletion-tuning/";
+          
+        },
+      },{id: "post-freetoken-让消费级电脑跑起-284b-moe-一次把整机当成推理集群的系统设计",
+        
+          title: "FreeToken：让消费级电脑跑起 284B MoE，一次把整机当成推理集群的系统设计",
+        
+        description: "从 prefill 的双缓冲流式加载、decode 的 q* 带宽分配策略到语义锚点缓存，拆解 FreeToken 如何在 8GB 笔记本到单张工作站 GPU 上服务前沿 MoE 模型。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/freetoken-edge-moe-serving/";
+          
+        },
+      },{id: "post-transformerlens-打开大模型的黑盒-用-hook-和因果干预研究-transformer-内部",
+        
+          title: "TransformerLens：打开大模型的黑盒，用 Hook 和因果干预研究 Transformer 内部",
+        
+        description: "从 Hook 系统、Activation Patching、DLA 到 4.0 的 Driver 架构，系统梳理 TransformerLens 这套机制可解释性工具链能证明什么、不能证明什么。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformerlens-mech-interp/";
+          
+        },
+      },{id: "post-sub2api-把-claude-openai-gemini-统一接入-一个开源-ai-api-网关的设计与边界",
+        
+          title: "Sub2API：把 Claude、OpenAI、Gemini 统一接入，一个开源 AI API 网关的设计与边界",
+        
+        description: "从多账号管理、API Key 分发、账号调度、Token 级计费到协议适配，拆解 Sub2API 这套 Go + Vue 3 的 AI API 网关架构，以及它在合规与稳定性上的真实边界。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/sub2api-ai-api-gateway/";
+          
+        },
+      },{id: "post-train-llm-from-scratch-从零开始训练自己的大语言模型",
+        
+          title: "Train LLM From Scratch：从零开始训练自己的大语言模型",
+        
+        description: "使用原生 PyTorch，从 Tokenizer、Transformer 和预训练出发，逐步理解 SFT、DPO、PPO、GRPO 与大语言模型的完整训练流程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/train-llm-from-scratch/";
+          
+        },
+      },{id: "post-deepseek-v4-1-flash-1017-uncensored-不重新训练模型-直接修改权重-让-ai-改变回答行为",
+        
+          title: "DeepSeek-V4.1-Flash-1017-Uncensored：不重新训练模型，直接修改权重，让 AI 改变回答行为",
+        
+        description: "从闭式权重编辑、MoE 架构、能力评测和部署方式出发，分析如何在不重新训练模型的情况下改变大模型的拒绝行为。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/deepseek-v4-weight-editing/";
+          
+        },
+      },{id: "post-idol-一张图片生成百万级-3d-高斯模型-ai-正在重新定义三维建模",
+        
+          title: "Idol：一张图片生成百万级 3D 高斯模型，AI 正在重新定义三维建模",
+        
+        description: "Idol 通过单张图片推断三维结构，最多生成 1,048,576 个 3D Gaussian，为三维资产生成与实时交互提供了新的工作流。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/idol-image-to-3d-gaussian/";
+          
+        },
+      },{id: "post-windows-上-保存失败-文件被占用时原子替换为什么会报错",
+        
+          title: "Windows 上「保存失败」：文件被占用时原子替换为什么会报错",
+        
+        description: "一个桌面项目里的踩坑记录：只要还有句柄指向目标文件，原子替换就会失败，以及三层修法。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/windows-atomic-write/";
+          
+        },
+      },{id: "post-一次-css-压缩把整站布局打散",
+        
+          title: "一次 CSS 压缩把整站布局打散",
+        
+        description: "预编译 Tailwind 的间距 token 不能二次压缩：var(--spacing) 被拆成 var( -  - spacing) 的排查过程。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/css-minify-broke-tailwind/";
+          
+        },
+      },{id: "post-把个人站从-魔改模板-改成-薄启动器",
+        
+          title: "把个人站从「魔改模板」改成「薄启动器」",
+        
+        description: "一次架构上的降维：把运行时交给插件包，站点只保留内容与配置。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/thin-starter-architecture/";
+          
+        },
+      },{id: "post-从这里开始",
+        
+          title: "从这里开始",
+        
+        description: "记录 AI、开发者工具、知识管理与产品实践。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/hello-world/";
+          
+        },
+      },{id: "news-站点上线-目标很简单-把正在做的项目-写下的思考和踩过的坑放在同一个地方-并且保证每一条都能被验证",
+          title: '站点上线。目标很简单：把正在做的项目、写下的思考和踩过的坑放在同一个地方，并且保证每一条都能被验证。',
+          description: "",
+          section: "News",},{id: "news-站内第一篇技术复盘-从这里开始-已发布-之后会陆续写代码智能体-多智能体协作和-rust-命令行工具相关的工程记录",
+          title: '站内第一篇技术复盘《从这里开始》已发布。之后会陆续写代码智能体、多智能体协作和 Rust 命令行工具相关的工程记录。',
+          description: "",
+          section: "News",},{id: "news-项目页重新整理-每个项目补上了定位-技术栈与源码入口-卡片改为指向站内详情页-而不是直接跳到-github-完整仓库清单见-开源仓库-页",
+          title: '项目页重新整理：每个项目补上了定位、技术栈与源码入口，卡片改为指向站内详情页，而不是直接跳到 GitHub。完整仓库清单见「开源仓库」页。',
+          description: "",
+          section: "News",},{id: "news-首页改版-新增-精选项目-最近在写-最近动态-三块内容-导航栏也多了一个-动态-入口-首页不再只是一段自我介绍-而是一份能持续更新的工作台账",
+          title: '首页改版：新增「精选项目」「最近在写」「最近动态」三块内容，导航栏也多了一个「动态」入口。首页不再只是一段自我介绍，而是一份能持续更新的工作台账。',
+          description: "",
+          section: "News",},{id: "news-新增-网站-页-把平时收集的站点做成卡片墙-按标签筛选-条目放在-data-websites-yml-以后加网站只改数据文件",
+          title: '新增「网站」页：把平时收集的站点做成卡片墙，按标签筛选；条目放在 `_data/websites.yml`，以后加网站只改数据文件。',
+          description: "",
+          section: "News",},{id: "projects-blade-ai-editor",
+          title: 'Blade AI Editor',
+          description: "面向 AI 辅助开发场景的编辑器，探索人与智能体共同编码的新体验。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/blade-ai-editor/";
+            },},{id: "projects-catshell",
+          title: 'catshell',
+          description: "高效、轻量的文件查看工具，为顺畅的命令行工作流而生。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/catshell/";
+            },},{id: "projects-docuflowai",
+          title: 'DocuFlowAI',
+          description: "融合原生代码编辑器、LSP 与多运行时智能体执行的 AI 开发工作区。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/docuflow-ai/";
+            },},{id: "projects-folixa",
+          title: 'Folixa',
+          description: "基于 C++20、Qt 6 与 PDFium 构建的原生 AI PDF 编辑器。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/folixa/";
+            },},{id: "projects-九峰兰亭商业",
+          title: '九峰兰亭商业',
+          description: "聚焦江宁东山周边商业信息，将本地需求转化为数字产品。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/jiufenglanting-business/";
+            },},{id: "projects-mix-knowledg",
+          title: 'mix-knowledg',
+          description: "探索多个智能体共同组织、处理和连接知识的协作方式。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/mix-knowledg/";
+            },},{id: "projects-neuralnotes",
+          title: 'NeuralNotes',
+          description: "以知识星图连接笔记，在关系网络中发现新的信息线索。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/neuralnotes/";
+            },},{id: "projects-planloop",
+          title: 'planloop',
+          description: "将智能体计划变成可校验数据，用验收、记忆和预算约束执行过程。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/planloop/";
+            },},{id: "projects-strata",
+          title: 'Strata',
+          description: "将工作项、周期、模块、页面和分析整合在一起的开源项目管理平台。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/strata/";
+            },},{id: "projects-superdba",
+          title: 'SuperDBA',
+          description: "面向开发者与 AI 智能体的开源数据库工作空间。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/superdba/";
+            },},{id: "projects-veyra-studio",
+          title: 'Veyra Studio',
+          description: "本地优先、与宿主无关的 AI 界面设计环境。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/veyra-studio/";
+            },},{id: "projects-weber-code-agent",
+          title: 'weber-code-agent',
+          description: "理解代码、执行任务并协助完成软件开发工作的代码智能体。",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/weber-code-agent/";
+            },},{id: "prompts-agent-任务契约",
+          title: 'Agent 任务契约',
+          description: "为编码或研究 Agent 明确目标、范围、约束、验证和完成条件。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/agent-task-contract/";
+            },},{id: "prompts-面向风险的代码审查",
+          title: '面向风险的代码审查',
+          description: "先找真实缺陷和回归风险，再讨论风格与可维护性。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/code-review/";
+            },},{id: "prompts-数据分析问题定义",
+          title: '数据分析问题定义',
+          description: "在计算指标之前明确口径、假设、异常值和可回答范围。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/data-analysis/";
+            },},{id: "prompts-图像生成艺术指导",
+          title: '图像生成艺术指导',
+          description: "用主体、构图、光线、材质和约束组织可迭代的图像提示词。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/image-direction/";
+            },},{id: "prompts-月夜泛舟",
+          title: '月夜泛舟',
+          description: "用极简构图、冷蓝月光和一盏暖灯，写出一幅静谧的东方夜湖行舟图。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/moonlit-lake-boat/";
+            },},{id: "prompts-开源项目深度研究",
+          title: '开源项目深度研究',
+          description: "从证据、架构、实现路径与限制出发分析一个开源项目。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/project-research/";
+            },},{id: "prompts-技术文章论点编辑",
+          title: '技术文章论点编辑',
+          description: "把资料整理成有中心论点的技术文章，而不是功能说明书。",
+          section: "Prompts",handler: () => {
+              window.location.href = "/prompts/technical-writing/";
+            },},{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/fengjutian", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%66%65%6E%67%6A%75%74%69%61%6E@%75%73%65%72%73.%6E%6F%72%65%70%6C%79.%67%69%74%68%75%62.%63%6F%6D", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/assets/al_search/js/shortcut-key.js"></script> </body> </html>
