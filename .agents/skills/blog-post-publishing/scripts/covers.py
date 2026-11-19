@@ -974,6 +974,48 @@ def motif_switches(d, box, accent, tag):
     d.text((x, y + h + 18), tag, font=font(16), fill=FAINT)
 
 
+def motif_split(d, box, accent, tag):
+    """One sentence carrying three ideas, split into three sentences of one idea
+    each -- S1 of the STE80 list, drawn."""
+    x, y, w, h = box
+
+    def mno(size, bold=False):
+        return ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf" if bold
+                                  else r"C:\Windows\Fonts\consola.ttf", size)
+
+    d.text((x, y + 4), "one sentence, three ideas", font=font(15), fill=mix(DIM, accent, 0.4))
+
+    # the long sentence
+    d.rounded_rectangle((x + 2, y + 36, x + w - 2, y + 96), radius=10,
+                        fill=mix(BG_TOP, DIM, 0.16), outline=mix(BG_TOP, DIM, 0.42), width=2)
+    for i, lab in enumerate(("idea A", "idea B", "idea C")):
+        cx = x + 34 + i * (w - 68) / 3
+        d.text((cx, y + 66), lab, font=font(15), fill=mix(DIM, WHITE, 0.35), anchor="mm")
+        if i:
+            d.line((cx - (w - 68) / 6, y + 50, cx - (w - 68) / 6, y + 82),
+                   fill=mix(BG_TOP, DIM, 0.55), width=2)
+
+    # the arrow, tagged with the rule
+    ax = x + 26
+    d.line((ax, y + 104, ax, y + 132), fill=accent, width=3)
+    d.polygon([(ax, y + 142), (ax - 7, y + 128), (ax + 7, y + 128)], fill=accent)
+    d.text((ax + 16, y + 110), "S1  one idea per sentence", font=font(14), fill=accent)
+
+    # three short sentences
+    widths = (0.34, 0.26, 0.30)
+    ry = y + 152
+    for i, wf in enumerate(widths):
+        d.rounded_rectangle((x + 2, ry, x + 2 + (w - 4) * wf, ry + 44), radius=8,
+                            fill=tint(accent, 0.45), outline=accent, width=2)
+        d.text((x + 16, ry + 12), "idea " + "ABC"[i], font=font(14), fill=WHITE)
+        ry += 56
+
+    for i, tagtxt in enumerate(("S6  active voice", "S8  verbs, not nouns")):
+        d.text((x + 2, y + 318 + i * 22), tagtxt, font=font(13), fill=mix(DIM, accent, 0.35))
+
+    d.text((x, y + h + 26), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -2110,6 +2152,15 @@ def build(slug, out_dir):
         d.text((M, 460), "3,568 star · 377 fork · Scrape / Crawl / Search / Map / Batch", font=font(18),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "ste80":
+        head(d, accent, "Dodaios / MIT / 916 stars / agent skill",
+             "STE80\nHumanizer", "改完，事实还在",
+             (M, 136), 82, (M, 344), 470, thesis_size=25)
+        motif_split(d, (648, 130, 496, 352), accent, "先把句子拆开，再谈风格")
+        d.text((M, 408), "26 条 AI 特征 · S1–S15 结构规则 · 一个 python 检查器", font=font(18), fill=DIM)
+        d.text((M, 444), "方法来自 Karpathy 2026-10-02 的那条推文", font=font(18),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2198,6 +2249,8 @@ CARDS = {
                     color=(216, 66, 78), glow=(890, 292), glow_r=470, strength=0.30),
     "anycrawl": dict(file="anycrawl-llm-ready-defaults.jpg",
                      color=(109, 71, 184), glow=(880, 296), glow_r=470, strength=0.32),
+    "ste80": dict(file="ste80-humanizer-two-passes.jpg",
+                  color=(24, 104, 132), glow=(884, 292), glow_r=470, strength=0.32),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",

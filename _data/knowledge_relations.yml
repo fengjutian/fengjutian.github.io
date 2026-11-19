@@ -177,6 +177,9 @@
 - source: topic:developer-tools
   target: post:anycrawl-llm-ready-defaults
   type: applies
+- source: topic:developer-tools
+  target: post:ste80-humanizer-two-passes
+  type: applies
 - source: post:everything-monorepo-fifty-apps
   target: post:thin-starter-architecture
   type: related_to
@@ -301,6 +304,9 @@
 - source: topic:engineering-judgment
   target: post:cognitive-game-mutual-prediction
   type: grounds
+- source: topic:engineering-judgment
+  target: post:ste80-humanizer-two-passes
+  type: applies
 - source: post:mainline-git-native-intent-memory
   target: post:intent-system-intent-driven-development
   type: related_to
