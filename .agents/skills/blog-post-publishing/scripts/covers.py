@@ -1933,11 +1933,11 @@ def build(slug, out_dir):
 
     elif slug == "cognitive-game":
         head(d, accent, "认知博弈 / I-POMDP / 可辨识性",
-             "认知\n博弈", "预测一旦被用来行动，就不再是关于未来的陈述",
+             "认知\n博弈", "两个主体互相预测时，未来由谁决定",
              (M, 126), 96, (M, 372), 470, thesis_size=25)
         motif_phaselag(d, (620, 112, 508, 396), accent, "行动 → 观测 → 更新 → 行动")
-        d.text((M, 468), "两个射手 · 两个概率云 · 一个闭环", font=font(20), fill=DIM)
-        d.text((M, 504), "难点不是递归多深，是可辨识性", font=font(20),
+        d.text((M, 468), "信念表示 · 递归层级 · 可辨识性", font=font(20), fill=DIM)
+        d.text((M, 504), "从概率云到双主体闭环", font=font(20),
                fill=mix(DIM, accent, 0.7))
 
     elif slug == "two-agent":
