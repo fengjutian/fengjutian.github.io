@@ -942,6 +942,38 @@ def motif_rss(d, box, accent, tag):
     d.text((x, y + h + 12), tag, font=font(16), fill=FAINT)
 
 
+def motif_switches(d, box, accent, tag):
+    """Four defaults already switched on: the product is the settings nobody has
+    to touch. Rails with the knob parked at the far end."""
+    x, y, w, h = box
+
+    def mno(size, bold=False):
+        return ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf" if bold
+                                  else r"C:\Windows\Fonts\consola.ttf", size)
+
+    d.text((x, y + 4), "four defaults, already on", font=font(15),
+           fill=mix(DIM, accent, 0.35))
+
+    rows = [("engine", "auto"), ("only_main_content", "true"),
+            ("formats", "markdown"), ("store_in_cache", "true")]
+    ry = y + 36
+    for name, val in rows:
+        d.text((x, ry + 14), name, font=mno(14), fill=mix(DIM, WHITE, 0.35))
+        d.text((x + w - 4, ry + 14), val, font=mno(14, True), fill=accent, anchor="ra")
+
+        track_y = ry + 48
+        d.line((x + 2, track_y, x + w - 2, track_y), fill=mix(BG_TOP, DIM, 0.45), width=3)
+        d.line((x + 2, track_y, x + w - 2, track_y), fill=mix(BG_TOP, accent, 0.22), width=7)
+        knob_x = x + w - 14
+        d.ellipse((knob_x - 10, track_y - 10, knob_x + 10, track_y + 10), fill=accent)
+        d.ellipse((knob_x - 4, track_y - 4, knob_x + 4, track_y + 4), fill=mix(accent, WHITE, 0.7))
+        ry += 70
+
+    d.text((x, y + h - 22), "nobody has to read a best-practice page", font=font(15),
+           fill=mix(DIM, accent, 0.4))
+    d.text((x, y + h + 18), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -2069,6 +2101,15 @@ def build(slug, out_dir):
         d.text((M, 460), "7 个模型族 · native CPU 与 Vulkan 两个后端", font=font(19),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "anycrawl":
+        head(d, accent, "any4ai / TypeScript / MIT / 3.5k stars",
+             "AnyCrawl", "LLM-ready 不是模型给的，是默认值给的",
+             (M, 146), 96, (M, 352), 470, thesis_size=25)
+        motif_switches(d, (648, 128, 496, 356), accent, "抓取 → 清洗 → markdown，四个默认值一路开着")
+        d.text((M, 424), "auto 引擎 · 只留正文 · markdown · 缓存", font=font(19), fill=DIM)
+        d.text((M, 460), "3,568 star · 377 fork · Scrape / Crawl / Search / Map / Batch", font=font(18),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2155,6 +2196,8 @@ CARDS = {
                         color=(26, 150, 190), glow=(890, 292), glow_r=470, strength=0.30),
     "cheetah": dict(file="cheetah-tiered-memory-rss.jpg",
                     color=(216, 66, 78), glow=(890, 292), glow_r=470, strength=0.30),
+    "anycrawl": dict(file="anycrawl-llm-ready-defaults.jpg",
+                     color=(109, 71, 184), glow=(880, 296), glow_r=470, strength=0.32),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",
