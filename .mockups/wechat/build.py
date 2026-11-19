@@ -9,6 +9,7 @@ import base64
 import io
 import os
 import re
+import struct
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -69,21 +70,44 @@ def formula(text):
             % (INK, inline(text)))
 
 
-def image(path, caption):
-    full = os.path.join(ROOT, path.replace("/", os.sep))
-    if not os.path.exists(full):
-        full = os.path.join(os.path.dirname(os.path.abspath(__file__)), path.replace("/", os.sep))
-    if not os.path.exists(full):
-        raise SystemExit("missing image: " + path)
+def b64(path, fallback_dirs=()):
+    cands = [os.path.join(ROOT, path.replace("/", os.sep)),
+             os.path.join(os.path.dirname(os.path.abspath(__file__)), path.replace("/", os.sep))]
+    cands.extend(fallback_dirs)
+    for full in cands:
+        if os.path.exists(full):
+            with open(full, "rb") as fh:
+                return base64.b64encode(fh.read()).decode("ascii"), full
+    raise SystemExit("missing image: " + path)
+
+
+def png_size(full):
     with open(full, "rb") as fh:
-        b64 = base64.b64encode(fh.read()).decode("ascii")
+        head = fh.read(24)
+    if head[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return struct.unpack(">II", head[16:24])
+
+
+def image(path, caption):
+    data, full = b64(path)
     mime = "image/jpeg" if path.lower().endswith((".jpg", ".jpeg")) else "image/png"
     cap = ('<section style="margin:10px 0 30px;text-align:center;">'
            '<section style="font-size:13px;color:%s;line-height:1.7;letter-spacing:.2px;">%s'
            "</section></section>" % (MUTED, inline(caption))) if caption else ""
     return ('<section style="margin:30px 0 0;">'
             '<img src="data:%s;base64,%s" style="width:100%%;height:auto;display:block;'
-            'border-radius:4px;" /></section>%s' % (mime, b64, cap))
+            'border-radius:4px;" /></section>%s' % (mime, data, cap))
+
+
+def equation(path, scale=3.0):
+    """Formula PNG rendered at `scale`x; pin the CSS width so it is not upscaled."""
+    data, full = b64(path)
+    size = png_size(full)
+    css_w = int(round(size[0] / scale)) if size else 560
+    return ('<section style="margin:6px 0 24px;text-align:center;">'
+            '<img src="data:image/png;base64,%s" style="width:%dpx;max-width:100%%;'
+            'height:auto;display:inline-block;" /></section>' % (data, css_w))
 
 
 def code(lines):
@@ -170,6 +194,8 @@ def build():
             out.append(highlight(line[2:].strip()))
         elif line.startswith("$ "):
             out.append(formula(line[2:].strip()))
+        elif line.startswith("EQ "):
+            out.append(equation(line[3:].strip()))
         elif line.startswith("IMG "):
             path, _, cap = line[4:].partition("|")
             out.append(image(path.strip(), cap.strip()))
