@@ -131,7 +131,7 @@
 → 配置里的 feature flag 打开了吗？
 → 这一页的 front matter 里接入了吗？
 </code></pre></div></div> <p>第二个坑是 <code class="language-plaintext highlighter-rouge">Gemfile</code> 和 <code class="language-plaintext highlighter-rouge">_config.yml</code> 是<strong>两张必须对齐的清单</strong>。只在一边出现的插件是惰性的——加载了，但什么也不做。</p> <h2 id="代价">代价</h2> <p>不是白拿的：</p> <ul> <li>想改主题行为，得去插件仓库提 PR，本地无法「快速试一下」；</li> <li>升级从「merge 冲突」变成了「读 changelog」，但 changelog 读起来比 merge 冲突舒服得多；</li> <li>多了一层间接：出问题时得先判断问题属于内容层还是运行时层。</li> </ul> <p>对个人站来说，这笔交易是划算的。我的内容迭代频率远高于主题定制频率，把迭代快的部分留在手里、把稳定的部分交给版本化发布，是正确的方向。</p> <h2 id="怎么确认自己没越界">怎么确认自己没越界</h2> <p>仓库里有一条自动化检查（<code class="language-plaintext highlighter-rouge">npm run lint:style-contract</code>），它会直接拒绝以下路径的存在：</p> <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>_layouts/   _includes/   _sass/   _scripts/   assets/tailwind/   assets/webfonts/
-</code></pre></div></div> <p>CI 挂了就是越界了，不用靠自觉。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cheetah-tiered-memory-rss/">Cheetah：常驻内存不该由模型大小决定</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pill-camera-control-seedance/">AI Filmmaking Camera Control：让模型只抄镜头，不抄人</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cognitive-game-mutual-prediction/">认知博弈：形式化、求解与可辨识性综述</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/maitian-multi-platform-publishing/">麦田（Maitian）：平台改版那天，不该让每个用户升级一次</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/software-engineering-handbook-judgment/">The Software Engineering Handbook：把工程判断写成一份自由度账本</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hypit-video-compiler-timeline/">Hypit：你编辑的是词，秒是编译出来的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-lora-shared-capacity/">Omni LoRA：一个 671 MB 的修正，要背两个任务</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-quantized-runtime-contracts/">Omni-Quantized：12 个构建，两套布局，省的是显存不是时间</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/video-shotcraft-shot-names/">video-shotcraft：150 个镜头名，就是 Agent 的接口</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/jina-ocr-output-length/">Jina-OCR-v1：赢在少写，不在写快</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 19, 2026. </div> </footer> <script>
+</code></pre></div></div> <p>CI 挂了就是越界了，不用靠自觉。</p> </div> </article> <br> <hr> <br> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/ste80-humanizer-two-passes/">STE80 Humanizer：改写不难，改完事实还在才难</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/anycrawl-llm-ready-defaults/">AnyCrawl：LLM-ready 不是模型给的，是默认值给的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cheetah-tiered-memory-rss/">Cheetah：常驻内存不该由模型大小决定</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/pill-camera-control-seedance/">AI Filmmaking Camera Control：让模型只抄镜头，不抄人</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/cognitive-game-mutual-prediction/">认知博弈：形式化、求解与可辨识性综述</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/maitian-multi-platform-publishing/">麦田（Maitian）：平台改版那天，不该让每个用户升级一次</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/software-engineering-handbook-judgment/">The Software Engineering Handbook：把工程判断写成一份自由度账本</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/hypit-video-compiler-timeline/">Hypit：你编辑的是词，秒是编译出来的</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-lora-shared-capacity/">Omni LoRA：一个 671 MB 的修正，要背两个任务</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/blog/2026/omni-quantized-runtime-contracts/">Omni-Quantized：12 个构建，两套布局，省的是显存不是时间</a> </li> </ul> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ju Tian Feng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Last updated: November 19, 2026. </div> </footer> <script>
   window.alFolio = {
     compatBootstrap: false
   };
@@ -198,7 +198,29 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/news/";
           },
-        },{id: "post-cheetah-常驻内存不该由模型大小决定",
+        },{id: "post-ste80-humanizer-改写不难-改完事实还在才难",
+        
+          title: "STE80 Humanizer：改写不难，改完事实还在才难",
+        
+        description: "从 Karpathy 那条「80% 的 ASD-STE100」推文、26 条 AI 特征的分组、S1–S15 结构规则，到 evals 里最反直觉的发现——风格模型本来就会，保真才是这个 skill 挣的。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/ste80-humanizer-two-passes/";
+          
+        },
+      },{id: "post-anycrawl-llm-ready-不是模型给的-是默认值给的",
+        
+          title: "AnyCrawl：LLM-ready 不是模型给的，是默认值给的",
+        
+        description: "从 engine=auto 的升级路径、only_main_content 的删减、同步与异步两种返回语义，到 schema 抽取新增的误差和文档里已经存在的 Monitors——拆解这个 3.5k 星项目的四个默认值，以及它们各自的代价。",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/anycrawl-llm-ready-defaults/";
+          
+        },
+      },{id: "post-cheetah-常驻内存不该由模型大小决定",
         
           title: "Cheetah：常驻内存不该由模型大小决定",
         
