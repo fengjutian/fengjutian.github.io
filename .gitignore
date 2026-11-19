@@ -17,7 +17,12 @@ test-results/
 vendor
 
 # Local design previews and screenshots (not part of the published site)
-.mockups/
+# Exception: the WeChat export kit is a deliverable, so .mockups/wechat/ is tracked
+# while its render previews stay ignored.
+.mockups/*
+!.mockups/wechat/
+.mockups/wechat/full.png
+.mockups/wechat/shots/
 
 # Scratch space for ad-hoc verification runs
 .shots/
