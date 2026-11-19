@@ -1513,6 +1513,99 @@ def motif_lora(d, box, accent, tag):
     d.text((x + 44, y + h - 34), tag, font=font(16), fill=mix(DIM, accent, 0.55), anchor="lm")
 
 
+def motif_twocloud(d, box, accent, tag):
+    """Two density clouds side by side, a reticle in the overlap, and two arcs
+    that carry each agent's model of the other across the gap."""
+    x, y, w, h = box
+    c1 = (x + w * 0.30, y + h * 0.44)
+    c2 = (x + w * 0.70, y + h * 0.56)
+    rx, ry = 124, 90
+
+    for cx, cy in (c1, c2):
+        for i in range(4, 0, -1):
+            k = i / 4
+            d.ellipse((cx - rx * k, cy - ry * k, cx + rx * k, cy + ry * k),
+                      fill=tint(accent, 0.10 + 0.36 * (1 - k)))
+        d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry),
+                  outline=mix(BG_TOP, accent, 0.55), width=2)
+
+    # the reticle sits where the two clouds overlap, on neither agent
+    mx, my = (c1[0] + c2[0]) / 2, (c1[1] + c2[1]) / 2
+    r = 24
+    d.ellipse((mx - r, my - r, mx + r, my + r), outline=WHITE, width=3)
+    d.line((mx - r - 13, my, mx - r + 4, my), fill=WHITE, width=3)
+    d.line((mx + r - 4, my, mx + r + 13, my), fill=WHITE, width=3)
+    d.line((mx, my - r - 13, mx, my - r + 4), fill=WHITE, width=3)
+    d.line((mx, my + r - 4, mx, my + r + 13), fill=WHITE, width=3)
+
+    def arc(p0, p1, lift, color):
+        ctrl = ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2 + lift)
+        pts = [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * ctrl[0] + t * t * p1[0],
+                (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * ctrl[1] + t * t * p1[1])
+               for t in (i / 40 for i in range(41))]
+        d.line(pts, fill=color, width=3, joint="curve")
+        arrow(d, pts[-5], pts[-1], color, 3, 12)
+
+    arc((c1[0] + 40, c1[1] - 80), (c2[0] - 40, c2[1] - 86), -80, mix(accent, WHITE, 0.42))
+    arc((c2[0] - 40, c2[1] + 84), (c1[0] + 40, c1[1] + 80), 80, mix(accent, WHITE, 0.42))
+
+    d.text((x + 6, y + h + 14), tag, font=font(16), fill=FAINT)
+
+
+def motif_phaselag(d, box, accent, tag):
+    """Two action traces that answer each other with a delay: the lag is the
+    only part of the loop you can actually measure from outside."""
+    x, y, w, h = box
+    d.rounded_rectangle((x, y, x + w, y + h), radius=16, fill=tint(accent, 0.05),
+                        outline=mix(BG_TOP, accent, 0.32), width=2)
+    d.text((x + 26, y + 24), "两条行动曲线，差一个反应延迟", font=font(17),
+           fill=mix(DIM, accent, 0.5))
+
+    x0, x1 = x + 44, x + w - 44
+    mid = y + 208
+    amp = 74.0
+    cyc = 2.2 * math.pi
+
+    def trace(shift, color, width=3):
+        pts = []
+        for i in range(161):
+            u = i / 160
+            px = x0 + (x1 - x0) * u
+            py = mid - amp * math.sin(cyc * u + shift)
+            pts.append((px, py))
+        d.line(pts, fill=color, width=width, joint="curve")
+        return pts
+
+    a_pts = trace(0.0, accent)
+    b_pts = trace(-0.62, mix(accent, WHITE, 0.42), width=2)
+
+    d.line((x0, mid, x1, mid), fill=mix(BG_TOP, accent, 0.26), width=1)
+
+    # the lag between the two peaks, marked by two guides
+    def peak_x(shift):
+        best, bx_ = -1e9, x0
+        for i in range(161):
+            u = i / 160
+            v = math.sin(cyc * u + shift)
+            if v > best:
+                best, bx_ = v, x0 + (x1 - x0) * u
+        return bx_
+
+    pa, pb = peak_x(0.0), peak_x(-0.62)
+    for px in (pa, pb):
+        for yy in range(y + 96, mid + 6, 14):
+            d.line((px, yy, px, yy + 7), fill=mix(BG_TOP, accent, 0.45), width=2)
+
+    d.line((pb, mid - amp - 26, pa, mid - amp - 26), fill=mix(DIM, WHITE, 0.45), width=2)
+    for px in (pa, pb):
+        d.line((px, mid - amp - 34, px, mid - amp - 18), fill=mix(DIM, WHITE, 0.45), width=2)
+    d.text(((pa + pb) / 2, mid - amp - 46), "相位滞后", font=font(16), fill=mix(DIM, WHITE, 0.62),
+           anchor="mm")
+
+    d.text((x + 44, y + h - 62), "延迟固定、响应不固定：这是闭环的指纹", font=font(16), fill=mix(DIM, WHITE, 0.5))
+    d.text((x + 44, y + h - 30), tag, font=font(17), fill=mix(DIM, accent, 0.55), anchor="lm")
+
+
 def build(slug, out_dir):
     A = CARDS[slug]
     accent = A["color"]
@@ -1838,6 +1931,24 @@ def build(slug, out_dir):
         d.text((M, 478), "国内四家的最后一次点击，永远留给人", font=font(19),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "cognitive-game":
+        head(d, accent, "认知博弈 / I-POMDP / 可辨识性",
+             "认知\n博弈", "预测一旦被用来行动，就不再是关于未来的陈述",
+             (M, 126), 96, (M, 372), 470, thesis_size=25)
+        motif_phaselag(d, (620, 112, 508, 396), accent, "行动 → 观测 → 更新 → 行动")
+        d.text((M, 468), "两个射手 · 两个概率云 · 一个闭环", font=font(20), fill=DIM)
+        d.text((M, 504), "难点不是递归多深，是可辨识性", font=font(20),
+               fill=mix(DIM, accent, 0.7))
+
+    elif slug == "two-agent":
+        head(d, accent, "POMDP · I-POMDP · ToM · 主动推断",
+             "双主体\n概率云", "射手瞄准的不是位置，是对手看见你之后的那团分布",
+             (M, 138), 76, (M, 352), 470, thesis_size=25)
+        motif_twocloud(d, (594, 146, 532, 336), accent, "两层信念 · 同一发子弹")
+        d.text((M, 470), "4 成继续 · 3 成左躲 · 2 成右闪 · 1 成不动", font=font(20), fill=DIM)
+        d.text((M, 506), "分布动了，不等于行为动了", font=font(20),
+               fill=mix(DIM, accent, 0.65))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -1920,6 +2031,10 @@ CARDS = {
                         color=(128, 142, 60), glow=(890, 292), glow_r=470, strength=0.30),
     "maitian": dict(file="maitian-multi-platform-publishing.jpg",
                     color=(132, 170, 198), glow=(890, 292), glow_r=470, strength=0.30),
+    "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
+                      color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
+    "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",
+                           color=(208, 92, 132), glow=(884, 288), glow_r=470, strength=0.30),
 }
 
 if __name__ == "__main__":
