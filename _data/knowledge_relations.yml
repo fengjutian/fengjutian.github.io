@@ -86,6 +86,9 @@
   target: post:gpu-unlock-geforce-tensor-half-rate
   type: applies
 - source: topic:inference-serving
+  target: post:cheetah-tiered-memory-rss
+  type: applies
+- source: topic:inference-serving
   target: post:sub2api-ai-api-gateway
   type: applies
 - source: topic:inference-serving
@@ -100,6 +103,9 @@
 - source: post:mnn-pocket-on-device-budget
   target: post:mnn-backend-precision-matrix
   type: extends
+- source: post:cheetah-tiered-memory-rss
+  target: post:vllm-kv-cache-ledger
+  type: related_to
 
 - source: topic:agent-systems
   target: post:helixharness-harness-contracts

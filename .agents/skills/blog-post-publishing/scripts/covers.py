@@ -898,6 +898,50 @@ def motif_pill(d, box, accent, tag):
            fill=mix(DIM, accent, 0.5))
     d.text((x, y + h + 18), tag, font=font(16), fill=FAINT)
 
+def motif_rss(d, box, accent, tag):
+    """Two bars on one scale: the whole model resident, and the same model under
+    a 16 MB / 32 MB budget -- plus the three residency tiers underneath."""
+    x, y, w, h = box
+
+    d.text((x, y + 6), "steady RSS, same model, same output", font=font(15),
+           fill=mix(DIM, accent, 0.35))
+
+    # untiered
+    d.rounded_rectangle((x + 2, y + 40, x + w - 2, y + 104), radius=8,
+                        fill=(20, 27, 40), outline=mix(BG_TOP, DIM, 0.55), width=2)
+    d.text((x + 16, y + 62), "2,497 MB", font=font(22, True), fill=mix(DIM, WHITE, 0.45))
+
+    # tiered: 123/2497 of the same width
+    bw = max(8, (w - 4) * 123 / 2497.0)
+    d.rounded_rectangle((x + 2, y + 120, x + 2 + bw, y + 184), radius=6,
+                        fill=accent, outline=accent, width=2)
+    d.line((x + 2 + bw + 4, y + 112, x + 2 + bw + 4, y + 192), fill=accent, width=2)
+    d.text((x + 2 + bw + 18, y + 128), "123 MB", font=font(24, True), fill=accent)
+    d.text((x + 2 + bw + 18, y + 160), "16 MB / 32 MB budget", font=font(14), fill=mix(DIM, accent, 0.55))
+
+    # the three tiers
+    tiers = [("tier 0", "VRAM", 0.0), ("tier 1", "RAM", 0.0), ("tier 2", "DISK", 1.0)]
+    ty = y + 224
+    cw = (w - 28) / 3
+    for i, (t0, t1, cold) in enumerate(tiers):
+        tx = x + i * (cw + 14)
+        d.rounded_rectangle((tx, ty, tx + cw, ty + 62), radius=8,
+                            fill=(15, 21, 33) if cold else mix(BG_TOP, accent, 0.55),
+                            outline=accent if not cold else mix(BG_TOP, accent, 0.45), width=2)
+        if cold:
+            for k in range(0, int(cw), 10):
+                d.line((tx + k, ty + 0, tx + min(k + 5, cw), ty + 0), fill=accent, width=2)
+                d.line((tx + k, ty + 62, tx + min(k + 5, cw), ty + 62), fill=accent, width=2)
+        d.text((tx + 12, ty + 10), t0, font=font(15, True),
+               fill=WHITE if not cold else accent)
+        d.text((tx + 12, ty + 34), t1, font=font(14),
+               fill=mix(WHITE, accent, 0.25) if not cold else mix(DIM, accent, 0.5))
+
+    d.text((x + w - 2, ty + 74), "tier 2 pages are dropped with madvise(DONTNEED)",
+           font=font(14), fill=FAINT, anchor="ra")
+    d.text((x, y + h + 12), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -2016,6 +2060,15 @@ def build(slug, out_dir):
         d.text((M, 482), "75 个胶囊 · 62 个 pin · 24 个场景", font=font(19),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "cheetah":
+        head(d, accent, "DA3M0 / Rust + C / Apache-2.0",
+             "Cheetah", "常驻内存不该由模型大小决定",
+             (M, 146), 100, (M, 350), 470, thesis_size=26)
+        motif_rss(d, (648, 122, 496, 372), accent, "RSS 变成预算的函数，不是权重的函数")
+        d.text((M, 424), "per-tensor 驻留 · madvise(DONTNEED) · mmap", font=font(19), fill=DIM)
+        d.text((M, 460), "7 个模型族 · native CPU 与 Vulkan 两个后端", font=font(19),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2100,6 +2153,8 @@ CARDS = {
                     color=(132, 170, 198), glow=(890, 292), glow_r=470, strength=0.30),
     "pill-camera": dict(file="pill-camera-control-seedance.jpg",
                         color=(26, 150, 190), glow=(890, 292), glow_r=470, strength=0.30),
+    "cheetah": dict(file="cheetah-tiered-memory-rss.jpg",
+                    color=(216, 66, 78), glow=(890, 292), glow_r=470, strength=0.30),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",
