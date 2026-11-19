@@ -1057,6 +1057,42 @@ def motif_qa(d, box, accent, tag):
     d.text((x, y + h + 16), tag, font=font(16), fill=FAINT)
 
 
+def motif_contract(d, box, accent, tag):
+    """One line of DSL, one normalized command, one handler -- the boundary the
+    whole editor, the copilot and the exporter all speak through."""
+    x, y, w, h = box
+
+    def mno(size, bold=False):
+        return ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf" if bold
+                                  else r"C:\Windows\Fonts\consola.ttf", size)
+
+    d.text((x, y + 2), "one line, one immutable intent", font=font(15),
+           fill=mix(DIM, accent, 0.4))
+
+    layers = [
+        ("dsl", "add box name=Crate position=0,1,0", (20, 27, 40), mix(BG_TOP, DIM, 0.6)),
+        ("command", 'create_primitive {type:"box", name:"Crate"}', accent, accent),
+        ("engine", "handler -> scene", (15, 21, 33), mix(BG_TOP, accent, 0.45)),
+    ]
+    ly = y + 42
+    for i, (name, code, fill, edge) in enumerate(layers):
+        hh = 66
+        d.rounded_rectangle((x + 2, ly, x + w - 2, ly + hh), radius=9, fill=fill, outline=edge, width=2)
+        hot = i == 1
+        d.text((x + 18, ly + 10), name, font=font(13, True),
+               fill=WHITE if hot else mix(DIM, accent, 0.5))
+        d.text((x + 18, ly + 34), code, font=mno(14), fill=WHITE if hot else mix(DIM, WHITE, 0.45))
+        if i < 2:
+            ax = x + w / 2
+            d.line((ax, ly + hh + 2, ax, ly + hh + 22), fill=accent, width=3)
+            d.polygon([(ax, ly + hh + 30), (ax - 7, ly + hh + 17), (ax + 7, ly + hh + 17)], fill=accent)
+        ly += hh + 34
+
+    d.text((x, y + h - 24), "the parser never runs JavaScript", font=font(14),
+           fill=mix(DIM, accent, 0.35))
+    d.text((x, y + h + 16), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -2211,6 +2247,15 @@ def build(slug, out_dir):
         d.text((M, 440), "Opus 5.5 · Blender 5.2 · 一次成型不重试", font=font(19),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "stemstudio":
+        head(d, accent, "Stem-Studio / MIT / 212 stars / WebGPU",
+             "Stem\nStudio", "给 AI 的不是代码，是能被检查的命令",
+             (M, 136), 84, (M, 346), 470, thesis_size=24)
+        motif_contract(d, (648, 128, 496, 350), accent, "同一份命令契约：人、AI、导出器都走这条路")
+        d.text((M, 414), "Three.js + React + WebGPU · 三个本地进程", font=font(18), fill=DIM)
+        d.text((M, 450), "仓库最后一次 push：2026-08-09", font=font(18),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2303,6 +2348,8 @@ CARDS = {
                   color=(24, 104, 132), glow=(884, 292), glow_r=470, strength=0.32),
     "blender-skills": dict(file="blender-skills-qa-gate.jpg",
                            color=(38, 128, 92), glow=(880, 292), glow_r=470, strength=0.32),
+    "stemstudio": dict(file="stemstudio-command-contract.jpg",
+                       color=(196, 68, 148), glow=(884, 292), glow_r=470, strength=0.32),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",

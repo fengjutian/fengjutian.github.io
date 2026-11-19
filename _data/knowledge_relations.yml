@@ -120,6 +120,9 @@
   target: post:octop-single-process-agent-platform
   type: applies
 - source: topic:agent-systems
+  target: post:stemstudio-command-contract
+  type: applies
+- source: topic:agent-systems
   target: post:hello-world
   type: related_to
 - source: topic:agent-systems
@@ -250,6 +253,9 @@
   type: applies
 - source: topic:multimodal-creation
   target: post:blender-skills-qa-gate
+  type: applies
+- source: topic:multimodal-creation
+  target: post:stemstudio-command-contract
   type: applies
 - source: topic:multimodal-creation
   target: project:veyra-studio
