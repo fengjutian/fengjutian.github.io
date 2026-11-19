@@ -10,6 +10,8 @@ A 发现 B 变向，重新判断。而 B 也知道 A 会重新判断，于是又
 
 它和普通的运动预测有一个区别。普通预测里，你估一个会自己走的东西；这里你估的人，会因为被你估而改变走法。
 
+IMG img/illus-guess-becomes-action.png
+
 # 一、一个具体的局面
 
 IMG img/fig-01-prediction-becomes-observation.png | 图 1　A 判断 B 会往右，把枪口移过去；B 看见枪口，于是往左。A 的判断没有出错，是它被用出去了。

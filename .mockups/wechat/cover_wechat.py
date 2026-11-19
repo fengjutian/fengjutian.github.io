@@ -12,7 +12,7 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wechat-cover-235
 
 img, d = covers.canvas((1010, 300), ACCENT, 470, 0.32)
 covers.head(d, ACCENT, "认知博弈 / I-POMDP / 可辨识性",
-            "认知\n博弈", "两个主体互相预测时，未来由谁决定",
+            "认知\n博弈", "猜测一旦被拿去行动，未来就变了",
             (covers.M, 146), 92, (covers.M, 384), 610, thesis_size=24)
 covers.motif_phaselag(d, (750, 78, 570, 424), ACCENT, "行动 → 观测 → 更新 → 行动")
 d.text((covers.M, 486), "信念表示 · 递归层级 · 可辨识性", font=covers.font(19), fill=covers.DIM)
