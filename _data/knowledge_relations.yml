@@ -228,10 +228,16 @@
   target: post:voicestudio-local-voice-workstation
   type: applies
 - source: topic:multimodal-creation
+  target: post:pill-camera-control-seedance
+  type: applies
+- source: topic:multimodal-creation
   target: project:veyra-studio
   type: implemented_by
 - source: post:hypit-video-compiler-timeline
   target: post:video-shotcraft-shot-names
+  type: related_to
+- source: post:pill-camera-control-seedance
+  target: post:hypit-video-compiler-timeline
   type: related_to
 - source: post:voicestudio-local-voice-workstation
   target: post:boubou-local-voice-runtime
@@ -280,6 +286,9 @@
 - source: topic:engineering-judgment
   target: post:diagram-design-agent-skill-lint
   type: applies
+- source: topic:engineering-judgment
+  target: post:cognitive-game-mutual-prediction
+  type: grounds
 - source: post:mainline-git-native-intent-memory
   target: post:intent-system-intent-driven-development
   type: related_to

@@ -840,6 +840,64 @@ def motif_handoff(d, box, accent, tag):
     d.text((x, y + h + 14), tag, font=font(16), fill=FAINT)
 
 
+def motif_pill(d, box, accent, tag):
+    """A grey 3D set with one striped stand-in standing in it, and the camera
+    path drawn around the stand-in: the pill clip that is sent as the reference."""
+    x, y, w, h = box
+    fx, fy, fw, fh = x + 6, y + 12, w - 12, h - 84
+    floor = fy + fh - 40
+
+    d.rounded_rectangle((fx, fy, fx + fw, fy + fh), radius=14, fill=(14, 20, 31),
+                        outline=mix(BG_TOP, accent, 0.55), width=3)
+    d.line((fx + 16, floor, fx + fw - 16, floor), fill=mix(BG_TOP, DIM, 0.5), width=2)
+
+    # the set: boxes that are nobody
+    d.rounded_rectangle((fx + 22, floor - 96, fx + 96, floor), radius=5, fill=mix(BG_TOP, DIM, 0.30))
+    d.rounded_rectangle((fx + fw - 104, floor - 72, fx + fw - 24, floor), radius=5,
+                        fill=mix(BG_TOP, DIM, 0.24))
+
+    # the stand-in: striped capsule, standing on the floor, a dot for facing
+    cx = fx + fw / 2
+    ph, pw = 156, 50
+    top = floor - ph
+    d.rounded_rectangle((cx - pw / 2, top, cx + pw / 2, floor - 4), radius=pw / 2,
+                        fill=(224, 231, 239), outline=accent, width=3)
+    k = 0
+    yy = top + 22
+    while yy + 13 < floor - 12:
+        if k % 2 == 0:
+            d.rectangle((cx - pw / 2 + 4, yy, cx + pw / 2 - 4, yy + 13),
+                        fill=mix(accent, WHITE, 0.12))
+        yy += 28
+        k += 1
+    d.ellipse((cx - 6, top + 8, cx + 6, top + 20), fill=accent)
+
+    # the camera path around it
+    ecx, ecy = cx, top + ph * 0.44
+    rx, ry = fw * 0.31, ph * 0.46
+    pts = []
+    for i in range(0, 41):
+        t = i / 40
+        ang = math.pi * (1.02 - 1.05 * t)
+        pts.append((ecx + math.cos(ang) * rx, ecy - math.sin(ang) * ry * 0.9))
+    d.line(pts, fill=mix(accent, WHITE, 0.4), width=3, joint="curve")
+    tip, prev = pts[-1], pts[-4]
+    ang = math.atan2(tip[1] - prev[1], tip[0] - prev[0])
+    d.polygon([(tip[0] + 13 * math.cos(ang), tip[1] + 13 * math.sin(ang)),
+               (tip[0] + 7 * math.cos(ang + 2.3), tip[1] + 7 * math.sin(ang + 2.3)),
+               (tip[0] + 7 * math.cos(ang - 2.3), tip[1] + 7 * math.sin(ang - 2.3))],
+              fill=mix(accent, WHITE, 0.4))
+    for p in (pts[0], pts[12], pts[26], pts[-1]):
+        d.ellipse((p[0] - 4, p[1] - 4, p[0] + 4, p[1] + 4), fill=mix(accent, WHITE, 0.5))
+
+    d.text((fx + 18, fy + 14), "pill.mp4  7 s / 24 fps / 21:9", font=font(15), fill=DIM)
+    d.text((fx + fw - 18, fy + 14), "no body to copy", font=font(15),
+           fill=mix(accent, WHITE, 0.35), anchor="ra")
+
+    d.text((x, y + h - 34), "reference_video  ->  Seedance 2.5", font=font(16),
+           fill=mix(DIM, accent, 0.5))
+    d.text((x, y + h + 18), tag, font=font(16), fill=FAINT)
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -1949,6 +2007,15 @@ def build(slug, out_dir):
         d.text((M, 506), "分布动了，不等于行为动了", font=font(20),
                fill=mix(DIM, accent, 0.65))
 
+    elif slug == "pill-camera":
+        head(d, accent, "Sirio Berati / Tein / MIT / 137 templates",
+             "Camera\nControl", "让模型只抄镜头，不抄人",
+             (M, 140), 86, (M, 376), 470, thesis_size=25)
+        motif_pill(d, (648, 118, 496, 388), accent, "胶囊替身 + 代码写的镜头 = 参考视频")
+        d.text((M, 444), "three.js 场景 → Remotion 渲染 → Seedance 2.5", font=font(19), fill=DIM)
+        d.text((M, 482), "75 个胶囊 · 62 个 pin · 24 个场景", font=font(19),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2031,6 +2098,8 @@ CARDS = {
                         color=(128, 142, 60), glow=(890, 292), glow_r=470, strength=0.30),
     "maitian": dict(file="maitian-multi-platform-publishing.jpg",
                     color=(132, 170, 198), glow=(890, 292), glow_r=470, strength=0.30),
+    "pill-camera": dict(file="pill-camera-control-seedance.jpg",
+                        color=(26, 150, 190), glow=(890, 292), glow_r=470, strength=0.30),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",
