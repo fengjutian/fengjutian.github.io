@@ -1016,6 +1016,47 @@ def motif_split(d, box, accent, tag):
     d.text((x, y + h + 26), tag, font=font(16), fill=FAINT)
 
 
+def motif_qa(d, box, accent, tag):
+    """Two columns of the same six checks: the run without skills fails most of
+    them, the run with skills passes all of them."""
+    x, y, w, h = box
+
+    d.text((x, y + 2), "same model, same prompt, one shot", font=font(15),
+           fill=mix(DIM, accent, 0.4))
+
+    colw = (w - 24) / 2
+    heads = (("without", (192, 84, 84)), ("with skills", accent))
+    for i, (name, c) in enumerate(heads):
+        d.text((x + i * (colw + 24) + 2, y + 34), name, font=font(16, True), fill=c)
+
+    checks = [("z-fighting", True), ("UV overlap", True), ("flipped edges", True),
+              ("triangles", False), ("bake maps", True), ("mesh check", True)]
+    # left column: triangles ok only; right column: all ok
+    left_ok = [False, False, False, True, False, False]
+
+    row_h = 42
+    for r, (name, _) in enumerate(checks):
+        ry = y + 70 + r * row_h
+        d.text((x + 2, ry + 12), name, font=font(14), fill=mix(DIM, WHITE, 0.3))
+        for i in range(2):
+            cx = x + i * (colw + 24) + colw - 22
+            ok = (i == 1) or left_ok[r]
+            col = accent if ok else (192, 84, 84)
+            d.rounded_rectangle((cx - 14, ry + 2, cx + 14, ry + 30), radius=7,
+                                fill=(18, 26, 38), outline=col, width=2)
+            if ok:
+                d.line((cx - 7, ry + 16, cx - 2, ry + 23), fill=col, width=3)
+                d.line((cx - 2, ry + 23, cx + 8, ry + 9), fill=col, width=3)
+            else:
+                d.line((cx - 7, ry + 9, cx + 7, ry + 23), fill=col, width=3)
+                d.line((cx - 7, ry + 23, cx + 7, ry + 9), fill=col, width=3)
+
+    d.line((x + colw + 12, y + 30, x + colw + 12, y + 70 + 6 * row_h - 8),
+           fill=mix(BG_TOP, DIM, 0.4), width=2)
+
+    d.text((x, y + h + 16), tag, font=font(16), fill=FAINT)
+
+
 # ------------------------------------------------------------------ cards
 
 def motif_slot(d, box, accent, tag):
@@ -2161,6 +2202,15 @@ def build(slug, out_dir):
         d.text((M, 444), "方法来自 Karpathy 2026-10-02 的那条推文", font=font(18),
                fill=mix(DIM, accent, 0.6))
 
+    elif slug == "blender-skills":
+        head(d, accent, "EL4CTEO / MIT / 2.3k stars / 28 skills",
+             "Blender\nSkills", "能不能建出来不难，能不能过检查才难",
+             (M, 136), 80, (M, 336), 470, thesis_size=25)
+        motif_qa(d, (648, 132, 496, 350), accent, "同一份资产，两次重拓扑，六项检查")
+        d.text((M, 404), "z-fighting 22 → 0 · UV 重叠 34% → 0.02%", font=font(19), fill=DIM)
+        d.text((M, 440), "Opus 5.5 · Blender 5.2 · 一次成型不重试", font=font(19),
+               fill=mix(DIM, accent, 0.6))
+
     domain(d)
     path = os.path.join(out_dir, A["file"])
     img.save(path, "JPEG", quality=92, optimize=True, subsampling=0)
@@ -2251,6 +2301,8 @@ CARDS = {
                      color=(109, 71, 184), glow=(880, 296), glow_r=470, strength=0.32),
     "ste80": dict(file="ste80-humanizer-two-passes.jpg",
                   color=(24, 104, 132), glow=(884, 292), glow_r=470, strength=0.32),
+    "blender-skills": dict(file="blender-skills-qa-gate.jpg",
+                           color=(38, 128, 92), glow=(880, 292), glow_r=470, strength=0.32),
     "two-agent": dict(file="two-agent-probabilistic-cloud.jpg",
                       color=(96, 122, 196), glow=(320, 268), glow_r=470, strength=0.30),
     "cognitive-game": dict(file="cognitive-game-mutual-prediction.jpg",
